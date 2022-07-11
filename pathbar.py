@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
+from library import Node
 
 
 class PathbarLabel(QLabel):
@@ -14,6 +15,8 @@ class PathbarLabel(QLabel):
 
 
 class NodeLabel(PathbarLabel):
+    clicked = Signal(Node)
+
     def __init__(self, node, color):
         self.node = node
         text = node.name
@@ -23,8 +26,13 @@ class NodeLabel(PathbarLabel):
         super().__init__(text, color)
         self.setToolTip(node.name)
 
+    def mousePressEvent(self, event):
+        self.clicked.emit(self.node)
+
 
 class Pathbar(QWidget):
+    clicked = Signal(Node)
+
     background_opacity = 0.5
     fade_target = False
 
@@ -48,7 +56,7 @@ class Pathbar(QWidget):
     def set_target(self, target):
         nodes = []
         node = target
-        while node:
+        while node.parent:
             nodes.insert(0, node)
             node = node.parent
 
@@ -59,7 +67,9 @@ class Pathbar(QWidget):
             if self.fade_target and node is target:
                 sep_color = Qt.blue
                 node_color = Qt.gray
-            if node.parent:
+            if self.layout.count():
                 self.layout.addWidget(PathbarLabel('>', sep_color))
-            self.layout.addWidget(NodeLabel(node, node_color))
+            label = NodeLabel(node, node_color)
+            label.clicked.connect(self.clicked)
+            self.layout.addWidget(label)
         self.layout.addStretch(1)

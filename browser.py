@@ -12,6 +12,7 @@ class BrowserWindow(QWidget):
     def __init__(self, widget):
         super().__init__()
         self.pathbar = pathbar.Pathbar()
+        self.pathbar.clicked.connect(self.unselected)
         self.widget = widget
         self.setLayout(self.make_layout(self.pathbar, self.widget))
         self.widget.target_updated.connect(self.target_cb)
