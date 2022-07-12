@@ -112,8 +112,16 @@ class Browser(QStackedWidget):
         self.viewer.target_selected.connect(self.unselect)
         self.viewer.unselected.connect(self.unselect)
 
-    def load_node(self, node):
-        self.currentWidget().load(node, node.children[0])
+    def load_node(self, node, target=None, mode=None):
+        if target is None:
+            target = node.children[0]
+        if mode is not None:
+            assert mode in ['grid', 'viewer'], mode
+            self.setCurrentWidget(getattr(self, mode))
+        self.currentWidget().load(node, target)
+
+    def target(self):
+        return self.currentWidget().target
 
     def grid_select(self, node):
         if node.children:

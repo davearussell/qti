@@ -98,6 +98,10 @@ class Cell(QFrame):
         palette.setColor(QPalette.WindowText, Qt.yellow if enabled else Qt.black)
         self.setPalette(palette)
 
+    def setFocus(self):
+        super().setFocus()
+        self.enable_border(True)
+
     def focusInEvent(self, event):
         self.focused.emit(self)
 
