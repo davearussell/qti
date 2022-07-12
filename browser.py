@@ -136,9 +136,19 @@ class Browser(QStackedWidget):
         new_node = siblings[(siblings.index(node) + offset) % len(siblings)]
         window.load(new_node, new_node.children[0])
 
+    def toggle_pathbars(self):
+        if self.currentWidget().pathbar.isHidden():
+            self.grid.pathbar.show()
+            self.viewer.pathbar.show()
+        else:
+            self.grid.pathbar.hide()
+            self.viewer.pathbar.hide()
+
     def keyPressEvent(self, event):
         key = event.key()
         if key in [Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp, Qt.Key_PageDown]:
             self.scroll_node(1 if key in [Qt.Key_Down, Qt.Key_PageDown] else -1)
+        elif key == Qt.Key_H:
+            self.toggle_pathbars()
         else:
             event.ignore()
