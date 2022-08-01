@@ -93,17 +93,13 @@ class Cell(QFrame):
         self.setFrameShape(QFrame.Box)
         self.setLineWidth(2)
 
-    def set_border_color(self, color):
+    def enable_border(self, enabled):
         palette = self.palette()
-        palette.setColor(QPalette.WindowText, color)
+        palette.setColor(QPalette.WindowText, Qt.yellow if enabled else Qt.black)
         self.setPalette(palette)
 
     def focusInEvent(self, event):
-        self.set_border_color(Qt.yellow)
         self.focused.emit(self)
-
-    def focusOutEvent(self, event):
-        self.set_border_color(Qt.black)
 
     def mouseDoubleClickEvent(self, event):
         self.selected.emit(self)
@@ -123,24 +119,23 @@ class Grid(QScrollArea):
 
     @Slot(QFrame)
     def cell_focused(self, cell):
+        if self.target:
+            self.target.enable_border(False)
         self.target = cell
+        self.target.enable_border(True)
         self.target_updated.emit(self.target.widget)
+        self.ensureWidgetVisible(cell)
 
     @Slot(QFrame)
     def cell_selected(self, cell):
-        self.target = cell
-        self.target_selected.emit(self.target.widget)
+        self.target_selected.emit(cell.widget)
 
     def resizeEvent(self, event):
         if self.target:
             self.ensureWidgetVisible(self.target)
 
-    def set_target(self, cell):
-        self.target = cell
-        cell.setFocus()
-        self.ensureWidgetVisible(cell)
-
     def load(self, widgets, target=None):
+        self.target = None
         self.hide()
         QWidget().setLayout(self.widget().layout()) # clears our layout
         layout = FlowLayout(self.spacing)
@@ -152,7 +147,8 @@ class Grid(QScrollArea):
             cell.selected.connect(self.cell_selected)
             layout.addWidget(cell)
             if widget is target:
-                self.set_target(cell)
+                self.target = cell
+                cell.setFocus()
         self.show()
 
     def focusInEvent(self, event):
@@ -163,7 +159,9 @@ class Grid(QScrollArea):
     def keyPressEvent(self, event):
         key = event.key()
         if key in [Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right]:
-            self.set_target(self.widget().layout().scroll(self.target, key))
+            cell = self.widget().layout().scroll(self.target, key)
+            cell.setFocus()
+            self.ensureWidgetVisible(cell)
         elif key == Qt.Key_Return:
             if self.target:
                 self.target_selected.emit(self.target.widget)
