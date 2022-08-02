@@ -1,6 +1,10 @@
-from PySide6.QtWidgets import QLabel, QLineEdit
+import os
+
+from PySide6.QtWidgets import QLabel, QLineEdit, QCompleter
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import Qt, Signal
+
+from sets import SetPicker
 
 class LineEdit(QLineEdit):
     commit = Signal(str, str)
@@ -9,6 +13,9 @@ class LineEdit(QLineEdit):
 
     def __init__(self, key, value):
         super().__init__()
+        # Disable scrolling between fields with <TAB> as we want
+        # to use it for tab-completion within some fields
+        self.setFocusPolicy(Qt.ClickFocus)
         self.key = key
         self.setText(value)
 
@@ -62,3 +69,12 @@ class TextField(Field):
     def make_box(self):
         box = LineEdit(self.key, self.value)
         return box
+
+
+class SetField(Field):
+    def __init__(self, key, values, all_values, **kwargs):
+        self.all_values = all_values
+        super().__init__(key, values, **kwargs)
+
+    def make_box(self):
+        return SetPicker(self.key, self.value, self.all_values)

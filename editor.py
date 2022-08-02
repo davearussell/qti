@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QGridLayout
 from PySide6.QtCore import Qt
 
 
-from fields import TextField, ReadOnlyField
+from fields import TextField, ReadOnlyField, SetField
 
 
 def get_ancestors(node):
@@ -45,6 +45,16 @@ def choose_fields(node):
                 value = next(node.leaves()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
+    for key in node.library.sets:
+        all_values = node.library.sets[key]
+        values = None
+        for leaf in node.leaves():
+            if values is None:
+                values = leaf.spec[key].copy()
+            else:
+                values = [value for value in values if value in leaf.spec[key]]
+        fields.append(SetField(key, values, all_values, keybind=find_keybind(key, keybinds),
+                               commit_cb=update_set))
 
     return fields
 
@@ -68,6 +78,11 @@ def update_ancestor(node, field, new_value):
         if node.type == ancestor_type:
             node.name = new_value
             break
+
+        
+def update_set(node, field, new_value):
+    for leaf in node.leaves():
+        leaf.spec[field.key] = new_value
 
 
 class EditorDialog(QDialog):

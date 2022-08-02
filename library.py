@@ -57,6 +57,17 @@ class Library:
             spec = json.load(f)
         self.images = spec['images']
         self.default_group_by = spec['group_by']
+        self.scan_keys()
+
+    def scan_keys(self):
+        ignore_keys = ['name', 'resolution', 'path']
+        self.sets = {}
+        for image_spec in self.images:
+            for key, value in image_spec.items():
+                if key in ignore_keys:
+                    continue
+                if isinstance(value, list):
+                    self.sets[key] = self.sets.get(key, set()) | set(value)
 
     def make_tree(self):
         root = Container(self, 'root', 'root')
