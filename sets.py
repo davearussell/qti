@@ -47,6 +47,8 @@ class TextBox(QLineEdit):
 
 
 class ValueBox(QLabel):
+    clicked = Signal(QLabel)
+
     def __init__(self, value):
         super().__init__()
         self.value = value
@@ -57,6 +59,9 @@ class ValueBox(QLabel):
         palette.setColor(QPalette.Window, Qt.white)
         self.setPalette(palette)
 
+    def mousePressEvent(self, event):
+        self.clicked.emit(self)
+
 
 class SetPicker(QWidget):
     commit = Signal(str, list)
@@ -64,7 +69,7 @@ class SetPicker(QWidget):
     def __init__(self, key, values, all_values):
         super().__init__()
         self.key = key
-        self.boxes = [ValueBox(value) for value in values]
+        self.boxes = []
         self.text = TextBox(all_values)
         self.text.push_value.connect(self.push_value)
         self.text.pop_value.connect(self.pop_value)
@@ -72,25 +77,37 @@ class SetPicker(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-        for box in self.boxes:
-            layout.addWidget(box)
         layout.addWidget(self.text)
+        for value in values:
+            self.add_box(ValueBox(value))
 
     def _commit(self):
         self.commit.emit(self.key, [box.value for box in self.boxes])
+
+    def add_box(self, box):
+        box.clicked.connect(self.box_clicked)
+        self.boxes.append(box)
+        self.layout().insertWidget(self.layout().count() - 1, box)
+
+    def remove_box(self, box):
+        self.boxes.remove(box)
+        box.hide()
+        self.layout().removeWidget(box)
+        return box
 
     def focusInEvent(self, event):
         self.text.setFocus()
 
     def push_value(self, value):
-        self.boxes.append(ValueBox(value))
-        self.layout().insertWidget(self.layout().count() - 1, self.boxes[-1])
+        self.add_box(ValueBox(value))
         self.text.setText('')
         self.text.setCompleter(None)
 
     def pop_value(self):
         if self.boxes:
-            box = self.boxes.pop()
-            box.hide()
-            self.layout().removeWidget(box)
+            box = self.remove_box(self.boxes[-1])
             self.text.setText(box.value)
+
+    def box_clicked(self, box):
+        self.remove_box(box)
+        self.text.setFocus()
