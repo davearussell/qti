@@ -22,7 +22,7 @@ def choose_fields(node):
     keybinds = set()
 
     fields = [
-        ReadOnlyField('type', node.type.title()),
+        ReadOnlyField('type', node.type_label.title()),
         TextField('name', node.name, keybind='N', commit_cb=update_name)
     ]
     if node.type == 'image':
@@ -40,24 +40,28 @@ def choose_fields(node):
                 value = next(node.leaves()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
-    for key in node.library.sets:
-        all_values = node.library.sets[key]
-        values = None
-        for leaf in node.leaves():
-            if values is None:
-                values = leaf.spec[key].copy()
-            else:
-                values = [value for value in values if value in leaf.spec[key]]
-        fields.append(SetField(key, values, all_values, keybind=find_keybind(key, keybinds),
-                               commit_cb=update_set))
+        for key in node.library.sets:
+            all_values = node.library.sets[key]
+            values = None
+            for leaf in node.leaves():
+                if values is None:
+                    values = leaf.spec[key].copy()
+                else:
+                    values = [value for value in values if value in leaf.spec[key]]
+            fields.append(SetField(key, values, all_values, keybind=find_keybind(key, keybinds),
+                                   commit_cb=update_set))
 
     return fields
 
 
-def update_name(node, _, new_value):
+def update_name(node, field, new_value):
     if node.children:
         for leaf in node.leaves():
-            leaf.spec[node.type] = new_value
+            value = leaf.spec[node.type]
+            if isinstance(value, list):
+                value[value.index(field.value)] = new_value
+            else:
+                leaf.spec[node.type] = new_value
     else:
         node.spec['name'] = new_value
     node.name = new_value # required for reload_tree's path_from_root logic

@@ -38,10 +38,17 @@ class Container(Node):
     def __init__(self, library, name, _type):
         super().__init__(library, name)
         self.type = _type
+        self.is_set = self.type in library.sets
+        self.type_label = self.type
+        if self.is_set:
+            assert self.type_label.endswith('s')
+            self.type_label = self.type_label[:-1]
 
 
 class Image(Node):
     type = 'image'
+    type_label = 'image'
+    is_set = False
 
     def __init__(self, library, spec):
         super().__init__(library, spec['name'])
