@@ -8,6 +8,7 @@ import library
 import browser
 from editor import EditorDialog
 from config import default_config, ConfigDialog
+from deleter import DeleterDialog
 
 JSON_PATH = "/home/dar/files/downloads/test/pictures/flat.json"
 
@@ -70,6 +71,8 @@ class Window(QMainWindow):
             EditorDialog(self, self.browser.target()).exec() # blocks until dialog closed
         elif key == Qt.Key_V:
             ConfigDialog(self, self.library, self.config).exec()
+        elif key == Qt.Key_D:
+            DeleterDialog(self, self.browser.target()).exec()
         else:
             event.ignore()
 
