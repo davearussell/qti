@@ -1,9 +1,4 @@
-from PySide6.QtWidgets import QDialog, QWidget
-from PySide6.QtWidgets import QGridLayout
-from PySide6.QtCore import Qt
-
-
-from fields import TextField, ReadOnlyField, SetField
+from fields import FieldDialog, TextField, ReadOnlyField, SetField
 
 
 def get_ancestors(node):
@@ -85,34 +80,17 @@ def update_set(node, field, new_value):
         leaf.spec[field.key] = new_value
 
 
-class EditorDialog(QDialog):
+class EditorDialog(FieldDialog):
+    title = "Editor"
+
     def __init__(self, main_window, node):
         super().__init__(main_window)
-        self.setWindowTitle("Editor")
-        self.main_window = main_window
-        self.layout = None
         self.need_reload = False
         self.load_node(node)
 
     def load_node(self, node):
         self.node = node
-        if self.layout:
-            QWidget().setLayout(self.layout) # purge existing layout and fields
-        self.layout = QGridLayout()
-        self.setLayout(self.layout)
-        self.keybinds = {}
-        self.fields = {}
-
-        for row_i, field in enumerate(choose_fields(node)):
-            self.fields[field.key] = field
-            if field.keybind:
-                self.keybinds[Qt.Key.values['Key_' + field.keybind]] = field.box
-            self.layout.addWidget(field.label, row_i, 0)
-            self.layout.addWidget(field.box, row_i, 1)
-            if field.editable:
-                field.box.commit.connect(self.field_committed)
-        self.layout.setRowStretch(row_i + 1, 1)
-        self.setFocus()
+        self.init_fields(choose_fields(node))
 
     def field_committed(self, key, value):
         field = self.fields[key]
@@ -121,20 +99,4 @@ class EditorDialog(QDialog):
             # We can't reload here as reloading would delete the field whose
             # commit signal we're curently being called from
             self.need_reload = True
-        self.setFocus()
-
-    def focusInEvent(self, event):
-        super().focusInEvent(event)
-        if self.need_reload:
-            self.need_reload = False
-            target = self.main_window.reload_tree()
-            self.load_node(target)
-
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Return:
-            self.accept()
-        elif key in self.keybinds:
-            self.keybinds[key].setFocus()
-        else:
-            event.ignore()
+        super().field_committed(key, value)

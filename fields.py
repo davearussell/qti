@@ -1,10 +1,53 @@
 import os
 
+from PySide6.QtWidgets import QDialog, QWidget, QGridLayout
 from PySide6.QtWidgets import QLabel, QLineEdit, QCompleter
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
+
+
+class FieldDialog(QDialog):
+    title = "Dialog"
+
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.setWindowTitle(self.title)
+        self.main_window = main_window
+        self.layout = None
+
+    def init_fields(self, fields):
+        if self.layout:
+            QWidget().setLayout(self.layout) # purge existing layout and fields
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+
+        self.fields = {}
+        self.keybinds = {}
+        for row_i, field in enumerate(fields):
+            self.fields[field.key] = field
+            if field.keybind:
+                self.keybinds[Qt.Key.values['Key_' + field.keybind]] = field.box
+            self.layout.addWidget(field.label, row_i, 0)
+            self.layout.addWidget(field.box, row_i, 1)
+            if field.editable:
+                field.box.commit.connect(self.field_committed)
+        self.layout.setRowStretch(row_i + 1, 1)
+        self.setFocus()
+
+    def field_committed(self, key, value):
+        self.setFocus()
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Return:
+            self.accept()
+        elif key in self.keybinds:
+            self.keybinds[key].setFocus()
+        else:
+            event.ignore()
+
 
 class LineEdit(QLineEdit):
     commit = Signal(str, str)
