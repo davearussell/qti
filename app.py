@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt
 import library
 import browser
 from editor import EditorDialog
+from config import default_config, ConfigDialog
 
 JSON_PATH = "/home/dar/files/downloads/test/pictures/flat.json"
 
@@ -24,13 +25,14 @@ class Window(QMainWindow):
         pal.setColor(QPalette.Window, Qt.black)
         self.setPalette(pal)
         self.library = library.Library(json_file)
+        self.config = default_config(self.library)
         self.browser = browser.Browser()
         self.setCentralWidget(self.browser)
         self.reload_tree()
 
     def reload_tree(self):
         target = self.browser.target()
-        tree = self.library.make_tree()
+        tree = self.library.make_tree(self.config)
 
         if not target:
             self.browser.load_node(tree)
@@ -66,6 +68,8 @@ class Window(QMainWindow):
             self.app.quit()
         elif key == Qt.Key_E:
             EditorDialog(self, self.browser.target()).exec() # blocks until dialog closed
+        elif key == Qt.Key_V:
+            ConfigDialog(self, self.library, self.config).exec()
         else:
             event.ignore()
 

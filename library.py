@@ -48,6 +48,9 @@ class Image(Node):
         self.spec = spec
         self.abspath = os.path.join(self.root_dir, spec['path'])
 
+    def delete_from_library(self):
+        self.library.images.remove(self.spec)
+
 
 class Library:
     def __init__(self, json_path):
@@ -62,19 +65,21 @@ class Library:
     def scan_keys(self):
         ignore_keys = ['name', 'resolution', 'path']
         self.sets = {}
+        self.keys = set()
         for image_spec in self.images:
             for key, value in image_spec.items():
                 if key in ignore_keys:
                     continue
+                self.keys.add(key)
                 if isinstance(value, list):
                     self.sets[key] = self.sets.get(key, set()) | set(value)
 
-    def make_tree(self):
+    def make_tree(self, config):
         root = Container(self, 'root', 'root')
         for image_spec in self.images:
             parents = [root]
 
-            for key in self.default_group_by:
+            for key in config['group_by']:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
                     values = [values]
