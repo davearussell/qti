@@ -82,10 +82,18 @@ class Library:
                     self.sets[key] = self.sets.get(key, set()) | set(value)
 
     def make_tree(self, config):
+        filter_expr = config['_filter']
         root = Container(self, 'root', 'root')
         for image_spec in self.images:
-            parents = [root]
+            if filter_expr:
+                tags = set()
+                for key in self.sets:
+                    if key in image_spec:
+                        tags |= set(image_spec[key])
+                if not filter_expr.matches(tags):
+                    continue
 
+            parents = [root]
             for key in config['group_by']:
                 values = image_spec.get(key)
                 if not isinstance(values, list):

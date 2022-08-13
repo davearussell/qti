@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtWidgets import QDialog, QWidget, QGridLayout
 from PySide6.QtWidgets import QLabel, QLineEdit, QCompleter
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtGui import QFontMetrics, QPalette
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
@@ -54,13 +54,17 @@ class LineEdit(QLineEdit):
 
     max_chars = 50
 
-    def __init__(self, key, value):
+    def __init__(self, key, value, validator=None, normalizer=None):
         super().__init__()
         # Disable scrolling between fields with <TAB> as we want
         # to use it for tab-completion within some fields
         self.setFocusPolicy(Qt.ClickFocus)
         self.key = key
+        self.validator = validator
+        self.normalizer = normalizer
+        self.valid = True
         self.setText(value)
+        self.textChanged.connect(self.text_update)
 
     def sizeHint(self):
         size = super().sizeHint()
@@ -68,8 +72,21 @@ class LineEdit(QLineEdit):
         size.setWidth(text_width + 10)
         return size
 
+    def text_update(self, value):
+        self.valid = self.validator(value) if (self.validator and value) else True
+        self.set_bg_color()
+
+    def set_bg_color(self):
+        palette = self.palette()
+        palette.setColor(QPalette.Text, Qt.black if self.valid else Qt.red)
+        self.setPalette(palette)
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return:
+            if self.valid and self.normalizer:
+                self.setText(self.normalizer(self.text()))
+            elif not self.valid:
+                self.setText('')
             self.commit.emit(self.key, self.text())
         else:
             super().keyPressEvent(event)
@@ -88,7 +105,7 @@ class Field:
 
     def make_label(self):
         label = QLabel()
-        text = self.key.title()
+        text = self.key.replace('_', ' ').title()
         if self.keybind:
             idx = text.upper().find(self.keybind)
             text = text[:idx] + '<u>%s</u>' % text[idx] + text[idx+1:]
@@ -109,8 +126,13 @@ class ReadOnlyField(Field):
 
 
 class TextField(Field):
+    def __init__(self, *args, **kwargs):
+        self.validator = kwargs.pop('validator', None)
+        self.normalizer = kwargs.pop('normalizer', None)
+        super().__init__(*args, **kwargs)
+
     def make_box(self):
-        box = LineEdit(self.key, self.value)
+        box = LineEdit(self.key, self.value, validator=self.validator, normalizer=self.normalizer)
         return box
 
 
