@@ -16,8 +16,7 @@ class TextBox(QLineEdit):
         super().__init__()
         self.setFocusPolicy(Qt.ClickFocus)
         self.completions = completions
-        self._completer = QCompleter(self.completions)
-        self.setCompleter(self._completer)
+        self.setCompleter(QCompleter(self.completions))
 
     def _commit(self):
         if self.text():
@@ -28,7 +27,6 @@ class TextBox(QLineEdit):
         super().focusOutEvent(event)
 
     def keyPressEvent(self, event):
-        self.setCompleter(self._completer)
         key = event.key()
         if key == Qt.Key_Backspace and not self.text():
             self.pop_value.emit()
@@ -36,7 +34,10 @@ class TextBox(QLineEdit):
                 self.setText("")
         elif key == Qt.Key_Tab:
             matches = [value for value in self.completions if value.startswith(self.text())]
-            self.setText(os.path.commonprefix(matches))
+            if matches:
+                self.setText(os.path.commonprefix(matches))
+                if len(matches) == 1:
+                    self.push_value.emit(matches[0])
         elif key == Qt.Key_Space:
             if self.text():
                 self.push_value.emit(self.text())
@@ -101,7 +102,10 @@ class SetPicker(QWidget):
     def push_value(self, value):
         self.add_box(ValueBox(value))
         self.text.setText('')
+        # Reposition completer to match resized self.text
+        completer = self.text.completer()
         self.text.setCompleter(None)
+        self.text.setCompleter(completer)
 
     def pop_value(self):
         if self.boxes:
