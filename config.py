@@ -31,6 +31,7 @@ def normalize_expr(text):
 def default_config(library):
     return {
         'group_by': library.default_group_by,
+        'order_by': [],
         'include_tags': [],
         'exclude_tags': [],
         'custom_expr': '',
@@ -52,8 +53,10 @@ class ConfigDialog(FieldDialog):
         all_tags = set()
         for _set in self.library.sets.values():
             all_tags |= _set
+        sort_types = list(self.library.sort_types.keys())
         return [
             SetField("group_by", self.config['group_by'].copy(), self.library.keys, keybind='G'),
+            SetField("order_by", self.config['order_by'].copy(), sort_types, keybind='O'),
             SetField('include_tags', self.config['include_tags'].copy(), all_tags, keybind='I'),
             SetField('exclude_tags', self.config['exclude_tags'].copy(), all_tags, keybind='X'),
             TextField('custom_expr', self.config['custom_expr'], keybind='U',

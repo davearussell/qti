@@ -60,6 +60,12 @@ class Image(Node):
 
 
 class Library:
+    sort_types = {
+        'default': None,
+        'count': lambda c: -len(c.children),
+        'alpha': lambda c: c.name,
+    }
+
     def __init__(self, json_path):
         self.json_path = json_path
         self.root_dir = os.path.dirname(self.json_path)
@@ -112,4 +118,13 @@ class Library:
                 parents = new_parents
             for parent in parents:
                 parent.add_child(Image(self, image_spec))
+
+        sort_keys = [self.sort_types.get(k) for k in config['order_by']]
+        nodes = [root]
+        for sort_key in sort_keys:
+            if sort_key:
+                for node in nodes:
+                    node.children.sort(key=sort_key)
+            nodes = [child for node in nodes for child in node.children]
+
         return root
