@@ -1,5 +1,6 @@
 #! /bin/python3
 import argparse
+import os
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QPalette, QImageReader, QFont
 from PySide6.QtCore import Qt
@@ -10,7 +11,7 @@ from editor import EditorDialog
 from config import default_config, ConfigDialog
 from deleter import DeleterDialog
 
-JSON_PATH = "/home/dar/files/downloads/test/pictures/flat.json"
+FALLBACK_JSON_PATH = "/home/dar/files/downloads/test/pictures/images.json"
 
 
 class Window(QMainWindow):
@@ -79,12 +80,17 @@ class Window(QMainWindow):
 
 def parse_cmdline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--json-file', default=JSON_PATH,
+    parser.add_argument('-f', '--json-file', default=None,
                         help="JSON image file to load")
     return parser.parse_args()
 
 
 def main(options):
+    if options.json_file is None:
+        for path in ['images.json', FALLBACK_JSON_PATH]:
+            if os.path.exists(path):
+                options.json_file = path
+                break
     QImageReader.setAllocationLimit(0)
     app = QApplication([])
     window = Window(app, options.json_file)
