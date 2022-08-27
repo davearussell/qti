@@ -10,6 +10,7 @@ import browser
 from editor import EditorDialog
 from config import default_config, ConfigDialog
 from deleter import DeleterDialog
+import keys
 
 FALLBACK_JSON_PATH = "/home/dar/files/downloads/test/pictures/images.json"
 
@@ -65,14 +66,14 @@ class Window(QMainWindow):
         return target
 
     def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Q:
+        action = keys.get_action(event)
+        if action == 'quit':
             self.app.quit()
-        elif key == Qt.Key_E:
+        elif action == 'edit':
             EditorDialog(self, self.browser.target()).exec() # blocks until dialog closed
-        elif key == Qt.Key_V:
+        elif action == 'config':
             ConfigDialog(self, self.library, self.config).exec()
-        elif key == Qt.Key_D:
+        elif action == 'delete':
             DeleterDialog(self, self.browser.target()).exec()
         else:
             event.ignore()

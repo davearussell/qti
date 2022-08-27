@@ -3,6 +3,8 @@ from PySide6.QtCore import Qt, Signal, QEvent
 from library import Node
 
 import cache
+import keys
+
 
 class Viewer(QLabel):
     target_selected = Signal(Node)
@@ -30,12 +32,12 @@ class Viewer(QLabel):
         self.target_updated.emit(target)
 
     def keyPressEvent(self, event):
-        key = event.key()
-        if key in [Qt.Key_Left, Qt.Key_Right]:
-            self.scroll(1 if key == Qt.Key_Right else -1)
-        elif key == Qt.Key_Return:
+        action = keys.get_action(event)
+        if action in ['left', 'right']:
+            self.scroll(1 if action == 'right' else -1)
+        elif action == 'select':
             self.target_selected.emit(self.target)
-        elif key == Qt.Key_Backspace:
+        elif action == 'unselect':
             self.unselected.emit()
         else:
             event.ignore()

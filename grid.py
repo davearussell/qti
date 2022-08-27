@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QLayout
 from PySide6.QtGui import QPalette
 from PySide6.QtCore import Qt, Signal, Slot, QRect, QPoint, QSize
 
+import keys
+
 
 class FlowLayout(QLayout):
     def __init__(self, spacing=10, margin=10):
@@ -68,10 +70,10 @@ class FlowLayout(QLayout):
                     row_up = rows[(j - 1) % len(rows)]
                     row_down = rows[(j + 1) % len(rows)]
                     self.neighbours[cell] = {
-                        Qt.Key_Left: row[(i - 1) % len(row)],
-                        Qt.Key_Right: row[(i + 1) % len(row)],
-                        Qt.Key_Down: row_down[min(i, len(row_down) - 1)],
-                        Qt.Key_Up: row_up[min(i, len(row_up) - 1)],
+                        'left': row[(i - 1) % len(row)],
+                        'right': row[(i + 1) % len(row)],
+                        'down': row_down[min(i, len(row_down) - 1)],
+                        'up': row_up[min(i, len(row_up) - 1)],
                 }
         return y + row_height - rect.y() + self._margin
 
@@ -161,15 +163,15 @@ class Grid(QScrollArea):
             self.target.setFocus()
 
     def keyPressEvent(self, event):
-        key = event.key()
-        if key in [Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right]:
-            cell = self.widget().layout().scroll(self.target, key)
+        action = keys.get_action(event)
+        if action in ['up', 'down', 'left', 'right']:
+            cell = self.widget().layout().scroll(self.target, action)
             cell.setFocus()
             self.ensureWidgetVisible(cell)
-        elif key == Qt.Key_Return:
+        elif action == 'select':
             if self.target:
                 self.target_selected.emit(self.target.widget)
-        elif key == Qt.Key_Backspace:
+        elif action == 'unselect':
             self.unselected.emit()
         else:
             event.ignore()

@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QStackedWidget, QVBoxLayout, QStackedLayo
 from PySide6.QtCore import Qt, Signal
 import grid, viewer, thumbnail, pathbar
 from library import Node
+import keys
 
 
 class BrowserWindow(QWidget):
@@ -153,10 +154,12 @@ class Browser(QStackedWidget):
             self.viewer.pathbar.hide()
 
     def keyPressEvent(self, event):
-        key = event.key()
-        if key in [Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp, Qt.Key_PageDown]:
-            self.scroll_node(1 if key in [Qt.Key_Down, Qt.Key_PageDown] else -1)
-        elif key == Qt.Key_H:
+        action = keys.get_action(event)
+        if action in ['prev', 'next', 'up', 'down']:
+            # NOTE: up/down here is only reachable in viewer mode; in grid
+            # mode the grid class consumes them to scroll with in the grid
+            self.scroll_node(1 if action in ['next', 'down'] else -1)
+        elif action == 'toggle_hide':
             self.toggle_pathbars()
         else:
             event.ignore()

@@ -5,6 +5,7 @@ from PySide6.QtGui import QPalette
 from PySide6.QtCore import Qt, Signal
 
 from grid import FlowLayout
+import keys
 
 
 class TextBox(QLineEdit):
@@ -41,7 +42,7 @@ class TextBox(QLineEdit):
         elif key == Qt.Key_Space:
             if self.text():
                 self.push_value.emit(self.text())
-        elif key == Qt.Key_Return:
+        elif keys.get_action(event) == 'select':
             self._commit()
         else:
             super().keyPressEvent(event)

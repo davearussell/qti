@@ -6,6 +6,7 @@ from PySide6.QtGui import QFontMetrics, QPalette
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
+import keys
 
 
 class FieldDialog(QDialog):
@@ -40,8 +41,9 @@ class FieldDialog(QDialog):
         self.setFocus()
 
     def keyPressEvent(self, event):
+        action = keys.get_action(event)
         key = event.key()
-        if key == Qt.Key_Return:
+        if action == 'select':
             self.accept()
         elif key in self.keybinds:
             self.keybinds[key].setFocus()
@@ -82,7 +84,7 @@ class LineEdit(QLineEdit):
         self.setPalette(palette)
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if keys.get_action(event) == 'select':
             if self.valid and self.normalizer:
                 self.setText(self.normalizer(self.text()))
             elif not self.valid:
