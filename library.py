@@ -87,6 +87,11 @@ class Library:
                 if isinstance(value, list):
                     self.sets[key] = self.sets.get(key, set()) | set(value)
 
+    def save(self):
+        spec = {'images': self.images, 'group_by': self.default_group_by}
+        with open(self.json_path, 'w', encoding='UTF_8') as f:
+            json.dump(spec, f, indent=4)
+
     def make_tree(self, config):
         filter_expr = config['_filter']
         root = Container(self, 'root', 'root')

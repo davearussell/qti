@@ -90,6 +90,7 @@ def main(options):
     window = Window(app, options.json_file)
     window.show()
     app.exec()
+    window.library.save()
 
 
 if __name__ == '__main__':
