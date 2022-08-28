@@ -33,7 +33,7 @@ class Window(QMainWindow):
         self.browser = browser.Browser()
         self.setCentralWidget(self.browser)
         self.reload_tree()
-        self.snapshot = None
+        self.snapshots = []
 
     def reload_tree(self):
         target = self.browser.target()
@@ -69,15 +69,14 @@ class Window(QMainWindow):
         return target
 
     def save_snapshot(self):
-        config = copy.deepcopy(self.config)
-        self.snapshot = (self.browser.node(), self.browser.target(), self.browser.mode(), config)
+        snapshot = (self.browser.node(), self.browser.target(), self.browser.mode(),
+                    copy.deepcopy(self.config))
+        self.snapshots.append(snapshot)
 
     def restore_snapshot(self):
-        if self.snapshot:
-            node, target, mode, config = self.snapshot
-            self.config = config
+        if self.snapshots:
+            node, target, mode, self.config = self.snapshots.pop()
             self.browser.load_node(node, target=target, mode=mode)
-            self.snapshot = None
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
