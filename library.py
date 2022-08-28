@@ -17,6 +17,13 @@ class Node:
             self.children.insert(index, child)
         return child
 
+    @property
+    def root(self):
+        node = self
+        while node.parent:
+            node = node.parent
+        return node
+
     def ancestors(self, predicate=None):
         node = self
         while node:
