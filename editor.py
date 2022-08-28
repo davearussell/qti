@@ -103,3 +103,7 @@ class EditorDialog(FieldDialog):
             # commit signal we're curently being called from
             self.need_reload = True
         super().field_committed(key, value)
+
+    def reload(self):
+        super().reload()
+        self.main_window.library.scan_keys()
