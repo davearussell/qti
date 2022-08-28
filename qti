@@ -58,7 +58,8 @@ class Window(QMainWindow):
                 if idx >= len(node.children):
                     idx = len(node.children) - 1
                 target = node.children[idx]
-                browser_mode = 'grid'
+                if target.type != 'image':
+                    browser_mode = 'grid'
                 break
             target = targets[0]
 
