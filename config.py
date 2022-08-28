@@ -1,19 +1,8 @@
+import copy
 from PySide6.QtCore import Qt
 
 from fields import FieldDialog, SetField, TextField
 import expr
-
-
-def construct_filter(config):
-    clauses = []
-    if config['custom_expr']:
-        clauses.append(config['custom_expr'])
-    if config['include_tags']:
-        clauses.append('|'.join(config['include_tags']))
-    if config['exclude_tags']:
-        clauses.append('!(%s)' % ('|'.join(config['exclude_tags'])))
-    filter_expr = '&'.join('(%s)' % clause for clause in clauses)
-    return expr.parse_expr(filter_expr) if filter_expr else None
 
 
 def validate_expr(text):
@@ -28,15 +17,41 @@ def normalize_expr(text):
     return str(expr.parse_expr(text)) if text else text
 
 
-def default_config(library):
-    return {
-        'group_by': library.default_group_by,
+class Config:
+    defaults = {
+        'group_by': [],
         'order_by': [],
         'include_tags': [],
         'exclude_tags': [],
         'custom_expr': '',
-        '_filter': None,
     }
+
+    def __init__(self, **kwargs):
+        for k, v in self.defaults.items():
+            setattr(self, k, kwargs.pop(k, copy.deepcopy(v)))
+        if kwargs:
+            raise AttributeError("%s does not take attribute(s) %r" % (
+                type(self).__name__, ', '.join(kwargs.keys())))
+
+    def copy(self):
+        kwargs = {k: getattr(self, k) for k in self.defaults}
+        return type(self)(**copy.deepcopy(kwargs))
+
+    @property
+    def filter(self):
+        clauses = []
+        if self.custom_expr:
+            clauses.append(self.custom_expr)
+        if self.include_tags:
+            clauses.append('|'.join(self.include_tags))
+        if self.exclude_tags:
+            clauses.append('!(%s)' % ('|'.join(self.exclude_tags)))
+        filter_expr = '&'.join('(%s)' % clause for clause in clauses)
+        return expr.parse_expr(filter_expr) if filter_expr else None
+
+
+def default_config(library):
+    return Config(group_by=library.default_group_by)
 
 
 class ConfigDialog(FieldDialog):
@@ -54,12 +69,13 @@ class ConfigDialog(FieldDialog):
         for _set in self.library.sets.values():
             all_tags |= _set
         sort_types = list(self.library.sort_types.keys())
+        config = self.config.copy()
         return [
-            SetField("group_by", self.config['group_by'].copy(), self.library.keys, keybind='G'),
-            SetField("order_by", self.config['order_by'].copy(), sort_types, keybind='O'),
-            SetField('include_tags', self.config['include_tags'].copy(), all_tags, keybind='I'),
-            SetField('exclude_tags', self.config['exclude_tags'].copy(), all_tags, keybind='X'),
-            TextField('custom_expr', self.config['custom_expr'], keybind='U',
+            SetField("group_by", config.group_by, self.library.keys, keybind='G'),
+            SetField("order_by", config.order_by, sort_types, keybind='O'),
+            SetField('include_tags', config.include_tags, all_tags, keybind='I'),
+            SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),
+            TextField('custom_expr', config.custom_expr, keybind='U',
                       validator=validate_expr, normalizer=normalize_expr)
         ]
 
@@ -70,7 +86,6 @@ class ConfigDialog(FieldDialog):
 
     def field_committed(self, key, value):
         self.need_reload = True
-        assert key in self.config, (key, value)
-        self.config[key] = value
-        self.config['_filter'] = construct_filter(self.config)
+        assert key in self.config.defaults, (key, value)
+        setattr(self.config, key, value)
         super().field_committed(key, value)

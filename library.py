@@ -93,7 +93,7 @@ class Library:
             json.dump(spec, f, indent=4)
 
     def make_tree(self, config):
-        filter_expr = config['_filter']
+        filter_expr = config.filter
         root = Container(self, 'root', 'root')
         for image_spec in self.images:
             if filter_expr:
@@ -105,7 +105,7 @@ class Library:
                     continue
 
             parents = [root]
-            for key in config['group_by']:
+            for key in config.group_by:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
                     values = [values]
@@ -124,7 +124,7 @@ class Library:
             for parent in parents:
                 parent.add_child(Image(self, image_spec))
 
-        sort_keys = [self.sort_types.get(k) for k in config['order_by']]
+        sort_keys = [self.sort_types.get(k) for k in config.order_by]
         nodes = [root]
         for sort_key in sort_keys:
             if sort_key:
