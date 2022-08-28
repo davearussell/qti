@@ -41,9 +41,12 @@ class FieldDialog(QDialog):
     def field_committed(self, key, value):
         self.setFocus()
 
+    def reload(self):
+        self.main_window.reload_tree()
+
     def accept(self):
         if self.need_reload:
-            self.main_window.reload_tree()
+            self.reload()
         super().accept()
 
     def keyPressEvent(self, event):
