@@ -1,5 +1,6 @@
 #! /bin/python3
 import argparse
+import copy
 import os
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QPalette, QImageReader, QFont
@@ -32,6 +33,7 @@ class Window(QMainWindow):
         self.browser = browser.Browser()
         self.setCentralWidget(self.browser)
         self.reload_tree()
+        self.snapshot = None
 
     def reload_tree(self):
         target = self.browser.target()
@@ -66,6 +68,17 @@ class Window(QMainWindow):
         self.browser.load_node(node, target=target, mode=browser_mode)
         return target
 
+    def save_snapshot(self):
+        config = copy.deepcopy(self.config)
+        self.snapshot = (self.browser.node(), self.browser.target(), self.browser.mode(), config)
+
+    def restore_snapshot(self):
+        if self.snapshot:
+            node, target, mode, config = self.snapshot
+            self.config = config
+            self.browser.load_node(node, target=target, mode=mode)
+            self.snapshot = None
+
     def keyPressEvent(self, event):
         action = keys.get_action(event)
         if action == 'quit':
@@ -76,6 +89,10 @@ class Window(QMainWindow):
             ConfigDialog(self, self.library, self.config).exec()
         elif action == 'delete':
             DeleterDialog(self, self.browser.target()).exec()
+        elif action == 'save_snapshot':
+            self.save_snapshot()
+        elif action == 'restore_snapshot':
+            self.restore_snapshot()
         else:
             event.ignore()
 
