@@ -65,7 +65,6 @@ class ConfigDialog(FieldDialog):
         super().__init__(main_window)
         self.library = library
         self.config = config
-        self.need_reload = False
         self.init_fields(self.choose_fields())
 
     def choose_fields(self):
@@ -82,11 +81,6 @@ class ConfigDialog(FieldDialog):
             TextField('custom_expr', config.custom_expr, keybind='U',
                       validator=validate_expr, normalizer=normalize_expr)
         ]
-
-    def accept(self):
-        if self.need_reload:
-            self.main_window.reload_tree()
-        super().accept()
 
     def field_committed(self, key, value):
         self.need_reload = True

@@ -17,6 +17,7 @@ class FieldDialog(QDialog):
         self.setWindowTitle(self.title)
         self.main_window = main_window
         self.layout = None
+        self.need_reload = False
 
     def init_fields(self, fields):
         if self.layout:
@@ -39,6 +40,11 @@ class FieldDialog(QDialog):
 
     def field_committed(self, key, value):
         self.setFocus()
+
+    def accept(self):
+        if self.need_reload:
+            self.main_window.reload_tree()
+        super().accept()
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
