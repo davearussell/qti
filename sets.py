@@ -18,6 +18,7 @@ class TextBox(QLineEdit):
         self.setFocusPolicy(Qt.ClickFocus)
         self.completions = completions
         self.setCompleter(QCompleter(self.completions))
+        self.setMinimumWidth(self.sizeHint().width())
 
     def _commit(self):
         if self.text():
