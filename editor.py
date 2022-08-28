@@ -89,7 +89,6 @@ class EditorDialog(FieldDialog):
 
     def __init__(self, main_window, node):
         super().__init__(main_window)
-        self.need_reload = False
         self.load_node(node)
 
     def load_node(self, node):
