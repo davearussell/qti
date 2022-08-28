@@ -37,6 +37,10 @@ class Config:
         kwargs = {k: getattr(self, k) for k in self.defaults}
         return type(self)(**copy.deepcopy(kwargs))
 
+    def clear_filters(self):
+        for k in ['include_tags', 'exclude_tags', 'custom_expr']:
+            setattr(self, k, self.defaults[k])
+
     @property
     def filter(self):
         clauses = []

@@ -10,6 +10,8 @@ class BrowserWindow(QWidget):
     target_selected = Signal(Node)
     unselected = Signal(Node)
 
+    name = None
+
     def __init__(self, widget):
         super().__init__()
         self.pathbar = pathbar.Pathbar()
@@ -56,6 +58,8 @@ class BrowserWindow(QWidget):
 
 
 class GridWindow(BrowserWindow):
+    name = 'grid'
+
     thumbnail_size = (200, 250)
 
     def __init__(self):
@@ -77,6 +81,8 @@ class GridWindow(BrowserWindow):
 
 
 class ViewerWindow(BrowserWindow):
+    name = 'viewer'
+
     def __init__(self):
         super().__init__(viewer.Viewer())
 
@@ -120,6 +126,12 @@ class Browser(QStackedWidget):
             assert mode in ['grid', 'viewer'], mode
             self.setCurrentWidget(getattr(self, mode))
         self.currentWidget().load(node, target)
+
+    def mode(self):
+        return self.currentWidget().name
+
+    def node(self):
+        return self.currentWidget().node
 
     def target(self):
         return self.currentWidget().target
