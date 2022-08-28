@@ -4,7 +4,6 @@ import os
 class Node:
     def __init__(self, library, name):
         self.library = library
-        self.root_dir = library.root_dir
         self.name = name
         self.parent = None
         self.children = []
@@ -60,7 +59,7 @@ class Image(Node):
     def __init__(self, library, spec):
         super().__init__(library, spec['name'])
         self.spec = spec
-        self.abspath = os.path.join(self.root_dir, spec['path'])
+        self.abspath = os.path.join(library.root_dir, spec['path'])
 
     def delete_from_library(self):
         self.library.images.remove(self.spec)
