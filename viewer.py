@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent
 from library import Node
 
-import cache
 import keys
+from cache import load_pixmap
 
 
 class Viewer(QLabel):
@@ -21,7 +21,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.pixmap = cache.load_pixmap(self.target.root_dir, self.target.abspath, self.size())
+        self.pixmap = load_pixmap(self.target.library.root_dir, self.target.abspath, self.size())
         self.setPixmap(self.pixmap)
 
     def scroll(self, offset):
