@@ -82,8 +82,8 @@ class FlowLayout(QLayout):
 
 
 class Cell(QFrame):
-    focused = Signal(QFrame)
-    selected = Signal(QFrame)
+    clicked = Signal(QFrame)
+    double_clicked = Signal(QFrame)
 
     def __init__(self, widget):
         super().__init__()
@@ -91,7 +91,7 @@ class Cell(QFrame):
         self.setLayout(layout)
         layout.addWidget(widget)
         self.widget = widget
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.NoFocus)
         self.setFrameShape(QFrame.Box)
         self.setLineWidth(2)
 
@@ -100,15 +100,11 @@ class Cell(QFrame):
         palette.setColor(QPalette.WindowText, Qt.yellow if enabled else Qt.black)
         self.setPalette(palette)
 
-    def setFocus(self):
-        super().setFocus()
-        self.enable_border(True)
-
-    def focusInEvent(self, event):
-        self.focused.emit(self)
+    def mousePressEvent(self, event):
+        self.clicked.emit(self)
 
     def mouseDoubleClickEvent(self, event):
-        self.selected.emit(self)
+        self.double_clicked.emit(self)
 
 
 class Grid(QScrollArea):
@@ -124,7 +120,7 @@ class Grid(QScrollArea):
         self.target = None
 
     @Slot(QFrame)
-    def cell_focused(self, cell):
+    def set_target(self, cell):
         if self.target:
             self.target.enable_border(False)
         self.target = cell
@@ -133,7 +129,7 @@ class Grid(QScrollArea):
         self.ensureWidgetVisible(cell)
 
     @Slot(QFrame)
-    def cell_selected(self, cell):
+    def select_target(self, cell):
         self.target_selected.emit(cell.widget)
 
     def resizeEvent(self, event):
@@ -143,6 +139,8 @@ class Grid(QScrollArea):
 
     def load(self, widgets, target=None):
         self.target = None
+        if widgets and target is None:
+            target = widgets[0]
         self.hide()
         QWidget().setLayout(self.widget().layout()) # clears our layout
         layout = FlowLayout(self.spacing)
@@ -150,28 +148,21 @@ class Grid(QScrollArea):
 
         for widget in widgets:
             cell = Cell(widget)
-            cell.focused.connect(self.cell_focused)
-            cell.selected.connect(self.cell_selected)
+            cell.clicked.connect(self.set_target)
+            cell.double_clicked.connect(self.select_target)
             layout.addWidget(cell)
             if widget is target:
-                self.target = cell
-                cell.setFocus()
+                self.set_target(cell)
         self.show()
-
-    def focusInEvent(self, event):
-        super().focusInEvent(event)
-        if self.target:
-            self.target.setFocus()
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
         if action in ['up', 'down', 'left', 'right']:
             cell = self.widget().layout().scroll(self.target, action)
-            cell.setFocus()
-            self.ensureWidgetVisible(cell)
+            self.set_target(cell)
         elif action == 'select':
             if self.target:
-                self.target_selected.emit(self.target.widget)
+                self.select_target(self.target)
         elif action == 'unselect':
             self.unselected.emit()
         else:
