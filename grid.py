@@ -137,6 +137,7 @@ class Grid(QScrollArea):
         self.target_selected.emit(cell.widget)
 
     def resizeEvent(self, event):
+        super().resizeEvent(event)
         if self.target:
             self.ensureWidgetVisible(self.target)
 
