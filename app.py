@@ -12,13 +12,9 @@ import keys
 
 
 class Window(QMainWindow):
-    size = (1600, 1000)
-
     def __init__(self, app, json_file):
         super().__init__()
         self.app = app
-        self.setGeometry(200, 0, *self.size)
-        self.setFixedSize(*self.size)
         self.setFont(QFont("Liberation mono"))
         pal = self.palette()
         pal.setColor(QPalette.Window, Qt.black)
@@ -116,6 +112,6 @@ class Application(QApplication):
         self.window = Window(self, json_file)
 
     def exec(self):
-        self.window.show()
+        self.window.showFullScreen()
         super().exec()
         self.window.library.save()
