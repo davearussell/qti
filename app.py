@@ -8,6 +8,7 @@ import browser
 from editor import EditorDialog
 from config import default_config, ConfigDialog
 from deleter import DeleterDialog
+from importer import ImporterDialog
 import keys
 
 
@@ -101,6 +102,8 @@ class Window(QMainWindow):
             self.restore_snapshot()
         elif action == 'jump_to_subject':
             self.jump_to_subject()
+        elif action == 'add_new_images':
+            ImporterDialog(self, self.browser.node()).exec()
         else:
             event.ignore()
 

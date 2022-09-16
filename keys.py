@@ -11,6 +11,7 @@ ACTIONS = {
 
     'select':   [Qt.Key_Return,    (Qt.Key_Enter, Qt.KeypadModifier)],
     'unselect': [Qt.Key_Backspace, (Qt.Key_0, Qt.KeypadModifier)],
+    'cancel':   [Qt.Key_Escape],
 
     'toggle_hide': [Qt.Key_H],
     'quit':        [Qt.Key_Q],
@@ -21,6 +22,8 @@ ACTIONS = {
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],
     'jump_to_subject': [Qt.Key_J],
+
+    'add_new_images':   [Qt.Key_N],
 }
 
 
@@ -39,3 +42,15 @@ for action, keys in ACTIONS.items():
 def get_action(event):
     k = (event.key(), int(event.modifiers()))
     return KEYS.get(k)
+
+
+class KeyMap:
+    def __init__(self):
+        self.keys = {}
+
+    def assign_keybind(self, word):
+        for char in word:
+            if char.upper() not in self.keys:
+                self.keys[char.upper()] = word
+                return char
+        raise Exception("Cannot find a free free keybind for %r" % (word,))
