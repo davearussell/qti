@@ -132,6 +132,19 @@ class Grid(QScrollArea):
     def select_target(self, cell):
         self.target_selected.emit(cell.widget)
 
+    @Slot()
+    def select_current_target(self):
+        self.select_target(self.target)
+
+    @Slot(str)
+    def scroll(self, direction):
+        cell = self.widget().layout().scroll(self.target, direction)
+        self.set_target(cell)
+
+    @Slot()
+    def unselect(self):
+        self.unselected.emit()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if self.target:
@@ -158,12 +171,11 @@ class Grid(QScrollArea):
     def keyPressEvent(self, event):
         action = keys.get_action(event)
         if action in ['up', 'down', 'left', 'right']:
-            cell = self.widget().layout().scroll(self.target, action)
-            self.set_target(cell)
+            self.scroll(action)
         elif action == 'select':
             if self.target:
-                self.select_target(self.target)
+                self.select_current_target()
         elif action == 'unselect':
-            self.unselected.emit()
+            self.unselect()
         else:
             event.ignore()
