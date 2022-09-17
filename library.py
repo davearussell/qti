@@ -71,6 +71,7 @@ class Library:
         'count': lambda c: -len(c.children),
         'alpha': lambda c: c.name,
     }
+    builtin_keys = ['name', 'path', 'resolution']
 
     def __init__(self, json_path):
         self.json_path = json_path
@@ -79,22 +80,34 @@ class Library:
             spec = json.load(f)
         self.images = spec['images']
         self.default_group_by = spec['group_by']
+        self.key_types = spec['key_types']
+        self.custom_keys = list(self.key_types.keys())
         self.scan_keys()
 
+    def default_value(self, key):
+        if key in self.builtin_keys:
+            return None
+        defaults = {
+            'set': [],
+            'str': '',
+        }
+        return defaults[self.key_types[key]]
+
     def scan_keys(self):
-        ignore_keys = ['name', 'resolution', 'path']
         self.sets = {}
-        self.keys = set()
         for image_spec in self.images:
             for key, value in image_spec.items():
-                if key in ignore_keys:
+                if key in self.builtin_keys:
                     continue
-                self.keys.add(key)
                 if isinstance(value, list):
                     self.sets[key] = self.sets.get(key, set()) | set(value)
 
     def save(self):
-        spec = {'images': self.images, 'group_by': self.default_group_by}
+        spec = {
+            'images': self.images,
+            'group_by': self.default_group_by,
+            'key_types': self.key_types,
+        }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)
 
