@@ -109,7 +109,7 @@ class Field:
     def __init__(self, key, value, keybind=None, commit_cb=None):
         self.key = key
         self.value = value
-        self.keybind = keybind
+        self.keybind = keybind.upper() if keybind else None
         self.commit_cb = commit_cb
         self.label = self.make_label()
         self.box = self.make_box()
