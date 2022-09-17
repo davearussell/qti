@@ -117,15 +117,18 @@ class Grid(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.setWidget(QWidget())
-        self.target = None
+        self._target = None
+
+    def target(self):
+        return self._target.widget if self._target else None
 
     @Slot(QFrame)
     def set_target(self, cell):
-        if self.target:
-            self.target.enable_border(False)
-        self.target = cell
-        self.target.enable_border(True)
-        self.target_updated.emit(self.target.widget)
+        if self._target:
+            self._target.enable_border(False)
+        self._target = cell
+        self._target.enable_border(True)
+        self.target_updated.emit(self._target.widget)
         self.ensureWidgetVisible(cell)
 
     @Slot(QFrame)
@@ -134,11 +137,11 @@ class Grid(QScrollArea):
 
     @Slot()
     def select_current_target(self):
-        self.select_target(self.target)
+        self.select_target(self._target)
 
     @Slot(str)
     def scroll(self, direction):
-        cell = self.widget().layout().scroll(self.target, direction)
+        cell = self.widget().layout().scroll(self._target, direction)
         self.set_target(cell)
 
     @Slot()
@@ -147,11 +150,11 @@ class Grid(QScrollArea):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self.target:
-            self.ensureWidgetVisible(self.target)
+        if self._target:
+            self.ensureWidgetVisible(self._target)
 
     def load(self, widgets, target=None):
-        self.target = None
+        self._target = None
         if widgets and target is None:
             target = widgets[0]
         self.hide()
@@ -173,7 +176,7 @@ class Grid(QScrollArea):
         if action in ['up', 'down', 'left', 'right']:
             self.scroll(action)
         elif action == 'select':
-            if self.target:
+            if self._target:
                 self.select_current_target()
         elif action == 'unselect':
             self.unselect()
