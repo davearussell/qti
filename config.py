@@ -82,8 +82,8 @@ class ConfigDialog(FieldDialog):
                       validator=validate_expr, normalizer=normalize_expr)
         ]
 
-    def field_committed(self, key, value):
+    def field_committed(self, field, value):
         self.need_reload = True
-        assert key in self.config.defaults, (key, value)
-        setattr(self.config, key, value)
-        super().field_committed(key, value)
+        assert field.key in self.config.defaults, (field.key, value)
+        setattr(self.config, field.key, value)
+        super().field_committed(field, value)

@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtWidgets import QDialog, QWidget, QGridLayout
+from PySide6.QtWidgets import QDialog, QWidget, QGridLayout, QVBoxLayout
 from PySide6.QtWidgets import QLabel, QLineEdit, QCompleter
 from PySide6.QtGui import QFontMetrics, QPalette
 from PySide6.QtCore import Qt, Signal
@@ -16,30 +16,19 @@ class FieldDialog(QDialog):
         super().__init__(main_window)
         self.setWindowTitle(self.title)
         self.main_window = main_window
+        self.setLayout(QVBoxLayout())
+        self.field_list = FieldList()
+        self.field_list.field_committed.connect(self.field_committed)
+        self.layout().addWidget(self.field_list)
         self.layout = None
         self.need_reload = False
 
     def init_fields(self, fields):
-        if self.layout:
-            QWidget().setLayout(self.layout) # purge existing layout and fields
-        self.layout = QGridLayout()
-        self.setLayout(self.layout)
+        self.field_list.init_fields(fields)
+        self.field_list.setFocus()
 
-        self.fields = {}
-        self.keybinds = {}
-        for row_i, field in enumerate(fields):
-            self.fields[field.key] = field
-            if field.keybind:
-                self.keybinds[Qt.Key.values['Key_' + field.keybind]] = field.box
-            self.layout.addWidget(field.label, row_i, 0)
-            self.layout.addWidget(field.box, row_i, 1)
-            if field.editable:
-                field.box.commit.connect(self.field_committed)
-        self.layout.setRowStretch(row_i + 1, 1)
-        self.setFocus()
-
-    def field_committed(self, key, value):
-        self.setFocus()
+    def field_committed(self, field, value):
+        pass
 
     def reload(self):
         self.main_window.reload_tree()
@@ -50,18 +39,50 @@ class FieldDialog(QDialog):
         super().accept()
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
-        key = event.key()
-        if action == 'select':
+        if keys.get_action(event) == 'select':
             self.accept()
-        elif key in self.keybinds:
+        else:
+            event.ignore()
+
+
+class FieldList(QWidget):
+    field_committed = Signal(object, object)
+
+    def __init__(self):
+        super().__init__()
+        self.fields = {}
+        self.keybinds = {}
+
+    def init_fields(self, fields):
+        if self.layout():
+            QWidget().setLayout(self.layout()) # purge existing layout and fields
+        self.setLayout(QGridLayout())
+        self.fields = {}
+        self.keybinds = {}
+        for row_i, field in enumerate(fields):
+            self.fields[field.key] = field
+            if field.keybind:
+                self.keybinds[Qt.Key.values['Key_' + field.keybind]] = field.box
+            self.layout().addWidget(field.label, row_i, 0)
+            self.layout().addWidget(field.box, row_i, 1)
+            if field.editable:
+                field.box.commit.connect(self._field_committed)
+        self.layout().setRowStretch(row_i + 1, 1)
+
+    def _field_committed(self, key, value):
+        self.setFocus()
+        self.field_committed.emit(self.fields[key], value)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in self.keybinds:
             self.keybinds[key].setFocus()
         else:
             event.ignore()
 
 
 class LineEdit(QLineEdit):
-    commit = Signal(str, str)
+    commit = Signal(object, str)
 
     max_chars = 50
 

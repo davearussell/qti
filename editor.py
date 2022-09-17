@@ -95,14 +95,13 @@ class EditorDialog(FieldDialog):
         self.node = node
         self.init_fields(choose_fields(node))
 
-    def field_committed(self, key, value):
-        field = self.fields[key]
+    def field_committed(self, field, value):
         if field.value != value:
             field.commit_cb(self.node, field, value)
             # We can't reload here as reloading would delete the field whose
             # commit signal we're curently being called from
             self.need_reload = True
-        super().field_committed(key, value)
+        super().field_committed(field, value)
 
     def reload(self):
         super().reload()
