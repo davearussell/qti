@@ -114,6 +114,7 @@ class Library:
     def make_tree(self, config):
         filter_expr = config.filter
         root = Container(self, 'root', 'root')
+        child_map = {} # parent -> child_name -> child
         for image_spec in self.images:
             if filter_expr:
                 tags = set()
@@ -132,13 +133,12 @@ class Library:
                 new_parents = []
                 for value in values:
                     for parent in parents:
-                        matches = [child for child in parent.children if child.name == value]
-                        if matches:
-                            assert len(matches) == 1
-                            parent = matches[0]
-                        else:
-                            parent = parent.add_child(Container(self, value, key))
-                        new_parents.append(parent)
+                        node = child_map.setdefault(parent, {}).get(value)
+                        if node is None:
+                            node = Container(self, value, key)
+                            parent.add_child(node)
+                            child_map[parent][value] = node
+                        new_parents.append(node)
                 parents = new_parents
             for parent in parents:
                 parent.add_child(Image(self, image_spec))
