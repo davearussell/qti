@@ -132,12 +132,16 @@ class Library:
 
                 new_parents = []
                 for value in values:
+                    map_value = value
+                    if key in self.default_group_by:
+                        i = self.default_group_by.index(key) + 1
+                        map_value = tuple(image_spec.get(k) for k in self.default_group_by[:i])
                     for parent in parents:
-                        node = child_map.setdefault(parent, {}).get(value)
+                        node = child_map.setdefault(parent, {}).get(map_value)
                         if node is None:
                             node = Container(self, value, key)
                             parent.add_child(node)
-                            child_map[parent][value] = node
+                            child_map[parent][map_value] = node
                         new_parents.append(node)
                 parents = new_parents
             for parent in parents:
