@@ -165,10 +165,20 @@ class ImporterDialog(QDialog):
         self.grid.load(self.images)
         self.layout().addWidget(self.grid)
 
+    def delete_target(self):
+        target = self.grid.target()
+        if target:
+            self.grid.remove_idx(self.images.index(target))
+            self.images.remove(target)
+
     def grid_target_updated(self, image):
-        for key in image.spec:
-            if key in self.field_list.fields:
-                self.field_list.fields[key].box.setText(image.format_value(key))
+        field_keys = self.field_list.fields.keys()
+        if image:
+            values = {key: image.format_value(key) for key in image.spec if key in field_keys}
+        else:
+            values = {key: '' for key in field_keys}
+        for key in values:
+            self.field_list.fields[key].box.setText(values[key])
 
     def field_committed(self, field, value):
         target = self.grid.target()
@@ -213,6 +223,8 @@ class ImporterDialog(QDialog):
             self.commit()
         elif action == 'cancel':
             self.reject()
+        elif action == 'delete':
+            self.delete_target()
         elif action in ['up', 'down', 'left', 'right']:
             self.grid.scroll(action)
         else:
