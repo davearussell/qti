@@ -24,6 +24,12 @@ class FlowLayout(QLayout):
         if 0 <= index < len(self.items):
             return self.items[index]
 
+    def takeAt(self, index):
+        item = self.itemAt(index)
+        if item:
+            self.items.remove(item)
+        return item
+
     def hasHeightForWidth(self):
         return True
 
@@ -110,7 +116,7 @@ class Cell(QFrame):
 class Grid(QScrollArea):
     target_selected = Signal(QWidget)
     unselected = Signal()
-    target_updated = Signal(QWidget)
+    target_updated = Signal(object)
     spacing = 10
 
     def __init__(self):
@@ -127,9 +133,10 @@ class Grid(QScrollArea):
         if self._target:
             self._target.enable_border(False)
         self._target = cell
-        self._target.enable_border(True)
-        self.target_updated.emit(self._target.widget)
-        self.ensureWidgetVisible(cell)
+        if cell:
+            cell.enable_border(True)
+            self.ensureWidgetVisible(cell)
+        self.target_updated.emit(cell.widget if cell else None)
 
     @Slot(QFrame)
     def select_target(self, cell):
@@ -170,6 +177,17 @@ class Grid(QScrollArea):
             if widget is target:
                 self.set_target(cell)
         self.show()
+
+    def remove_idx(self, i):
+        layout = self.widget().layout()
+        cell = layout.takeAt(i).widget()
+        cell.hide()
+        if layout.items:
+            if i == len(layout.items):
+                i -= 1
+            self.set_target(layout.itemAt(i).widget())
+        else:
+            self.set_target(None)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
