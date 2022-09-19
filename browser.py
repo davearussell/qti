@@ -1,169 +1,124 @@
 #! /bin/python3
-from PySide6.QtWidgets import QWidget, QStackedWidget, QVBoxLayout, QStackedLayout
-from PySide6.QtCore import Qt, Signal
-import grid, viewer, thumbnail, pathbar
-from library import Node
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
+from PySide6.QtCore import Qt, Signal, QSize
+from grid import Grid
+from viewer import Viewer
+from thumbnail import Thumbnail
+from pathbar import Pathbar
 import keys
 
 
-class BrowserWindow(QWidget):
-    target_selected = Signal(Node)
-    unselected = Signal(Node)
-
-    name = None
-
-    def __init__(self, widget):
+class NodeGrid(Grid):
+    def __init__(self, thumbnail_size):
         super().__init__()
-        self.pathbar = pathbar.Pathbar()
-        self.pathbar.clicked.connect(self.unselected)
-        self.widget = widget
-        self.setLayout(self.make_layout(self.pathbar, self.widget))
-        self.widget.target_updated.connect(self.target_cb)
-        self.widget.target_selected.connect(self.select_cb)
-        self.widget.unselected.connect(self.unselect_cb)
+        self.thumbnail_size = thumbnail_size
+
+    def _cell_to_userobj(self, cell):
+        return cell.widget.node
+
+    def load(self, node, target=None):
+        thumbnails = [Thumbnail(child, self.thumbnail_size) for child in node.children]
+        target_thumbnail = thumbnails[node.children.index(target)] if target else None
+        super().load(thumbnails, target=target_thumbnail)
+
+
+class Browser(QWidget):
+    thumbnail_size = QSize(200, 250)
+
+    def __init__(self, size):
+        super().__init__()
+        self.setFixedSize(size)
+        self.mode = 'grid'
         self.node = None
         self.target = None
+        self.pathbar = None
 
-    def make_layout(self, pathbar, widget):
-        """Put pathbar at the top of the window with widget below it."""
-        layout = QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(pathbar)
-        layout.addWidget(widget)
-        return layout
-
-    def load(self, node, target):
-        self.node = node
-        self.target = target
-        self.load_widget(node, target)
-        self.pathbar.set_target(target)
-
-    def load_widget(self, node, target):
-        self.widget.load(node, target)
-
-    def target_cb(self, target):
-        self.target = target
-        self.pathbar.set_target(target)
-
-    def select_cb(self, target):
-        self.target_selected.emit(target)
-
-    def unselect_cb(self):
-        self.unselected.emit(self.target)
-
-    def focusInEvent(self, event):
-        super().focusInEvent(event)
-        self.widget.setFocus()
-
-
-class GridWindow(BrowserWindow):
-    name = 'grid'
-
-    thumbnail_size = (200, 250)
-
-    def __init__(self):
-        super().__init__(grid.Grid())
+    def make_grid(self, node, target):
+        self.pathbar = Pathbar()
+        self.pathbar.clicked.connect(self.unselect)
         self.pathbar.fade_target = True
 
-    def load_widget(self, node, target):
-        thumbnails = [thumbnail.Thumbnail(child, self.thumbnail_size) for child in node.children]
-        self.widget.load(thumbnails, target=thumbnails[node.children.index(target)])
+        grid = NodeGrid(self.thumbnail_size)
+        grid.target_updated.connect(self._target_updated)
+        grid.target_selected.connect(self.select)
+        grid.unselected.connect(self.unselect)
+        grid.load(node, target=target)
 
-    def target_cb(self, thumbnail):
-        super().target_cb(thumbnail.node)
-
-    def select_cb(self, thumbnail):
-        super().select_cb(thumbnail.node)
-
-    def unselect_cb(self):
-        self.unselected.emit(self.node)
-
-
-class ViewerWindow(BrowserWindow):
-    name = 'viewer'
-
-    def __init__(self):
-        super().__init__(viewer.Viewer())
-
-    def pathbar_container(self, widget):
-        """Since the pathbar's background is partially opaque, we want it to
-        be minimally tall so as to avoid obscuring the entire window."""
-        container = QWidget()
         layout = QVBoxLayout()
+        self.setLayout(layout)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-        container.setLayout(layout)
-        layout.addWidget(widget)
-        layout.addStretch(1)
-        return container
+        layout.addWidget(self.pathbar)
+        layout.addWidget(grid)
+        grid.setFocus()
 
-    def make_layout(self, pathbar, widget):
-        """Allow widget to fill the window; overlay pathbar on top of it."""
+    def make_viewer(self, node, target):
+        self.pathbar = Pathbar()
+        self.pathbar.clicked.connect(self.unselect)
+
+        pathbar_wrapper = QWidget()
+        wr_layout = QVBoxLayout()
+        wr_layout.setSpacing(0)
+        wr_layout.setContentsMargins(0, 0, 0, 0)
+        pathbar_wrapper.setLayout(wr_layout)
+        wr_layout.addWidget(self.pathbar)
+        wr_layout.addStretch(1)
+
+        viewer = Viewer(self.size())
+        viewer.target_updated.connect(self._target_updated)
+        viewer.target_selected.connect(self.unselect)
+        viewer.unselected.connect(self.unselect)
+        viewer.load(node, target)
+
         layout = QStackedLayout()
+        self.setLayout(layout)
         layout.setStackingMode(QStackedLayout.StackAll)
-        layout.addWidget(widget)
-        layout.addWidget(self.pathbar_container(pathbar))
-        return layout
+        layout.addWidget(pathbar_wrapper)
+        layout.addWidget(viewer)
+        viewer.setFocus()
 
-
-class Browser(QStackedWidget):
-    def __init__(self):
-        super().__init__()
-        self.grid = GridWindow()
-        self.addWidget(self.grid)
-        self.grid.target_selected.connect(self.grid_select)
-        self.grid.unselected.connect(self.unselect)
-        self.viewer = ViewerWindow()
-        self.addWidget(self.viewer)
-        self.viewer.target_selected.connect(self.unselect)
-        self.viewer.unselected.connect(self.unselect)
+    def _target_updated(self, target):
+        self.pathbar.set_target(target)
+        self.target = target
 
     def load_node(self, node, target=None, mode=None):
-        if target is None:
-            target = node.children[0]
+        if self.layout():
+            QWidget().setLayout(self.layout()) # purge existing window contents
+        self.node = node
+        self.target = target or node.children[0]
         if mode is not None:
-            assert mode in ['grid', 'viewer'], mode
-            self.setCurrentWidget(getattr(self, mode))
-        self.currentWidget().load(node, target)
-
-    def mode(self):
-        return self.currentWidget().name
-
-    def node(self):
-        return self.currentWidget().node
-
-    def target(self):
-        return self.currentWidget().target
-
-    def grid_select(self, node):
-        if node.children:
-            self.grid.load(node, node.children[0])
+            self.mode = mode
+        if self.mode == 'grid':
+            self.make_grid(self.node, self.target)
+        elif self.mode == 'viewer':
+            self.make_viewer(self.node, self.target)
         else:
-            self.setCurrentWidget(self.viewer)
-            self.viewer.load(node.parent, node)
+            assert 0, self.mode
 
-    def unselect(self, node):
+    def select(self, target):
+        if target.children:
+            self.load_node(target, mode='grid')
+        else:
+            self.load_node(target.parent, target=target, mode='viewer')
+
+    def unselect(self, node=None):
+        if node is None:
+            node = self.node
         if node.parent:
-            self.setCurrentWidget(self.grid)
-            self.grid.load(node.parent, node)
+            self.load_node(node.parent, target=node, mode='grid')
 
     def scroll_node(self, offset):
-        window = self.currentWidget()
-        node = window.node
-        if not node.parent:
+        if not self.node.parent:
             return
-        siblings = node.parent.children
-        new_node = siblings[(siblings.index(node) + offset) % len(siblings)]
-        window.load(new_node, new_node.children[0])
+        siblings = self.node.parent.children
+        new_node = siblings[(siblings.index(self.node) + offset) % len(siblings)]
+        self.load_node(new_node)
 
-    def toggle_pathbars(self):
-        if self.currentWidget().pathbar.isHidden():
-            self.grid.pathbar.show()
-            self.viewer.pathbar.show()
+    def toggle_pathbar(self):
+        if self.pathbar.isHidden():
+            self.pathbar.show()
         else:
-            self.grid.pathbar.hide()
-            self.viewer.pathbar.hide()
+            self.pathbar.hide()
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
@@ -172,6 +127,6 @@ class Browser(QStackedWidget):
             # mode the grid class consumes them to scroll with in the grid
             self.scroll_node(1 if action in ['next', 'down'] else -1)
         elif action == 'toggle_hide':
-            self.toggle_pathbars()
+            self.toggle_pathbar()
         else:
             event.ignore()
