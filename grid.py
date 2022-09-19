@@ -129,7 +129,7 @@ class Grid(QScrollArea):
         return self._target.widget if self._target else None
 
     @Slot(QFrame)
-    def set_target(self, cell):
+    def _set_target(self, cell):
         if self._target:
             self._target.enable_border(False)
         self._target = cell
@@ -139,17 +139,17 @@ class Grid(QScrollArea):
         self.target_updated.emit(cell.widget if cell else None)
 
     @Slot(QFrame)
-    def select_target(self, cell):
+    def _select_target(self, cell):
         self.target_selected.emit(cell.widget)
 
     @Slot()
     def select_current_target(self):
-        self.select_target(self._target)
+        self._select_target(self._target)
 
     @Slot(str)
     def scroll(self, direction):
         cell = self.widget().layout().scroll(self._target, direction)
-        self.set_target(cell)
+        self._set_target(cell)
 
     @Slot()
     def unselect(self):
@@ -171,11 +171,11 @@ class Grid(QScrollArea):
 
         for widget in widgets:
             cell = Cell(widget)
-            cell.clicked.connect(self.set_target)
-            cell.double_clicked.connect(self.select_target)
+            cell.clicked.connect(self._set_target)
+            cell.double_clicked.connect(self._select_target)
             layout.addWidget(cell)
             if widget is target:
-                self.set_target(cell)
+                self._set_target(cell)
         self.show()
 
     def remove_idx(self, i):
@@ -185,9 +185,9 @@ class Grid(QScrollArea):
         if layout.items:
             if i == len(layout.items):
                 i -= 1
-            self.set_target(layout.itemAt(i).widget())
+            self._set_target(layout.itemAt(i).widget())
         else:
-            self.set_target(None)
+            self._set_target(None)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
