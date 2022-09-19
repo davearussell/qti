@@ -114,7 +114,7 @@ class Cell(QFrame):
 
 
 class Grid(QScrollArea):
-    target_selected = Signal(QWidget)
+    target_selected = Signal(object)
     unselected = Signal()
     target_updated = Signal(object)
     spacing = 10
@@ -125,8 +125,13 @@ class Grid(QScrollArea):
         self.setWidget(QWidget())
         self._target = None
 
+    def _cell_to_userobj(self, cell):
+        """Returns the user object (i.e. one of the widgets passed in to self.load())
+        that is wrapped by this cell."""
+        return cell.widget if cell else None
+
     def target(self):
-        return self._target.widget if self._target else None
+        return self._cell_to_userobj(self._target)
 
     @Slot(QFrame)
     def _set_target(self, cell):
@@ -136,11 +141,11 @@ class Grid(QScrollArea):
         if cell:
             cell.enable_border(True)
             self.ensureWidgetVisible(cell)
-        self.target_updated.emit(cell.widget if cell else None)
+        self.target_updated.emit(self._cell_to_userobj(cell))
 
     @Slot(QFrame)
     def _select_target(self, cell):
-        self.target_selected.emit(cell.widget)
+        self.target_selected.emit(self._cell_to_userobj(cell))
 
     @Slot()
     def select_current_target(self):
