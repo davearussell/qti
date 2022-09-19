@@ -29,6 +29,7 @@ class Browser(QWidget):
         super().__init__()
         self.setFixedSize(size)
         self.mode = 'grid'
+        self.grid = None
         self.node = None
         self.target = None
         self.pathbar = None
@@ -38,19 +39,19 @@ class Browser(QWidget):
         self.pathbar.clicked.connect(self.unselect)
         self.pathbar.fade_target = True
 
-        grid = NodeGrid(self.thumbnail_size)
-        grid.target_updated.connect(self._target_updated)
-        grid.target_selected.connect(self.select)
-        grid.unselected.connect(self.unselect)
-        grid.load(node, target=target)
+        self.grid = NodeGrid(self.thumbnail_size)
+        self.grid.target_updated.connect(self._target_updated)
+        self.grid.target_selected.connect(self.select)
+        self.grid.unselected.connect(self.unselect)
+        self.grid.load(node, target=target)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.pathbar)
-        layout.addWidget(grid)
-        grid.setFocus()
+        layout.addWidget(self.grid)
+        self.grid.setFocus()
 
     def make_viewer(self, node, target):
         self.pathbar = Pathbar()
@@ -114,6 +115,18 @@ class Browser(QWidget):
         new_node = siblings[(siblings.index(self.node) + offset) % len(siblings)]
         self.load_node(new_node)
 
+    def swap_cells(self, direction):
+        cells = self.node.children
+        i1 = cells.index(self.target)
+        if self.mode == 'grid':
+            i2 = cells.index(self.grid.neighbour(self.target, direction))
+        else:
+            if direction in ['up', 'down']:
+                return # It only makes sense to swap horizontally when in viewer mode
+            i2 = (i1 + (1 if direction == 'right' else -1)) % len(cells)
+        cells[i1], cells[i2] = cells[i2], cells[i1]
+        self.load_node(self.node, self.target)
+
     def toggle_pathbar(self):
         if self.pathbar.isHidden():
             self.pathbar.show()
@@ -126,6 +139,8 @@ class Browser(QWidget):
             # NOTE: up/down here is only reachable in viewer mode; in grid
             # mode the grid class consumes them to scroll with in the grid
             self.scroll_node(1 if action in ['next', 'down'] else -1)
+        elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
+            self.swap_cells(action[len('swap_'):])
         elif action == 'toggle_hide':
             self.toggle_pathbar()
         else:

@@ -124,14 +124,23 @@ class Grid(QScrollArea):
         self.setWidgetResizable(True)
         self.setWidget(QWidget())
         self._target = None
+        self._cells = {}
 
     def _cell_to_userobj(self, cell):
         """Returns the user object (i.e. one of the widgets passed in to self.load())
         that is wrapped by this cell."""
         return cell.widget if cell else None
 
+    def _userobj_to_cell(self, obj):
+        return self._cells[obj]
+
     def target(self):
         return self._cell_to_userobj(self._target)
+
+    def neighbour(self, obj, direction):
+        cell = self._userobj_to_cell(obj)
+        neighbour_cell = self.widget().layout().scroll(cell, direction)
+        return self._cell_to_userobj(neighbour_cell)
 
     @Slot(QFrame)
     def _set_target(self, cell):
@@ -174,8 +183,10 @@ class Grid(QScrollArea):
         layout = FlowLayout(self.spacing)
         self.widget().setLayout(layout)
 
+        self._cells = {}
         for widget in widgets:
             cell = Cell(widget)
+            self._cells[self._cell_to_userobj(cell)] = cell
             cell.clicked.connect(self._set_target)
             cell.double_clicked.connect(self._select_target)
             layout.addWidget(cell)
