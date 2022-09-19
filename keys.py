@@ -6,6 +6,11 @@ ACTIONS = {
     'left':  [Qt.Key_Left,  (Qt.Key_1, Qt.KeypadModifier)],
     'right': [Qt.Key_Right, (Qt.Key_3, Qt.KeypadModifier)],
 
+    'swap_up':  [(Qt.Key_Up, Qt.ControlModifier)],
+    'swap_down':  [(Qt.Key_Down, Qt.ControlModifier)],
+    'swap_left':  [(Qt.Key_Left, Qt.ControlModifier)],
+    'swap_right':  [(Qt.Key_Right, Qt.ControlModifier)],
+
     'prev':  [Qt.Key_PageUp,   (Qt.Key_4, Qt.KeypadModifier)],
     'next':  [Qt.Key_PageDown, (Qt.Key_6, Qt.KeypadModifier)],
 
