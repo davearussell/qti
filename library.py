@@ -40,6 +40,14 @@ class Node:
         return self.descendants(lambda node: not node.children)
 
 
+class Root(Node):
+    type = 'root'
+    def __init__(self, library, config):
+        super().__init__(library, 'root')
+        self.config = config
+        self.dirty = False
+
+
 class Container(Node):
     def __init__(self, library, name, _type):
         super().__init__(library, name)
@@ -83,6 +91,7 @@ class Library:
         self.key_types = spec['key_types']
         self.custom_keys = list(self.key_types.keys())
         self.scan_keys()
+        self.tree = None
 
     def default_value(self, key):
         if key in self.builtin_keys:
@@ -102,7 +111,17 @@ class Library:
                 if isinstance(value, list):
                     self.sets[key] = self.sets.get(key, set()) | set(value)
 
+    def refresh_images(self):
+        # If the current tree has some reordered nodes, then regenerate our
+        # image list to match the new ordering. The exception is if the tree
+        # has a non-default view config, since we don't want to generate an
+        # incomplete or misordered image list.
+        if self.tree and self.tree.dirty and self.tree.config.is_default():
+            self.images = [image.spec for image in self.tree.leaves()]
+            self.tree.dirty = False
+
     def save(self):
+        self.refresh_images()
         spec = {
             'images': self.images,
             'group_by': self.default_group_by,
@@ -112,8 +131,9 @@ class Library:
             json.dump(spec, f, indent=4)
 
     def make_tree(self, config):
+        self.refresh_images()
         filter_expr = config.filter
-        root = Container(self, 'root', 'root')
+        self.tree = Root(self, config)
         child_map = {} # parent -> child_name -> child
         for image_spec in self.images:
             if filter_expr:
@@ -124,7 +144,7 @@ class Library:
                 if not filter_expr.matches(tags):
                     continue
 
-            parents = [root]
+            parents = [self.tree]
             for key in config.group_by:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
@@ -148,11 +168,11 @@ class Library:
                 parent.add_child(Image(self, image_spec))
 
         sort_keys = [self.sort_types.get(k) for k in config.order_by]
-        nodes = [root]
+        nodes = [self.tree]
         for sort_key in sort_keys:
             if sort_key:
                 for node in nodes:
                     node.children.sort(key=sort_key)
             nodes = [child for node in nodes for child in node.children]
 
-        return root
+        return self.tree

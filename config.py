@@ -33,6 +33,9 @@ class Config:
             raise AttributeError("%s does not take attribute(s) %r" % (
                 type(self).__name__, ', '.join(kwargs.keys())))
 
+    def is_default(self):
+        return all(getattr(self, k) == v for (k, v) in self.defaults.items())
+
     def copy(self):
         kwargs = {k: getattr(self, k) for k in self.defaults}
         return type(self)(**copy.deepcopy(kwargs))
@@ -55,7 +58,10 @@ class Config:
 
 
 def default_config(library):
-    return Config(group_by=library.default_group_by)
+    c = Config(group_by=library.default_group_by)
+    c.defaults = copy.deepcopy(c.defaults)
+    c.defaults['group_by'] = copy.deepcopy(library.default_group_by)
+    return c
 
 
 class ConfigDialog(FieldDialog):
