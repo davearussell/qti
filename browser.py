@@ -125,6 +125,7 @@ class Browser(QWidget):
                 return # It only makes sense to swap horizontally when in viewer mode
             i2 = (i1 + (1 if direction == 'right' else -1)) % len(cells)
         cells[i1], cells[i2] = cells[i2], cells[i1]
+        self.node.root.dirty = True
         self.load_node(self.node, self.target)
 
     def toggle_pathbar(self):
