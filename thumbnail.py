@@ -25,7 +25,7 @@ class Thumbnail(QLabel):
 
         self.painter = QPainter()
         self.pixmap = None
-        self.setFixedSize(QSize(*size))
+        self.setFixedSize(size)
         self.setAlignment(Qt.AlignCenter)
 
     def draw_text(self, text, font_size, align, margin=5, opacity=0.6):

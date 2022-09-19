@@ -8,11 +8,12 @@ from cache import load_pixmap
 
 class Viewer(QLabel):
     target_selected = Signal(Node)
-    unselected = Signal()
+    unselected = Signal(Node)
     target_updated = Signal(Node)
 
-    def __init__(self):
+    def __init__(self, size):
         super().__init__()
+        self.setFixedSize(size)
         self.setAlignment(Qt.AlignCenter)
         self.node = None
         self.target = None
@@ -23,6 +24,7 @@ class Viewer(QLabel):
         self.target = target
         self.pixmap = load_pixmap(self.target.library.root_dir, self.target.abspath, self.size())
         self.setPixmap(self.pixmap)
+        self.target_updated.emit(target)
 
     def scroll(self, offset):
         images = self.node.children
@@ -38,6 +40,6 @@ class Viewer(QLabel):
         elif action == 'select':
             self.target_selected.emit(self.target)
         elif action == 'unselect':
-            self.unselected.emit()
+            self.unselected.emit(self.target)
         else:
             event.ignore()

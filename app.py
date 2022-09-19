@@ -13,8 +13,9 @@ import keys
 
 
 class Window(QMainWindow):
-    def __init__(self, app, json_file):
+    def __init__(self, app, json_file, size):
         super().__init__()
+        self.setFixedSize(size)
         self.app = app
         self.setFont(QFont("Liberation mono"))
         pal = self.palette()
@@ -22,17 +23,17 @@ class Window(QMainWindow):
         self.setPalette(pal)
         self.library = library.Library(json_file)
         self.config = default_config(self.library)
-        self.browser = browser.Browser()
+        self.browser = browser.Browser(size)
         self.setCentralWidget(self.browser)
         self.reload_tree()
         self.snapshots = []
 
     def reload_tree(self):
-        target = self.browser.target()
+        target = self.browser.target
         tree = self.library.make_tree(self.config)
 
         if not target:
-            self.browser.load_node(tree)
+            self.browser.load_node(tree, mode='grid')
             return tree.children[0]
 
         path_from_root = []
@@ -61,7 +62,7 @@ class Window(QMainWindow):
         return node, target
 
     def save_snapshot(self):
-        snapshot = (self.browser.node(), self.browser.target(), self.browser.mode(),
+        snapshot = (self.browser.node, self.browser.target, self.browser.mode,
                     copy.deepcopy(self.config))
         self.snapshots.append(snapshot)
 
@@ -72,8 +73,8 @@ class Window(QMainWindow):
 
     def jump_to_subject(self):
         # TODO generalize this via a dialog
-        mode = self.browser.mode()
-        target = self.browser.target()
+        mode = self.browser.mode
+        target = self.browser.target
         image = next(target.leaves())
         subjects = image.spec['subjects']
         if not subjects:
@@ -91,11 +92,11 @@ class Window(QMainWindow):
         if action == 'quit':
             self.app.quit()
         elif action == 'edit':
-            EditorDialog(self, self.browser.target()).exec() # blocks until dialog closed
+            EditorDialog(self, self.browser.target).exec() # blocks until dialog closed
         elif action == 'config':
             ConfigDialog(self, self.library, self.config).exec()
         elif action == 'delete':
-            DeleterDialog(self, self.browser.target()).exec()
+            DeleterDialog(self, self.browser.target).exec()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':
@@ -103,7 +104,7 @@ class Window(QMainWindow):
         elif action == 'jump_to_subject':
             self.jump_to_subject()
         elif action == 'add_new_images':
-            ImporterDialog(self, self.browser.node()).exec()
+            ImporterDialog(self, self.browser.node).exec()
         else:
             event.ignore()
 
@@ -112,7 +113,7 @@ class Application(QApplication):
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
-        self.window = Window(self, json_file)
+        self.window = Window(self, json_file, self.primaryScreen().size())
 
     def exec(self):
         self.window.showFullScreen()
