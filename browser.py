@@ -40,7 +40,7 @@ class Browser(QWidget):
 
     def set_status_text(self, text):
         self.status_text = text
-        self.pathbar.set_text(text)
+        self.status_bar.set_text(text)
 
     def make_grid(self, node, target):
         self.pathbar = Pathbar()
