@@ -1,4 +1,5 @@
 import copy
+
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader, QPalette, QFont
 from PySide6.QtCore import Qt, Signal
@@ -9,6 +10,7 @@ from editor import EditorDialog
 from config import default_config, ConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
+from cache import background_cacher
 import keys
 
 
@@ -26,6 +28,11 @@ class Window(QMainWindow):
         self.config = default_config(self.library)
         self.browser = browser.Browser(size)
         self.setCentralWidget(self.browser)
+        self.cacher = background_cacher(
+            self.app, self.library.root_dir, self.library.images,
+            [self.size(), self.browser.thumbnail_size],
+            self.browser.set_status_text,
+        )
         self.reload_tree()
         self.snapshots = []
 
