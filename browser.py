@@ -5,6 +5,7 @@ from grid import Grid
 from viewer import Viewer
 from thumbnail import Thumbnail
 from pathbar import Pathbar
+from status_bar import StatusBar
 import keys
 
 
@@ -33,7 +34,13 @@ class Browser(QWidget):
         self.node = None
         self.target = None
         self.pathbar = None
+        self.status_bar = None
+        self.status_text = ''
         self.hide_bars = False
+
+    def set_status_text(self, text):
+        self.status_text = text
+        self.pathbar.set_text(text)
 
     def make_grid(self, node, target):
         self.pathbar = Pathbar()
@@ -45,6 +52,7 @@ class Browser(QWidget):
         self.grid.target_selected.connect(self.select)
         self.grid.unselected.connect(self.unselect)
         self.grid.load(node, target=target)
+        self.status_bar = StatusBar(self.status_text)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -52,19 +60,28 @@ class Browser(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.pathbar)
         layout.addWidget(self.grid)
+        layout.addWidget(self.status_bar)
         self.grid.setFocus()
+
+    def wrap_widget(self, widget, align='top'):
+        wrapper = QWidget()
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        wrapper.setLayout(layout)
+        if align == 'bottom':
+            layout.addStretch(1)
+        layout.addWidget(widget)
+        if align == 'top':
+            layout.addStretch(1)
+        return wrapper
 
     def make_viewer(self, node, target):
         self.pathbar = Pathbar()
         self.pathbar.clicked.connect(self.unselect)
-
-        pathbar_wrapper = QWidget()
-        wr_layout = QVBoxLayout()
-        wr_layout.setSpacing(0)
-        wr_layout.setContentsMargins(0, 0, 0, 0)
-        pathbar_wrapper.setLayout(wr_layout)
-        wr_layout.addWidget(self.pathbar)
-        wr_layout.addStretch(1)
+        self.status_bar = StatusBar(self.status_text)
+        pathbar_wrapper = self.wrap_widget(self.pathbar, 'top')
+        status_bar_wrapper = self.wrap_widget(self.status_bar, 'bottom')
 
         viewer = Viewer(self.size())
         viewer.target_updated.connect(self._target_updated)
@@ -76,6 +93,7 @@ class Browser(QWidget):
         self.setLayout(layout)
         layout.setStackingMode(QStackedLayout.StackAll)
         layout.addWidget(pathbar_wrapper)
+        layout.addWidget(status_bar_wrapper)
         layout.addWidget(viewer)
         viewer.setFocus()
 
@@ -132,7 +150,7 @@ class Browser(QWidget):
 
     def set_bar_visibility(self, hidden):
         self.hide_bars = hidden
-        for bar in [self.pathbar]:
+        for bar in [self.pathbar, self.status_bar]:
             if hidden:
                 bar.hide()
             else:
