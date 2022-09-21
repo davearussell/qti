@@ -1,7 +1,7 @@
 import copy
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader, QPalette, QFont
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 import library
 import browser
@@ -22,6 +22,7 @@ class Window(QMainWindow):
         pal.setColor(QPalette.Window, Qt.black)
         self.setPalette(pal)
         self.library = library.Library(json_file)
+        self.app.quitting.connect(self.library.save)
         self.config = default_config(self.library)
         self.browser = browser.Browser(size)
         self.setCentralWidget(self.browser)
@@ -110,6 +111,8 @@ class Window(QMainWindow):
 
 
 class Application(QApplication):
+    quitting = Signal()
+
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
@@ -118,4 +121,4 @@ class Application(QApplication):
     def exec(self):
         self.window.showFullScreen()
         super().exec()
-        self.window.library.save()
+        self.quitting.emit()
