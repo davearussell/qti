@@ -88,11 +88,9 @@ class FlowLayout(QLayout):
 
 
 class Cell(QFrame):
-    clicked = Signal(QFrame)
-    double_clicked = Signal(QFrame)
-
-    def __init__(self, widget):
+    def __init__(self, grid, widget):
         super().__init__()
+        self.grid = grid
         layout = QStackedLayout()
         self.setLayout(layout)
         layout.addWidget(widget)
@@ -107,10 +105,10 @@ class Cell(QFrame):
         self.setPalette(palette)
 
     def mousePressEvent(self, event):
-        self.clicked.emit(self)
+        self.grid._set_target(self)
 
     def mouseDoubleClickEvent(self, event):
-        self.double_clicked.emit(self)
+        self.grid._select_target(self)
 
 
 class Grid(QScrollArea):
@@ -185,10 +183,8 @@ class Grid(QScrollArea):
 
         self._cells = {}
         for widget in widgets:
-            cell = Cell(widget)
+            cell = Cell(self, widget)
             self._cells[self._cell_to_userobj(cell)] = cell
-            cell.clicked.connect(self._set_target)
-            cell.double_clicked.connect(self._select_target)
             layout.addWidget(cell)
             if widget is target:
                 self._set_target(cell)
