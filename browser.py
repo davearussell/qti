@@ -33,6 +33,7 @@ class Browser(QWidget):
         self.node = None
         self.target = None
         self.pathbar = None
+        self.hide_bars = False
 
     def make_grid(self, node, target):
         self.pathbar = Pathbar()
@@ -95,6 +96,7 @@ class Browser(QWidget):
             self.make_viewer(self.node, self.target)
         else:
             assert 0, self.mode
+        self.set_bar_visibility(self.hide_bars)
 
     def select(self, target):
         if target.children:
@@ -128,11 +130,13 @@ class Browser(QWidget):
         self.node.root.dirty = True
         self.load_node(self.node, self.target)
 
-    def toggle_pathbar(self):
-        if self.pathbar.isHidden():
-            self.pathbar.show()
-        else:
-            self.pathbar.hide()
+    def set_bar_visibility(self, hidden):
+        self.hide_bars = hidden
+        for bar in [self.pathbar]:
+            if hidden:
+                bar.hide()
+            else:
+                bar.show()
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
@@ -143,6 +147,6 @@ class Browser(QWidget):
         elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
             self.swap_cells(action[len('swap_'):])
         elif action == 'toggle_hide':
-            self.toggle_pathbar()
+            self.set_bar_visibility(not self.hide_bars)
         else:
             event.ignore()
