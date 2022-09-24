@@ -98,6 +98,7 @@ class EditorDialog(FieldDialog):
         self.init_fields(choose_fields(node))
 
     def field_committed(self, field, value):
+        self.node.library.refresh_images()
         if field.value != value:
             field.commit_cb(self.node, field, value)
             # We can't reload here as reloading would delete the field whose
