@@ -60,7 +60,10 @@ class DeleterDialog(QDialog):
                 assert self.delete_mode in ['disk', 'library']
                 image.delete_from_library()
                 if self.delete_mode == 'disk':
-                    print("Deleting", image.abspath)
-                    os.unlink(image.abspath)
+                    if os.path.exists(image.abspath):
+                        print("Deleting", image.abspath)
+                        os.unlink(image.abspath)
+                    else:
+                        print("Would delete", image.abspath, "but it is not there")
         self.main_window.reload_tree()
         super().accept()
