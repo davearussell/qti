@@ -53,6 +53,7 @@ class DeleterDialog(QDialog):
                 button.setDefault(True)
 
     def accept(self):
+        self.node.library.refresh_images()
         for image in self.node.leaves():
             if self.delete_mode == 'set':
                 image.spec[self.node.type].remove(self.node.name)
