@@ -1,3 +1,4 @@
+import os
 from fields import FieldDialog, TextField, ReadOnlyField, SetField
 
 
@@ -26,6 +27,7 @@ def choose_fields(node):
         TextField('name', node.name, keybind='N', commit_cb=update_name)
     ]
     if node.type == 'image':
+        fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
         fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
     if node.type in node.library.default_group_by + ['image']:
         ancestors = {node.type: node for node in get_ancestors(node)}
