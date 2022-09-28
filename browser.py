@@ -29,7 +29,7 @@ class Browser(QWidget):
     def __init__(self, size):
         super().__init__()
         self.setFixedSize(size)
-        self.mode = 'grid'
+        self.mode = None
         self.grid = None
         self.node = None
         self.target = None
@@ -37,84 +37,83 @@ class Browser(QWidget):
         self.status_bar = None
         self.status_text = ''
         self.hide_bars = False
+        self.setup_layout()
 
     def set_status_text(self, text):
         self.status_text = text
         self.status_bar.set_text(text)
 
-    def make_grid(self, node, target):
-        self.pathbar = Pathbar()
-        self.pathbar.clicked.connect(self.unselect)
-        self.pathbar.fade_target = True
+    def make_pathbar(self):
+        pathbar = Pathbar()
+        pathbar.clicked.connect(self.unselect)
+        return pathbar
 
-        self.grid = NodeGrid(self.thumbnail_size)
-        self.grid.target_updated.connect(self._target_updated)
-        self.grid.target_selected.connect(self.select)
-        self.grid.unselected.connect(self.unselect)
-        self.grid.load(node, target=target)
-        self.status_bar = StatusBar(self.status_text)
+    def make_status_bar(self):
+        return StatusBar()
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.pathbar)
-        layout.addWidget(self.grid)
-        layout.addWidget(self.status_bar)
-        self.grid.setFocus()
+    def make_grid(self):
+        grid = NodeGrid(self.thumbnail_size)
+        grid.target_updated.connect(self._target_updated)
+        grid.target_selected.connect(self.select)
+        grid.unselected.connect(self.unselect)
+        return grid
 
-    def wrap_widget(self, widget, align='top'):
-        wrapper = QWidget()
-        layout = QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        wrapper.setLayout(layout)
-        if align == 'bottom':
-            layout.addStretch(1)
-        layout.addWidget(widget)
-        if align == 'top':
-            layout.addStretch(1)
-        return wrapper
-
-    def make_viewer(self, node, target):
-        self.pathbar = Pathbar()
-        self.pathbar.clicked.connect(self.unselect)
-        self.status_bar = StatusBar(self.status_text)
-        pathbar_wrapper = self.wrap_widget(self.pathbar, 'top')
-        status_bar_wrapper = self.wrap_widget(self.status_bar, 'bottom')
-
+    def make_viewer(self):
         viewer = Viewer(self.size())
         viewer.target_updated.connect(self._target_updated)
         viewer.target_selected.connect(self.unselect)
         viewer.unselected.connect(self.unselect)
-        viewer.load(node, target)
+        return viewer
 
-        layout = QStackedLayout()
-        self.setLayout(layout)
-        layout.setStackingMode(QStackedLayout.StackAll)
-        layout.addWidget(pathbar_wrapper)
-        layout.addWidget(status_bar_wrapper)
-        layout.addWidget(viewer)
-        viewer.setFocus()
+    def setup_layout(self):
+        self.pathbar = self.make_pathbar()
+        self.grid = self.make_grid()
+        self.status_bar = self.make_status_bar()
+        self.viewer = self.make_viewer()
+
+        top_container = QWidget()
+        top_layout = QVBoxLayout()
+        top_layout.setSpacing(0)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_container.setLayout(top_layout)
+        top_layout.addWidget(self.pathbar)
+        top_layout.addWidget(self.grid)
+
+        # When the grid is visible it should take up all available space;
+        # when it is hidden the addStretch(0) prevents the other widgets
+        # from expanding to filli the gap
+        top_layout.setStretchFactor(self.grid, 1)
+        top_layout.addStretch(0)
+        top_layout.addWidget(self.status_bar)
+
+        base_layout = QStackedLayout()
+        base_layout.setStackingMode(QStackedLayout.StackAll)
+        self.setLayout(base_layout)
+        base_layout.addWidget(top_container)
+        base_layout.addWidget(self.viewer)
+        self.setLayout(base_layout)
 
     def _target_updated(self, target):
         self.pathbar.set_target(target)
         self.target = target
 
+    def set_mode(self, mode):
+        if mode is None:
+            mode = self.mode or 'grid'
+        if mode != self.mode:
+            active = self.grid if mode == 'grid' else self.viewer
+            inactive = self.viewer if mode == 'grid' else self.grid
+            inactive.hide()
+            active.show()
+            active.setFocus()
+            self.mode = mode
+
     def load_node(self, node, target=None, mode=None):
-        if self.layout():
-            QWidget().setLayout(self.layout()) # purge existing window contents
         self.node = node
         self.target = target or node.children[0]
-        if mode is not None:
-            self.mode = mode
-        if self.mode == 'grid':
-            self.make_grid(self.node, self.target)
-        elif self.mode == 'viewer':
-            self.make_viewer(self.node, self.target)
-        else:
-            assert 0, self.mode
-        self.set_bar_visibility(self.hide_bars)
+        self.set_mode(mode)
+        widget = self.grid if self.mode == 'grid' else self.viewer
+        widget.load(self.node, self.target)
 
     def select(self, target):
         if target.children:

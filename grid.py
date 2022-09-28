@@ -176,7 +176,7 @@ class Grid(QScrollArea):
         self._target = None
         if widgets and target is None:
             target = widgets[0]
-        self.hide()
+        self.hide() # adding cells is much quicker if done while the grid is hidden
         QWidget().setLayout(self.widget().layout()) # clears our layout
         layout = FlowLayout(self.spacing)
         self.widget().setLayout(layout)
