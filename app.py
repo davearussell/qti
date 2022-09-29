@@ -90,7 +90,6 @@ class Application(QApplication):
         self.cacher = background_cacher(
             self, self.library.root_dir, self.library.images,
             [self.window.size(), self.window.browser.thumbnail_size],
-            self.status_bar.set_text,
         )
 
     def exec(self):

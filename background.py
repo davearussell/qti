@@ -46,6 +46,7 @@ class BackgroundJob(QObject):
 
     def __init__(self, app):
         super().__init__()
+        self.app = app
         self.timer = QTimer()
         self.timer.timeout.connect(self._poll)
         self.timer.start(self.poll_interval_ms)
