@@ -5,7 +5,6 @@ from grid import Grid
 from viewer import Viewer
 from thumbnail import Thumbnail
 from pathbar import Pathbar
-from status_bar import StatusBar
 import keys
 
 
@@ -26,8 +25,9 @@ class NodeGrid(Grid):
 class Browser(QWidget):
     thumbnail_size = QSize(200, 250)
 
-    def __init__(self, size):
+    def __init__(self, app, size):
         super().__init__()
+        self.app = app
         self.setFixedSize(size)
         self.mode = None
         self.grid = None
@@ -39,17 +39,13 @@ class Browser(QWidget):
         self.hide_bars = False
         self.setup_layout()
 
-    def set_status_text(self, text):
-        self.status_text = text
-        self.status_bar.set_text(text)
-
     def make_pathbar(self):
         pathbar = Pathbar()
         pathbar.clicked.connect(self.unselect)
         return pathbar
 
     def make_status_bar(self):
-        return StatusBar()
+        return self.app.status_bar.make_widget()
 
     def make_grid(self):
         grid = NodeGrid(self.thumbnail_size)
