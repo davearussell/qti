@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, Signal
 
 import library
 import browser
+from status_bar import StatusBar
 from editor import EditorDialog
 from config import default_config, ConfigDialog
 from deleter import DeleterDialog
@@ -23,7 +24,7 @@ class Window(QMainWindow):
         pal = self.palette()
         pal.setColor(QPalette.Window, Qt.black)
         self.setPalette(pal)
-        self.browser = browser.Browser(size)
+        self.browser = browser.Browser(app, size)
         self.setCentralWidget(self.browser)
         self.snapshots = []
 
@@ -84,11 +85,12 @@ class Application(QApplication):
         self.library = library.Library(json_file)
         self.quitting.connect(self.library.save)
         self.config = default_config(self.library)
+        self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
         self.cacher = background_cacher(
             self, self.library.root_dir, self.library.images,
             [self.window.size(), self.window.browser.thumbnail_size],
-            self.window.browser.set_status_text,
+            self.status_bar.set_text,
         )
 
     def exec(self):

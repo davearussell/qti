@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QObject, Signal
 
 
-class StatusBar(QWidget):
+class StatusBarWidget(QWidget):
     background_opacity = 0.5
 
     def __init__(self, text=''):
@@ -26,3 +26,20 @@ class StatusBar(QWidget):
 
     def set_text(self, text):
         self.label.setText(text)
+
+
+class StatusBar(QObject):
+    text_update = Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.text = ''
+
+    def set_text(self, text):
+        self.text = text
+        self.text_update.emit(text)
+
+    def make_widget(self):
+        bar = StatusBarWidget()
+        self.text_update.connect(bar.set_text)
+        return bar
