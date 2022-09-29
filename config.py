@@ -67,8 +67,8 @@ def default_config(library):
 class ConfigDialog(FieldDialog):
     title = "Config"
 
-    def __init__(self, main_window, library, config):
-        super().__init__(main_window)
+    def __init__(self, app, library, config):
+        super().__init__(app)
         self.library = library
         self.config = config
         self.init_fields(self.choose_fields())
