@@ -89,8 +89,8 @@ def update_set(node, field, new_value):
 class EditorDialog(FieldDialog):
     title = "Editor"
 
-    def __init__(self, main_window, node):
-        super().__init__(main_window)
+    def __init__(self, app, node):
+        super().__init__(app)
         self.load_node(node)
 
     def load_node(self, node):
@@ -108,4 +108,4 @@ class EditorDialog(FieldDialog):
 
     def reload(self):
         super().reload()
-        self.main_window.library.scan_keys()
+        self.app.library.scan_keys()

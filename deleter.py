@@ -6,10 +6,10 @@ from PySide6.QtCore import Qt
 
 
 class DeleterDialog(QDialog):
-    def __init__(self, main_window, node):
-        super().__init__(main_window)
+    def __init__(self, app, node):
+        super().__init__(app.window)
         self.node = node
-        self.main_window = main_window
+        self.app = app
         self.setWindowTitle("Confirm delete")
         self.setLayout(QVBoxLayout())
         self.setup_radio_buttons()
@@ -66,5 +66,5 @@ class DeleterDialog(QDialog):
                         os.unlink(image.abspath)
                     else:
                         print("Would delete", image.abspath, "but it is not there")
-        self.main_window.reload_tree()
+        self.app.reload_tree()
         super().accept()

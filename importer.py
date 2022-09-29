@@ -98,16 +98,16 @@ class NewImage(QLabel):
 
 
 class ImporterDialog(QDialog):
-    def __init__(self, main_window, node):
-        super().__init__(main_window)
+    def __init__(self, app, node):
+        super().__init__(app)
         self.node = node
-        self.main_window = main_window
-        self.library = main_window.library
+        self.app = app
+        self.library = app.library
         self.setWindowTitle("Import images")
         self.setLayout(QHBoxLayout())
         self.images = []
         new_images = find_new_images_for(node)
-        if self.main_window.config.group_by != self.library.default_group_by:
+        if self.app.config.group_by != self.library.default_group_by:
             self.set_label("Cannot import when using custom grouping")
         elif new_images:
             self.setup_importer(new_images)
@@ -153,7 +153,7 @@ class ImporterDialog(QDialog):
         self.field_list.field_committed.connect(self.field_committed)
 
     def load_grid(self, new_images, default_values):
-        self.setFixedSize(self.main_window.size() - QSize(200, 200))
+        self.setFixedSize(self.app.window.size() - QSize(200, 200))
         self.grid = Grid()
         self.grid.setFocusPolicy(Qt.NoFocus)
         pal = self.grid.palette()
@@ -213,7 +213,7 @@ class ImporterDialog(QDialog):
                     value = self.library.default_value(key)
                 spec[key] = value
             self.library.images.append(spec)
-        self.main_window.reload_tree()
+        self.app.reload_tree()
         self.accept()
 
     def keyPressEvent(self, event):

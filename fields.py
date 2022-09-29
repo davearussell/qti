@@ -12,10 +12,10 @@ import keys
 class FieldDialog(QDialog):
     title = "Dialog"
 
-    def __init__(self, main_window):
-        super().__init__(main_window)
+    def __init__(self, app):
+        super().__init__(app.window)
         self.setWindowTitle(self.title)
-        self.main_window = main_window
+        self.app = app
         self.setLayout(QVBoxLayout())
         self.field_list = FieldList()
         self.field_list.field_committed.connect(self.field_committed)
@@ -31,7 +31,7 @@ class FieldDialog(QDialog):
         pass
 
     def reload(self):
-        self.main_window.reload_tree()
+        self.app.reload_tree()
 
     def accept(self):
         if self.need_reload:
