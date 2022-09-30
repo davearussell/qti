@@ -152,6 +152,8 @@ class Library:
 
                 new_parents = []
                 for value in values:
+                    if value is None:
+                        value = ''
                     map_value = value
                     if key in self.default_group_by:
                         i = self.default_group_by.index(key) + 1
