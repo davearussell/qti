@@ -123,12 +123,22 @@ class Browser(QWidget):
         if node.parent:
             self.load_node(node.parent, target=node, mode='grid')
 
-    def scroll_node(self, offset):
+    def scroll_node(self, action):
         if not self.node.parent:
             return
         siblings = self.node.parent.children
+        offset = {'up': -1, 'prev': -1, 'down': 1, 'next': 1}[action]
         new_node = siblings[(siblings.index(self.node) + offset) % len(siblings)]
         self.load_node(new_node)
+
+    def scroll(self, action, callback):
+        assert action in keys.SCROLL_ACTIONS, action
+        widget = self.grid if self.mode == 'grid' else self.viewer
+        if action in widget.action_map:
+            widget.action_map[action](action)
+        else:
+            self.scroll_node(action)
+        callback(self.target)
 
     def swap_cells(self, direction):
         cells = self.node.children
@@ -156,7 +166,7 @@ class Browser(QWidget):
         if action in ['prev', 'next', 'up', 'down']:
             # NOTE: up/down here is only reachable in viewer mode; in grid
             # mode the grid class consumes them to scroll with in the grid
-            self.scroll_node(1 if action in ['next', 'down'] else -1)
+            self.scroll_node(action)
         elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
             self.swap_cells(action[len('swap_'):])
         elif action == 'toggle_hide':

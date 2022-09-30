@@ -18,6 +18,12 @@ class Viewer(QLabel):
         self.node = None
         self.target = None
         self.pixmap = None
+        self.action_map = {
+            'left': self.scroll,
+            'right': self.scroll,
+            'select': self.select,
+            'unselect': self.unselect,
+        }
 
     def load(self, node, target):
         self.node = node
@@ -26,20 +32,23 @@ class Viewer(QLabel):
         self.setPixmap(self.pixmap)
         self.target_updated.emit(target)
 
-    def scroll(self, offset):
+    def scroll(self, action):
         images = self.node.children
         index = images.index(self.target)
+        offset = {'right': 1, 'left': -1}[action]
         target = images[(index + offset) % (len(images))]
         self.load(self.node, target)
         self.target_updated.emit(target)
 
+    def select(self, _action=None):
+        self.target_selected.emit(self.target)
+
+    def unselect(self, _action=None):
+        self.unselected.emit(self.target)
+
     def keyPressEvent(self, event):
         action = keys.get_action(event)
-        if action in ['left', 'right']:
-            self.scroll(1 if action == 'right' else -1)
-        elif action == 'select':
-            self.target_selected.emit(self.target)
-        elif action == 'unselect':
-            self.unselected.emit(self.target)
+        if action in self.action_map:
+            self.action_map[action](action)
         else:
             event.ignore()

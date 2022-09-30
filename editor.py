@@ -1,5 +1,7 @@
 import os
+from PySide6.QtCore import Signal
 from fields import FieldDialog, TextField, ReadOnlyField, SetField
+import keys
 
 
 def get_ancestors(node):
@@ -87,6 +89,7 @@ def update_set(node, field, new_value):
 
 
 class EditorDialog(FieldDialog):
+    request_scroll = Signal(str, object)
     title = "Editor"
 
     def __init__(self, app, node):
@@ -109,3 +112,10 @@ class EditorDialog(FieldDialog):
     def reload(self):
         super().reload()
         self.app.library.scan_keys()
+
+    def keyPressEvent(self, event):
+        action = keys.get_action(event)
+        if action in keys.SCROLL_ACTIONS:
+            self.request_scroll.emit(action, self.load_node)
+        else:
+            super().keyPressEvent(event)
