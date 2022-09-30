@@ -59,7 +59,9 @@ class Window(QMainWindow):
         if action == 'quit':
             self.app.quit()
         elif action == 'edit':
-            EditorDialog(self.app, self.browser.target).exec() # blocks until dialog closed
+            editor = EditorDialog(self.app, self.browser.target)
+            editor.request_scroll.connect(self.browser.scroll)
+            editor.exec()
         elif action == 'config':
             ConfigDialog(self.app, self.app.library, self.app.config).exec()
         elif action == 'delete':

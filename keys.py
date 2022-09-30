@@ -31,6 +31,8 @@ ACTIONS = {
     'add_new_images':   [Qt.Key_N],
 }
 
+SCROLL_ACTIONS = ['up', 'down', 'left', 'right', 'prev', 'next']
+
 
 KEYS = {} # KEY -> action
 for action, keys in ACTIONS.items():

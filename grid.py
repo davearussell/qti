@@ -123,6 +123,14 @@ class Grid(QScrollArea):
         self.setWidget(QWidget())
         self._target = None
         self._cells = {}
+        self.action_map = {
+            'up': self.scroll,
+            'down': self.scroll,
+            'left': self.scroll,
+            'right': self.scroll,
+            'select': self.select_current_target,
+            'unselect': self.unselect,
+        }
 
     def _cell_to_userobj(self, cell):
         """Returns the user object (i.e. one of the widgets passed in to self.load())
@@ -154,8 +162,9 @@ class Grid(QScrollArea):
         self.target_selected.emit(self._cell_to_userobj(cell))
 
     @Slot()
-    def select_current_target(self):
-        self._select_target(self._target)
+    def select_current_target(self, _action=None):
+        if self._target:
+            self._select_target(self._target)
 
     @Slot(str)
     def scroll(self, direction):
@@ -164,7 +173,7 @@ class Grid(QScrollArea):
         self.ensureWidgetVisible(cell)
 
     @Slot()
-    def unselect(self):
+    def unselect(self, _action=None):
         self.unselected.emit()
 
     def resizeEvent(self, event):
@@ -205,12 +214,7 @@ class Grid(QScrollArea):
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
-        if action in ['up', 'down', 'left', 'right']:
-            self.scroll(action)
-        elif action == 'select':
-            if self._target:
-                self.select_current_target()
-        elif action == 'unselect':
-            self.unselect()
+        if action in self.action_map:
+            self.action_map[action](action)
         else:
             event.ignore()
