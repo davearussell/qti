@@ -147,7 +147,6 @@ class Grid(QScrollArea):
         self._target = cell
         if cell:
             cell.enable_border(True)
-            self.ensureWidgetVisible(cell)
         self.target_updated.emit(self._cell_to_userobj(cell))
 
     @Slot(QFrame)
@@ -162,6 +161,7 @@ class Grid(QScrollArea):
     def scroll(self, direction):
         cell = self.widget().layout().scroll(self._target, direction)
         self._set_target(cell)
+        self.ensureWidgetVisible(cell)
 
     @Slot()
     def unselect(self):
@@ -189,6 +189,8 @@ class Grid(QScrollArea):
             if widget is target:
                 self._set_target(cell)
         self.show()
+        if self._target:
+            self.ensureWidgetVisible(self._target)
 
     def remove_idx(self, i):
         layout = self.widget().layout()
