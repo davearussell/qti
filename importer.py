@@ -99,7 +99,7 @@ class NewImage(QLabel):
 
 class ImporterDialog(QDialog):
     def __init__(self, app, node):
-        super().__init__(app)
+        super().__init__(app.window)
         self.node = node
         self.app = app
         self.library = app.library
