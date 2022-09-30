@@ -47,11 +47,15 @@ def choose_fields(node):
         for key in node.library.sets:
             all_values = node.library.sets[key]
             values = None
+            varying = False
             for leaf in node.leaves():
                 if values is None:
                     values = leaf.spec[key].copy()
-                else:
+                elif sorted(values) != sorted(leaf.spec[key]):
+                    varying = True
                     values = [value for value in values if value in leaf.spec[key]]
+            if varying:
+                values.insert(0, '...')
             fields.append(SetField(key, values, all_values, keybind=find_keybind(key, keybinds),
                                    commit_cb=update_set))
 
@@ -84,8 +88,16 @@ def update_ancestor(node, field, new_value):
 
         
 def update_set(node, field, new_value):
-    for leaf in node.leaves():
-        leaf.spec[field.key] = new_value
+    if '...' in new_value:
+        new_value.remove('...')
+        to_add = [key for key in new_value if key not in field.value]
+        to_remove = [key for key in field.value if key not in new_value]
+        for leaf in node.leaves():
+            old_value = leaf.spec[field.key]
+            leaf.spec[field.key] = [x for x in old_value if x not in to_remove + to_add] + to_add
+    else:
+        for leaf in node.leaves():
+            leaf.spec[field.key] = new_value
 
 
 class EditorDialog(FieldDialog):
