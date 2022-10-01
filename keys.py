@@ -21,7 +21,7 @@ ACTIONS = {
     'toggle_hide': [Qt.Key_H],
     'quit':        [Qt.Key_Q],
     'edit':        [Qt.Key_E],
-    'config':      [Qt.Key_V],
+    'view_config': [Qt.Key_V],
     'delete':      [Qt.Key_D],
 
     'save_snapshot':    [Qt.Key_S],

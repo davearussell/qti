@@ -8,7 +8,8 @@ import library
 import browser
 from status_bar import StatusBar
 from editor import EditorDialog
-from config import default_config, ConfigDialog
+from config import default_config
+from view_config import ViewConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
 from cache import background_cacher
@@ -62,8 +63,8 @@ class Window(QMainWindow):
             editor = EditorDialog(self.app, self.browser.target)
             editor.request_scroll.connect(self.browser.scroll)
             editor.exec()
-        elif action == 'config':
-            ConfigDialog(self.app, self.app.library, self.app.config).exec()
+        elif action == 'view_config':
+            ViewConfigDialog(self.app, self.app.library, self.app.config).exec()
         elif action == 'delete':
             DeleterDialog(self.app, self.browser.target).exec()
         elif action == 'save_snapshot':
