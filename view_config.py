@@ -1,13 +1,43 @@
-from fields import FieldDialog, SetField, TextField
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPalette
+
+from dialog import FieldDialog
+from fields import SetField, TextField, LineEdit
 import expr
+import keys
 
 
-def validate_expr(text):
-    try:
-        expr.parse_expr(text)
-    except expr.BadExpr:
-        return False
-    return True
+class ExprEdit(LineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self.check_valid)
+
+    def is_valid(self, value):
+        try:
+            expr.parse_expr(value)
+            return True
+        except expr.BadExpr:
+            return False
+
+    def normalise(self, value):
+        try:
+            return str(expr.parse_expr(value))
+        except expr.BadExpr:
+            return ''
+
+    def check_valid(self, value):
+        palette = self.palette()
+        palette.setColor(QPalette.Text, Qt.black if self.is_valid(value) else Qt.red)
+        self.setPalette(palette)
+
+    def keyPressEvent(self, event):
+        if keys.get_action(event) == 'select':
+            self.setText(self.normalise(self.text()))
+        super().keyPressEvent(event)
+
+
+class ExprField(TextField):
+    edit_cls = ExprEdit
 
 
 def normalize_expr(text):
@@ -34,8 +64,7 @@ class ViewConfigDialog(FieldDialog):
             SetField("order_by", config.order_by, sort_types, keybind='O'),
             SetField('include_tags', config.include_tags, all_tags, keybind='I'),
             SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),
-            TextField('custom_expr', config.custom_expr, keybind='U',
-                      validator=validate_expr, normalizer=normalize_expr)
+            ExprField('custom_expr', config.custom_expr, keybind='U'),
         ]
 
     def field_committed(self, field, value):

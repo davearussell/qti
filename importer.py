@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt, QSize
 from PIL import Image
 
 import keys
-from helpers import YesNoDialog
+from dialog import YesNoDialog
 from cache import load_pixmap
 from grid import Grid
 from fields import FieldList, TextField,  ReadOnlyField
@@ -142,9 +142,9 @@ class ImporterDialog(QDialog):
             ReadOnlyField('directory', ''),
             ReadOnlyField('filename', ''),
             ReadOnlyField('resolution', ''),
-            TextField('name', '', keybind=km.assign_keybind('name')),
+            TextField('name', '', keymap=km),
         ]
-        fields += [TextField(key, default_values[key], keybind=km.assign_keybind(key))
+        fields += [TextField(key, default_values[key], keymap=km)
                   for key in self.library.default_group_by]
         self.field_list = FieldList()
         self.field_list.init_fields(fields)
@@ -178,7 +178,7 @@ class ImporterDialog(QDialog):
         else:
             values = {key: '' for key in field_keys}
         for key in values:
-            self.field_list.fields[key].box.setText(values[key])
+            self.field_list.fields[key].set_value(values[key])
 
     def field_committed(self, field, value):
         target = self.grid.target()
@@ -192,7 +192,7 @@ class ImporterDialog(QDialog):
             images = [target]
         for image in images:
             image.spec[field.key] = apply_template(value, image.spec)
-        field.box.setText(target.format_value(field.key))
+        field.set_value(target.format_value(field.key))
 
     def commit(self):
         if not self.images:

@@ -56,8 +56,8 @@ class KeyMap:
         self.keys = {}
 
     def assign_keybind(self, word):
-        for char in word:
-            if char.upper() not in self.keys:
-                self.keys[char.upper()] = word
+        for char in word.upper():
+            if char not in self.keys:
+                self.keys[char] = word
                 return char
         raise Exception("Cannot find a free free keybind for %r" % (word,))
