@@ -9,6 +9,7 @@ class NameField(TextField):
     def __init__(self, node, **kwargs):
         self.node = node
         self.original_value = node.name
+        kwargs.setdefault('completions', [sibling.name for sibling in node.parent.children])
         super().__init__('name', self.original_value, **kwargs)
 
     def update_node(self, new_value):
@@ -30,6 +31,7 @@ class AncestorField(TextField):
         self.node = node
         self.ancestor = ancestor
         self.original_value = ancestor.name
+        kwargs.setdefault('completions', [sibling.name for sibling in ancestor.parent.children])
         super().__init__(ancestor.type, self.original_value, **kwargs)
 
     def update_node(self, new_value):
