@@ -51,8 +51,8 @@ class Window(QMainWindow):
         self.app.config.group_by = ['subjects']
         self.app.config.clear_filters()
         self.app.config.include_tags = subjects
-        _node, target = self.app.reload_tree()
-        node = [x for x in _node.root.children if x.name in subjects][0]
+        root = self.app.library.make_tree(self.app.config)
+        node = [x for x in root.children if x.name in subjects][0]
         self.browser.load_node(node, mode=mode)
 
     def keyPressEvent(self, event):
@@ -60,9 +60,10 @@ class Window(QMainWindow):
         if action == 'quit':
             self.app.quit()
         elif action == 'edit':
-            editor = EditorDialog(self.app, self.browser.target)
-            editor.request_scroll.connect(self.browser.scroll)
-            editor.exec()
+            if self.browser.target:
+                editor = EditorDialog(self.app, self.browser.target)
+                editor.request_scroll.connect(self.browser.scroll)
+                editor.exec()
         elif action == 'view_config':
             ViewConfigDialog(self.app, self.app.library, self.app.config).exec()
         elif action == 'delete':
@@ -105,9 +106,9 @@ class Application(QApplication):
         target = self.window.browser.target
         tree = self.library.make_tree(self.config)
 
-        if not target:
+        if not (target and tree.children):
             self.window.browser.load_node(tree, mode='grid')
-            return tree.children[0]
+            return
 
         path_from_root = []
         node = target
@@ -132,4 +133,3 @@ class Application(QApplication):
             target = targets[0]
 
         self.window.browser.load_node(node, target=target, mode=browser_mode)
-        return node, target

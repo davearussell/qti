@@ -54,13 +54,18 @@ class Pathbar(QWidget):
         self.setLayout(self.layout)
 
     def set_target(self, target):
+        self.clear()
+
+        if target is None:
+            self.layout.addWidget(PathbarLabel('No images found', Qt.gray))
+            return
+
         nodes = []
         node = target
         while node.parent:
             nodes.insert(0, node)
             node = node.parent
 
-        self.clear()
         sep_color = Qt.cyan
         node_color = Qt.white
         for node in nodes:
