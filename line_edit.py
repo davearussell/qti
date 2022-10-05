@@ -32,7 +32,11 @@ class LineEdit(QLineEdit):
         elif event.key() == Qt.Key_Tab and self.completions is not None:
             matches = [value for value in self.completions if value.startswith(self.text())]
             if matches:
-                self.setText(os.path.commonprefix(matches))
+                text = os.path.commonprefix(matches)
+                self.setText(text)
+                if not text: # Pop up all possible completions on <Tab> in an empty text box
+                    self.completer().setCompletionPrefix('')
+                    self.completer().complete()
                 if len(matches) == 1:
                     self.tab_complete.emit(matches[0])
         else:
