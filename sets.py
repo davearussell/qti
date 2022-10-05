@@ -5,28 +5,18 @@ from PySide6.QtGui import QPalette
 from PySide6.QtCore import Qt, Signal
 
 from grid import FlowLayout
+from line_edit import LineEdit
 import keys
 
 
-class TextBox(QLineEdit):
-    commit = Signal()
+class TextBox(LineEdit):
     push_value = Signal(str)
     pop_value = Signal()
 
     def __init__(self, completions):
-        super().__init__()
-        self.setFocusPolicy(Qt.ClickFocus)
-        self.completions = completions
-        self.setCompleter(QCompleter(self.completions))
+        super().__init__(initial_value='', completions=completions)
         self.setMinimumWidth(self.sizeHint().width())
-
-    def _commit(self):
-        if self.text():
-            self.push_value.emit(self.text())
-        self.commit.emit()
-
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
+        self.tab_complete.connect(self.push_value)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -34,17 +24,9 @@ class TextBox(QLineEdit):
             self.pop_value.emit()
             if event.modifiers() == Qt.ControlModifier:
                 self.setText("")
-        elif key == Qt.Key_Tab:
-            matches = [value for value in self.completions if value.startswith(self.text())]
-            if matches:
-                self.setText(os.path.commonprefix(matches))
-                if len(matches) == 1:
-                    self.push_value.emit(matches[0])
         elif key == Qt.Key_Space:
             if self.text():
                 self.push_value.emit(self.text())
-        elif keys.get_action(event) == 'select':
-            self._commit()
         else:
             super().keyPressEvent(event)
 
@@ -67,13 +49,12 @@ class ValueBox(QLabel):
 
 
 class SetPicker(QWidget):
-    commit = Signal(str, list)
+    commit = Signal(list)
 
-    def __init__(self, key, values, all_values):
+    def __init__(self, values, completions):
         super().__init__()
-        self.key = key
         self.boxes = []
-        self.text = TextBox(all_values)
+        self.text = TextBox(completions)
         self.text.push_value.connect(self.push_value)
         self.text.pop_value.connect(self.pop_value)
         self.text.commit.connect(self._commit)
@@ -84,8 +65,10 @@ class SetPicker(QWidget):
         for value in values:
             self.add_box(ValueBox(value))
 
-    def _commit(self):
-        self.commit.emit(self.key, [box.value for box in self.boxes])
+    def _commit(self, text):
+        if text:
+            self.push_value(text)
+        self.commit.emit([box.value for box in self.boxes])
 
     def add_box(self, box):
         box.clicked.connect(self.box_clicked)
