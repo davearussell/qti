@@ -200,6 +200,8 @@ class Grid(QScrollArea):
         self.show()
         if self._target:
             self.ensureWidgetVisible(self._target)
+        else:
+            self.target_updated.emit(None)
 
     def remove_idx(self, i):
         layout = self.widget().layout()

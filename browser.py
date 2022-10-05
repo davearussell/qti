@@ -106,7 +106,7 @@ class Browser(QWidget):
 
     def load_node(self, node, target=None, mode=None):
         self.node = node
-        self.target = target or node.children[0]
+        self.target = target or (node.children[0] if node.children else None)
         self.set_mode(mode)
         widget = self.grid if self.mode == 'grid' else self.viewer
         widget.load(self.node, self.target)
