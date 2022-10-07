@@ -20,6 +20,7 @@ class LineEdit(QLineEdit):
         self.completions = completions
         if completions is not None:
             self.setCompleter(QCompleter(completions))
+        self.setStyleSheet('QLineEdit[readOnly="true"] {background-color: #E0E0E0;}')
 
     def _commit(self):
         self.commit.emit(self.text())

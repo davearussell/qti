@@ -57,10 +57,10 @@ class ViewConfigDialog(FieldDialog):
         all_tags = set()
         for _set in self.library.sets.values():
             all_tags |= _set
-        sort_types = list(self.library.sort_types.keys())
+        sort_types = self.library.sort_types()
         config = self.config.copy()
         return [
-            SetField("group_by", config.group_by, self.library.custom_keys, keybind='G'),
+            SetField("group_by", config.group_by, self.library.groupable_keys(), keybind='G'),
             SetField("order_by", config.order_by, sort_types, keybind='O'),
             SetField('include_tags', config.include_tags, all_tags, keybind='I'),
             SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),

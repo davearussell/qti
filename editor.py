@@ -80,9 +80,9 @@ def choose_fields(node):
     if node.type == 'image':
         fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
         fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
-    if node.type in node.library.default_group_by + ['image']:
+    if node.type in node.library.hierarchy + ['image']:
         ancestors = {ancestor.type: ancestor for ancestor in node.ancestors()}
-        for ancestor_type in node.library.default_group_by:
+        for ancestor_type in node.library.hierarchy:
             if ancestor_type == node.type:
                 break
             if ancestor_type in ancestors:
@@ -91,8 +91,9 @@ def choose_fields(node):
                 value = next(node.leaves()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
-        for key in node.library.sets:
-            fields.append(EditorSetField(node, key, keymap=keymap))
+        for key in node.library.metadata_keys():
+            if key.get('multi'):
+                fields.append(EditorSetField(node, key['name'], keymap=keymap))
     return fields
 
 
