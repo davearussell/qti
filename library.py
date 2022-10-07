@@ -53,10 +53,12 @@ class Container(Node):
         super().__init__(library, name)
         self.type = _type
         self.is_set = self.type in library.sets
-        self.type_label = self.type
-        if self.is_set:
-            assert self.type_label.endswith('s')
-            self.type_label = self.type_label[:-1]
+
+    @property
+    def type_label(self):
+        if self.is_set and self.type.endswith('s'):
+            return self.type[:-1]
+        return self.type
 
 
 class Image(Node):
@@ -91,8 +93,8 @@ class Library:
         self.root_dir = os.path.dirname(os.path.abspath(self.json_path))
         with open(self.json_path, 'r', encoding='UTF-8') as f:
             spec = json.load(f)
-        self.hierarchy = spec['hierarchy']
         self._custom_keys = spec['keys']
+        self.hierarchy = [ck['name'] for ck in self._custom_keys if ck.get('in_hierarchy')]
         self.images = []
         for image_spec in spec['images']:
             self.add_image(image_spec)
@@ -107,6 +109,63 @@ class Library:
 
     def metadata_keys(self):
         return self._builtin_keys + self._custom_keys
+
+    def find_key(self, name):
+        matches = [key for key in self.metadata_keys() if key['name'] == name]
+        assert len(matches) == 1, (name, self.metadata_keys())
+        return matches[0]
+
+    def rename_key(self, old_name, new_name):
+        print("rename_key", old_name, new_name)
+        key = self.find_key(old_name)
+        key['name'] = new_name
+        for image_spec in self.images:
+            image_spec[new_name] = image_spec.pop(old_name)
+        for l in [self.hierarchy, self.tree.config.group_by]:
+            if old_name in l:
+                l[l.index(old_name)] = new_name
+        for node in self.tree.descendants():
+            if node.type == old_name:
+                node.type = new_name
+
+    def delete_key(self, name):
+        print("delete_key", name)
+        key = self.find_key(name)
+        self._custom_keys.remove(key)
+        # For simplicity, we don't bother to delete the key from every image
+        # at this point. It will get deleted automatically on next app restart
+        if name in self.hierarchy:
+            self.hierarchy.remove(name)
+
+    def new_key(self, name):
+        print("new_key", name)
+        self._custom_keys.append({'name': name})
+        for image_spec in self.images:
+            image_spec[name] = ''
+
+    def reorder_keys(self, order):
+        print("reorder_keys", order)
+        keys = [self.find_key(name) for name in order]
+        self._custom_keys = [key for key in keys if not key.get('builtin')]
+
+    def set_key_multi(self, name, multi):
+        print("set_key_multi", name, multi)
+        key = self.find_key(name)
+        assert multi != bool(key.get('multi')), key
+        key['multi'] = multi
+        for image_spec in self.images:
+            if multi:
+                image_spec[name] = image_spec[name].split()
+            else:
+                image_spec[name] = ' '.join(image_spec[name])
+
+    def set_hierarchy(self, hierarchy):
+        self.hierarchy = hierarchy
+        for ck in self._custom_keys:
+            if ck['name'] in hierarchy:
+                ck['in_hierarchy'] = True
+            else:
+                ck.pop('in_hierarchy', None)
 
     def add_image(self, spec):
         all_keys = [key['name'] for key in self.metadata_keys()]
@@ -145,7 +204,6 @@ class Library:
         self.refresh_images()
         spec = {
             'images': self.images,
-            'hierarchy': self.hierarchy,
             'keys': self._custom_keys,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:

@@ -12,6 +12,7 @@ from config import default_config
 from view_config import ViewConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
+from metadata import MetadataEditorDialog
 from cache import background_cacher
 import keys
 
@@ -68,6 +69,8 @@ class Window(QMainWindow):
             ViewConfigDialog(self.app, self.app.library, self.app.config).exec()
         elif action == 'delete':
             DeleterDialog(self.app, self.browser.target).exec()
+        elif action == 'edit_metadata':
+            MetadataEditorDialog(self.app).exec()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':
