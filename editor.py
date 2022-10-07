@@ -70,6 +70,20 @@ class EditorSetField(SetField):
                 leaf.spec[self.key] = new_value
 
 
+class EditorTextField(TextField):
+    def __init__(self, node, key, **kwargs):
+        self.node = node
+        values = {leaf.spec[key] for leaf in node.leaves()}
+        self.original_value = values.pop() if len(values) == 1 else '...'
+        super().__init__(key, self.original_value, **kwargs)
+
+    def update_node(self, new_value):
+        if self.original_value == new_value == '...':
+            return
+        for leaf in self.node.leaves():
+            leaf.spec[self.key] = new_value
+
+
 def choose_fields(node):
     keymap = keys.KeyMap()
 
@@ -92,8 +106,9 @@ def choose_fields(node):
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
         for key in node.library.metadata_keys():
-            if key.get('multi'):
-                fields.append(EditorSetField(node, key['name'], keymap=keymap))
+            if key['name'] not in node.library.hierarchy and not key.get('builtin'):
+                cls = EditorSetField if key.get('multi') else EditorTextField
+                fields.append(cls(node, key['name'], keymap=keymap))
     return fields
 
 

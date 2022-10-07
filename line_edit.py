@@ -7,10 +7,11 @@ import keys
 
 
 class LineEdit(QLineEdit):
-    commit = Signal(str)
+    commit = Signal(str, object)
     tab_complete = Signal(str)
 
-    def __init__(self, initial_value=None, completions=None):
+    def __init__(self, initial_value=None, completions=None, read_only=False,
+                 ctx=None, commit_cb=None):
         super().__init__()
         # Disable scrolling between fields with <TAB> as we want
         # to use it for tab-completion within some fields
@@ -21,9 +22,14 @@ class LineEdit(QLineEdit):
         if completions is not None:
             self.setCompleter(QCompleter(completions))
         self.setStyleSheet('QLineEdit[readOnly="true"] {background-color: #E0E0E0;}')
+        if read_only:
+            self.setReadOnly(True)
+        self.ctx = ctx
+        if commit_cb:
+            self.commit.connect(commit_cb)
 
     def _commit(self):
-        self.commit.emit(self.text())
+        self.commit.emit(self.text(), self.ctx)
 
     def keyPressEvent(self, event):
         if keys.get_action(event) == 'select':

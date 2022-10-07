@@ -23,6 +23,7 @@ ACTIONS = {
     'edit':        [Qt.Key_E],
     'view_config': [Qt.Key_V],
     'delete':      [Qt.Key_D],
+    'edit_metadata': [Qt.Key_M],
 
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],
