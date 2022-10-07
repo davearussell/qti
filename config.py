@@ -44,7 +44,7 @@ class Config:
 
 
 def default_config(library):
-    c = Config(group_by=library.default_group_by)
+    c = Config(group_by=library.hierarchy)
     c.defaults = copy.deepcopy(c.defaults)
-    c.defaults['group_by'] = copy.deepcopy(library.default_group_by)
+    c.defaults['group_by'] = copy.deepcopy(library.hierarchy)
     return c

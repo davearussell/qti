@@ -107,7 +107,7 @@ class ImporterDialog(QDialog):
         self.setLayout(QHBoxLayout())
         self.images = []
         new_images = find_new_images_for(node)
-        if self.app.config.group_by != self.library.default_group_by:
+        if self.app.config.group_by != self.library.hierarchy:
             self.set_label("Cannot import when using custom grouping")
         elif new_images:
             self.setup_importer(new_images)
@@ -123,7 +123,7 @@ class ImporterDialog(QDialog):
         default_values = {}
         leaf = next(self.node.leaves())
         seen_our_node = not self.node.parent
-        for key in self.library.default_group_by:
+        for key in self.library.hierarchy:
             default_values[key] = '' if seen_our_node else leaf.spec.get(key)
             if key == self.node.type:
                 seen_our_node = True
@@ -145,7 +145,7 @@ class ImporterDialog(QDialog):
             TextField('name', '', keymap=km),
         ]
         fields += [TextField(key, default_values[key], keymap=km)
-                  for key in self.library.default_group_by]
+                  for key in self.library.hierarchy]
         self.field_list = FieldList()
         self.field_list.init_fields(fields)
         self.layout().addWidget(self.field_list)
@@ -182,7 +182,7 @@ class ImporterDialog(QDialog):
 
     def field_committed(self, field, value):
         target = self.grid.target()
-        if '{' in value or field.key in self.library.default_group_by:
+        if '{' in value or field.key in self.library.hierarchy:
             # If the value is a template, or the key is in the default group hierarchy,
             # it is likely to be applicable to more than just this image, so we apply it
             # to this and all subsequent images in the import list for convenience.
@@ -199,20 +199,14 @@ class ImporterDialog(QDialog):
             self.accept()
             return
 
-        required_keys = self.library.default_group_by + ['name']
+        required_keys = self.library.hierarchy + ['name']
         if any(not image.spec.get(key) for key in required_keys for image in self.images):
             if not YesNoDialog(self, "Missing keys", "Some images are missing required keys. "
                               "Proceed anyway?").exec():
                 return
 
         for image in self.images:
-            spec = {}
-            for key in self.library.builtin_keys + self.library.custom_keys:
-                value = image.spec.get(key)
-                if not value:
-                    value = self.library.default_value(key)
-                spec[key] = value
-            self.library.images.append(spec)
+            self.library.add_image(image.spec)
         self.app.reload_tree()
         self.accept()
 

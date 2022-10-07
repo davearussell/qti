@@ -74,42 +74,63 @@ class Image(Node):
 
 
 class Library:
-    sort_types = {
+    _sort_types = {
         'default': None,
         'count': lambda c: -len(c.children),
         'alpha': lambda c: c.name,
     }
-    builtin_keys = ['name', 'path', 'resolution']
+
+    _builtin_keys = [
+        {'name': 'name', 'builtin': True},
+        {'name': 'path', 'builtin': True},
+        {'name': 'resolution', 'builtin': True},
+    ]
 
     def __init__(self, json_path):
         self.json_path = json_path
         self.root_dir = os.path.dirname(os.path.abspath(self.json_path))
         with open(self.json_path, 'r', encoding='UTF-8') as f:
             spec = json.load(f)
-        self.images = spec['images']
-        self.default_group_by = spec['group_by']
-        self.key_types = spec['key_types']
-        self.custom_keys = list(self.key_types.keys())
+        self.hierarchy = spec['hierarchy']
+        self._custom_keys = spec['keys']
+        self.images = []
+        for image_spec in spec['images']:
+            self.add_image(image_spec)
         self.scan_keys()
         self.tree = None
 
-    def default_value(self, key):
-        if key in self.builtin_keys:
-            return None
-        defaults = {
-            'set': [],
-            'str': '',
-        }
-        return defaults[self.key_types[key]]
+    def groupable_keys(self):
+        return [key['name'] for key in self._custom_keys]
+
+    def sort_types(self):
+        return [k for k in self._sort_types.keys()]
+
+    def metadata_keys(self):
+        return self._builtin_keys + self._custom_keys
+
+    def add_image(self, spec):
+        all_keys = [key['name'] for key in self.metadata_keys()]
+        spec = {key: spec[key] for key in spec if key in all_keys}
+        for key in self._builtin_keys:
+            if key['name'] not in spec:
+                raise Exception("Missing required key '%s'" % (key,))
+        for key in self._custom_keys:
+            name, multi = key['name'], key.get('multi')
+            default = [] if multi else ''
+            if name not in spec:
+                spec[name] = default
+            elif type(spec[name]) != type(default):
+                raise Exception("Bad value for key %r in %r" % (key, spec))
+        self.images.append(spec)
 
     def scan_keys(self):
         self.sets = {}
         for image_spec in self.images:
-            for key, value in image_spec.items():
-                if key in self.builtin_keys:
+            for key in self._custom_keys:
+                if not key.get('multi'):
                     continue
-                if isinstance(value, list):
-                    self.sets[key] = self.sets.get(key, set()) | set(value)
+                name = key['name']
+                self.sets[name] = self.sets.get(name, set()) | set(image_spec[name])
 
     def refresh_images(self):
         # If the current tree has some reordered nodes, then regenerate our
@@ -124,8 +145,8 @@ class Library:
         self.refresh_images()
         spec = {
             'images': self.images,
-            'group_by': self.default_group_by,
-            'key_types': self.key_types,
+            'hierarchy': self.hierarchy,
+            'keys': self._custom_keys,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)
@@ -155,9 +176,9 @@ class Library:
                     if value is None:
                         value = ''
                     map_value = value
-                    if key in self.default_group_by:
-                        i = self.default_group_by.index(key) + 1
-                        map_value = tuple(image_spec.get(k) for k in self.default_group_by[:i])
+                    if key in self.hierarchy:
+                        i = self.hierarchy.index(key) + 1
+                        map_value = tuple(image_spec.get(k) for k in self.hierarchy[:i])
                     for parent in parents:
                         node = child_map.setdefault(parent, {}).get(map_value)
                         if node is None:
@@ -169,7 +190,7 @@ class Library:
             for parent in parents:
                 parent.add_child(Image(self, image_spec))
 
-        sort_keys = [self.sort_types.get(k) for k in config.order_by]
+        sort_keys = [self._sort_types.get(k) for k in config.order_by]
         nodes = [self.tree]
         for sort_key in sort_keys:
             if sort_key:
