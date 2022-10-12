@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt, QSize
 from PIL import Image
 
 import keys
-from dialog import YesNoDialog
+from dialog import YesNoDialog, TextBoxDialog
 from cache import load_pixmap
 from grid import Grid
 from fields import FieldList, TextField,  ReadOnlyField
@@ -49,8 +49,15 @@ def f_strip_words(text, *strip_words):
     words = text.split()
     while words and any(re.match(pat, words[-1].lower()) for pat in pats):
         words = words[:-1]
+    while words and any(re.match(pat, words[0].lower()) for pat in pats):
+        words = words[1:]
     return ' '.join(words)
 
+def f_strip_digits(text):
+    return text.rstrip('0123456789')
+
+def f_dirat(path, i):
+    return path.split(os.path.sep)[int(i)]
 
 def apply_template(template, spec):
     env = jinja2.Environment()
@@ -59,6 +66,8 @@ def apply_template(template, spec):
         'lstrip': f_lstrip,
         'rstrip': f_rstrip,
         'strip_words': f_strip_words,
+        'strip_digits': f_strip_digits,
+        'dirat': f_dirat,
     })
     return env.from_string(template).render(spec)
 
@@ -69,7 +78,8 @@ class NewImage(QLabel):
     def __init__(self, library, image_path, spec):
         super().__init__()
         self.library = library
-        self.image_path = image_path
+        self.abspath = image_path
+        self.path = os.path.relpath(self.abspath, self.library.root_dir)
         self.spec = spec
         self.pixmap = None
         self.setFixedSize(self.thumbnail_size)
@@ -82,17 +92,17 @@ class NewImage(QLabel):
         return self.spec[key]
 
     def fill_in_spec(self):
-        self.spec['path'] = os.path.relpath(self.image_path, self.library.root_dir)
+        self.spec['path'] = self.path
         self.spec['directory'] = os.path.dirname(self.spec['path'])
         self.spec['dirname'] = os.path.basename(self.spec['directory'])
         self.spec['filename'] = os.path.basename(self.spec['path'])
         self.spec['basename'] = f_title(os.path.splitext(self.spec['filename'])[0])
         self.spec['name'] = self.spec['basename']
-        self.spec['resolution'] = Image.open(self.image_path).size
+        self.spec['resolution'] = Image.open(self.abspath).size
 
     def paintEvent(self, event):
         if self.pixmap is None:
-            self.pixmap = load_pixmap(self.library.root_dir, self.image_path, self.thumbnail_size)
+            self.pixmap = load_pixmap(self.library.root_dir, self.abspath, self.thumbnail_size)
             self.setPixmap(self.pixmap)
         super().paintEvent(event)
 
@@ -200,15 +210,23 @@ class ImporterDialog(QDialog):
             return
 
         required_keys = self.library.hierarchy + ['name']
-        if any(not image.spec.get(key) for key in required_keys for image in self.images):
+        ready = [image.spec for image in self.images
+                 if all(image.spec.get(key) for key in required_keys)]
+        if len(ready) < len(self.images):
             if not YesNoDialog(self, "Missing keys", "Some images are missing required keys. "
-                              "Proceed anyway?").exec():
+                              "These will not be added. Proceed anyway?").exec():
                 return
 
-        for image in self.images:
-            self.library.add_image(image.spec)
+        for spec in ready:
+            self.library.add_image(spec)
         self.app.reload_tree()
         self.accept()
+
+    def exclude_images(self, pattern):
+        for image in list(self.images):
+            if pattern in image.path:
+                self.grid.remove_idx(self.images.index(image))
+                self.images.remove(image)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
@@ -221,5 +239,10 @@ class ImporterDialog(QDialog):
             self.delete_target()
         elif action in ['up', 'down', 'left', 'right']:
             self.grid.scroll(action)
+        elif event.key() == Qt.Key_X:
+            dialog = TextBoxDialog(self, "Exclude images",
+                                   "Exclude images that match this pattern:")
+            dialog.result.connect(self.exclude_images)
+            dialog.exec()
         else:
             event.ignore()
