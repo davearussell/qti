@@ -207,12 +207,13 @@ class Grid(QScrollArea):
         layout = self.widget().layout()
         cell = layout.takeAt(i).widget()
         cell.hide()
-        if layout.items:
-            if i == len(layout.items):
-                i -= 1
-            self._set_target(layout.itemAt(i).widget())
-        else:
-            self._set_target(None)
+        if cell == self._target:
+            if layout.items:
+                if i == len(layout.items):
+                    i -= 1
+                self._set_target(layout.itemAt(i).widget())
+            else:
+                self._set_target(None)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)

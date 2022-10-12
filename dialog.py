@@ -1,19 +1,23 @@
-from PySide6.QtWidgets import QDialog, QLabel, QDialogButtonBox
+from PySide6.QtWidgets import QDialog, QLabel, QDialogButtonBox, QLineEdit
 from PySide6.QtWidgets import QVBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 from fields import FieldList
 import keys
 
 
-class YesNoDialog(QDialog):
-    def __init__(self, parent, title, text):
+class VBoxDialog(QDialog):
+    def __init__(self, parent, title, label=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setLayout(QVBoxLayout())
-        label = QLabel()
-        label.setText(text)
-        self.layout().addWidget(label)
+        if label:
+            self.layout().addWidget(QLabel(label))
+
+
+class YesNoDialog(VBoxDialog):
+    def __init__(self, parent, title, text):
+        super().__init__(parent, title, label=text)
         buttons = QDialogButtonBox(QDialogButtonBox.Yes | QDialogButtonBox.No)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -24,18 +28,29 @@ class YesNoDialog(QDialog):
                 button.setDefault(True)
 
 
-class FieldDialog(QDialog):
+class TextBoxDialog(VBoxDialog):
+    result = Signal(str)
+
+    def __init__(self, parent, title, label, value=''):
+        super().__init__(parent, title, label)
+        self.edit = QLineEdit(value)
+        self.layout().addWidget(self.edit)
+        self.edit.returnPressed.connect(self._result)
+        self.edit.returnPressed.connect(self.accept)
+
+    def _result(self):
+        self.result.emit(self.edit.text())
+
+
+class FieldDialog(VBoxDialog):
     title = "Dialog"
 
     def __init__(self, app):
-        super().__init__(app.window)
-        self.setWindowTitle(self.title)
+        super().__init__(app.window, self.title)
         self.app = app
-        self.setLayout(QVBoxLayout())
         self.field_list = FieldList()
         self.field_list.field_committed.connect(self.field_committed)
         self.layout().addWidget(self.field_list)
-        self.layout = None
         self.need_reload = False
 
     def init_fields(self, fields):
