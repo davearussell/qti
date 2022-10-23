@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 class Node:
     def __init__(self, library, name):
@@ -80,6 +81,7 @@ class Library:
         'default': None,
         'count': lambda c: -len(c.children),
         'alpha': lambda c: c.name,
+        'random': lambda c: random.random(),
     }
 
     _builtin_keys = [
