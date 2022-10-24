@@ -62,7 +62,7 @@ class FieldList(QWidget):
         for row_i, field in enumerate(fields):
             self.fields[field.key] = field
             if field.keybind:
-                self.keybinds[Qt.Key.values['Key_' + field.keybind]] = field.box
+                self.keybinds[getattr(Qt.Key, 'Key_' + field.keybind)] = field.box
             self.layout().addWidget(field.label, row_i, 0)
             self.layout().addWidget(field.box, row_i, 1)
             if field.editable:

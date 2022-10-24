@@ -38,7 +38,7 @@ KEYS = {} # KEY -> action
 for action, keys in ACTIONS.items():
     for key in keys:
         if isinstance(key, tuple): # (keycode, modifier)
-            key = (key[0], int(key[1]))
+            key = (key[0], key[1].value)
         else:
             key = (key, 0)
         if key in KEYS:
@@ -47,7 +47,7 @@ for action, keys in ACTIONS.items():
 
 
 def get_action(event):
-    k = (event.key(), int(event.modifiers()))
+    k = (event.key(), event.modifiers().value)
     return KEYS.get(k)
 
 
