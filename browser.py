@@ -47,7 +47,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = NodeGrid(self.app.thumbnail_size)
+        grid = NodeGrid(self.app.settings.thumbnail_size)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
