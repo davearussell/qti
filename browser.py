@@ -1,6 +1,6 @@
 #! /bin/python3
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, Signal
 from grid import Grid
 from viewer import Viewer
 from thumbnail import Thumbnail
@@ -23,8 +23,6 @@ class NodeGrid(Grid):
 
 
 class Browser(QWidget):
-    thumbnail_size = QSize(200, 250)
-
     def __init__(self, app, size):
         super().__init__()
         self.app = app
@@ -48,7 +46,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = NodeGrid(self.thumbnail_size)
+        grid = NodeGrid(self.app.thumbnail_size)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
