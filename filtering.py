@@ -1,7 +1,8 @@
 import copy
 
 from dialog import FieldDialog
-from fields import SetField, TextField, LineEdit
+from line_edit import LineEdit
+from fields import SetField, TextField
 import expr
 import keys
 

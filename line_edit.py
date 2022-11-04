@@ -10,17 +10,12 @@ class LineEdit(QLineEdit):
     commit = Signal(str, object)
     tab_complete = Signal(str)
 
-    def __init__(self, initial_value=None, completions=None, read_only=False,
-                 ctx=None, commit_cb=None):
+    def __init__(self, initial_value=None, read_only=False, ctx=None, commit_cb=None):
         super().__init__()
-        # Disable scrolling between fields with <TAB> as we want
-        # to use it for tab-completion within some fields
+        # Disable scrolling between fields with <TAB> as we want to define custom behaviour for it
         self.setFocusPolicy(Qt.ClickFocus)
         if initial_value is not None:
             self.setText(initial_value)
-        self.completions = completions
-        if completions is not None:
-            self.setCompleter(QCompleter(completions))
         self.setStyleSheet('QLineEdit[readOnly="true"] {background-color: #E0E0E0;}')
         if read_only:
             self.setReadOnly(True)
@@ -36,7 +31,20 @@ class LineEdit(QLineEdit):
             # Normally a QLineEdit will pass the <Enter> key event up
             # to its parent, which we don't want, so swallow it here.
             self._commit()
-        elif event.key() == Qt.Key_Tab and self.completions is not None:
+        else:
+            super().keyPressEvent(event)
+
+
+
+class TabCompleteLineEdit(LineEdit):
+    def __init__(self, *args, **kwargs):
+        completions = kwargs.pop('completions', [])
+        super().__init__(*args, **kwargs)
+        self.completions = completions
+        self.setCompleter(QCompleter(completions))
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Tab:
             matches = [value for value in self.completions if value.startswith(self.text())]
             if matches:
                 text = os.path.commonprefix(matches)

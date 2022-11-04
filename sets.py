@@ -4,11 +4,11 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QLineEdit, QComplete
 from PySide6.QtCore import Qt, Signal
 
 from grid import FlowLayout
-from line_edit import LineEdit
+from line_edit import TabCompleteLineEdit
 import keys
 
 
-class TextBox(LineEdit):
+class TextBox(TabCompleteLineEdit):
     push_value = Signal(str)
     pop_value = Signal()
 

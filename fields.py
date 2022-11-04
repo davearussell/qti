@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
-from line_edit import LineEdit
+from line_edit import TabCompleteLineEdit
 import keys
 
 
@@ -96,14 +96,14 @@ class ReadOnlyField(Field):
 
 
 class TextField(Field):
-    edit_cls = LineEdit
+    edit_cls = TabCompleteLineEdit
 
     def __init__(self, key, value, completions=None, **kwargs):
-        self.completions = completions
+        self.edit_args = {} if completions is None else {'completions': completions}
         super().__init__(key, value, **kwargs)
 
     def make_body(self, value):
-        box = self.edit_cls(value, completions=self.completions)
+        box = self.edit_cls(value, **self.edit_args)
         box.commit.connect(self.commit_value)
         return box
 
