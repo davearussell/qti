@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal, QSize
 
 import library
 import browser
+import settings
 from status_bar import StatusBar
 from editor import EditorDialog
 from filtering import default_filter_config, FilterConfigDialog
@@ -128,11 +129,11 @@ class Window(QMainWindow):
 
 class Application(QApplication):
     quitting = Signal()
-    thumbnail_size = QSize(200, 250)
 
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
+        self.settings = settings.Settings('davesoft', 'qti')
         self.library = library.Library(json_file)
         self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)
@@ -140,7 +141,7 @@ class Application(QApplication):
         self.window = Window(self, self.primaryScreen().size())
         self.cacher = background_cacher(
             self, self.library.root_dir, self.library.images,
-            [self.window.size(), self.thumbnail_size],
+            [self.window.size(), self.settings.thumbnail_size],
         )
         self.setStyleSheet(stylesheet)
         self.status_bar.set_text("XXX this is some test text 123 XXX")

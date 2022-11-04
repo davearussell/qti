@@ -163,7 +163,8 @@ class ImporterDialog(QDialog):
         self.setFixedSize(self.app.window.size() - QSize(200, 200))
         self.grid = Grid()
         self.grid.setFocusPolicy(Qt.NoFocus)
-        self.images = [NewImage(self.library, path, default_values.copy(), self.app.thumbnail_size)
+        self.images = [NewImage(self.library, path, default_values.copy(),
+                                self.app.settings.thumbnail_size)
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)
         self.grid.load(self.images)
