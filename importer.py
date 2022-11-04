@@ -114,7 +114,7 @@ class ImporterDialog(QDialog):
         self.setLayout(QHBoxLayout())
         self.images = []
         new_images = find_new_images_for(node)
-        if self.app.config.group_by != self.library.hierarchy:
+        if self.app.filter_config.group_by != self.library.hierarchy:
             self.set_label("Cannot import when using custom grouping")
         elif new_images:
             self.setup_importer(new_images)

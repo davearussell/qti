@@ -8,8 +8,7 @@ import library
 import browser
 from status_bar import StatusBar
 from editor import EditorDialog
-from config import default_config
-from view_config import ViewConfigDialog
+from filtering import default_filter_config, FilterConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
@@ -76,12 +75,12 @@ class Window(QMainWindow):
 
     def save_snapshot(self):
         snapshot = (self.browser.node, self.browser.target, self.browser.mode,
-                    copy.deepcopy(self.app.config))
+                    copy.deepcopy(self.app.filter_config))
         self.snapshots.append(snapshot)
 
     def restore_snapshot(self):
         if self.snapshots:
-            node, target, mode, self.app.config = self.snapshots.pop()
+            node, target, mode, self.app.filter_config = self.snapshots.pop()
             self.browser.load_node(node, target=target, mode=mode)
 
     def jump_to_subject(self):
@@ -93,10 +92,10 @@ class Window(QMainWindow):
         if not subjects:
             return
         self.save_snapshot()
-        self.app.config.group_by = ['subjects']
-        self.app.config.clear_filters()
-        self.app.config.include_tags = subjects
-        root = self.app.library.make_tree(self.app.config)
+        self.app.filter_config.group_by = ['subjects']
+        self.app.filter_config.clear_filters()
+        self.app.filter_config.include_tags = subjects
+        root = self.app.library.make_tree(self.app.filter_config)
         node = [x for x in root.children if x.name in subjects][0]
         self.browser.load_node(node, mode=mode)
 
@@ -109,8 +108,8 @@ class Window(QMainWindow):
                 editor = EditorDialog(self.app, self.browser.target)
                 editor.request_scroll.connect(self.browser.scroll)
                 editor.exec()
-        elif action == 'view_config':
-            ViewConfigDialog(self.app, self.app.library, self.app.config).exec()
+        elif action == 'filter_config':
+            FilterConfigDialog(self.app, self.app.library, self.app.filter_config).exec()
         elif action == 'delete':
             DeleterDialog(self.app, self.browser.target).exec()
         elif action == 'edit_metadata':
@@ -136,7 +135,7 @@ class Application(QApplication):
         QImageReader.setAllocationLimit(0)
         self.library = library.Library(json_file)
         self.quitting.connect(self.library.save)
-        self.config = default_config(self.library)
+        self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
         self.cacher = background_cacher(
@@ -154,7 +153,7 @@ class Application(QApplication):
 
     def reload_tree(self):
         target = self.window.browser.target
-        tree = self.library.make_tree(self.config)
+        tree = self.library.make_tree(self.filter_config)
 
         if not (target and tree.children):
             self.window.browser.load_node(tree, mode='grid')

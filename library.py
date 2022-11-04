@@ -43,9 +43,9 @@ class Node:
 
 class Root(Node):
     type = 'root'
-    def __init__(self, library, config):
+    def __init__(self, library, filter_config):
         super().__init__(library, 'root')
-        self.config = config
+        self.filter_config = filter_config
         self.dirty = False
 
 
@@ -123,7 +123,7 @@ class Library:
         key['name'] = new_name
         for image_spec in self.images:
             image_spec[new_name] = image_spec.pop(old_name)
-        for l in [self.hierarchy, self.tree.config.group_by]:
+        for l in [self.hierarchy, self.tree.filter_config.group_by]:
             if old_name in l:
                 l[l.index(old_name)] = new_name
         for node in self.tree.descendants():
@@ -196,9 +196,9 @@ class Library:
     def refresh_images(self):
         # If the current tree has some reordered nodes, then regenerate our
         # image list to match the new ordering. The exception is if the tree
-        # has a non-default view config, since we don't want to generate an
+        # has a non-default filter config, since we don't want to generate an
         # incomplete or misordered image list.
-        if self.tree and self.tree.dirty and self.tree.config.is_default():
+        if self.tree and self.tree.dirty and self.tree.filter_config.is_default():
             self.images = [image.spec for image in self.tree.leaves()]
             self.tree.dirty = False
 
@@ -211,10 +211,10 @@ class Library:
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)
 
-    def make_tree(self, config):
+    def make_tree(self, filter_config):
         self.refresh_images()
-        filter_expr = config.filter
-        self.tree = Root(self, config)
+        filter_expr = filter_config.filter
+        self.tree = Root(self, filter_config)
         child_map = {} # parent -> child_name -> child
         for image_spec in self.images:
             if filter_expr:
@@ -226,7 +226,7 @@ class Library:
                     continue
 
             parents = [self.tree]
-            for key in config.group_by:
+            for key in filter_config.group_by:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
                     values = [values]
@@ -250,7 +250,7 @@ class Library:
             for parent in parents:
                 parent.add_child(Image(self, image_spec))
 
-        sort_keys = [self._sort_types.get(k) for k in config.order_by]
+        sort_keys = [self._sort_types.get(k) for k in filter_config.order_by]
         nodes = [self.tree]
         for sort_key in sort_keys:
             if sort_key:
