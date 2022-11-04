@@ -9,15 +9,15 @@ import keys
 
 
 class NodeGrid(Grid):
-    def __init__(self, thumbnail_size):
+    def __init__(self, settings):
         super().__init__()
-        self.thumbnail_size = thumbnail_size
+        self.settings = settings
 
     def _cell_to_userobj(self, cell):
         return cell.widget.node
 
     def load(self, node, target=None):
-        thumbnails = [Thumbnail(child, self.thumbnail_size) for child in node.children]
+        thumbnails = [Thumbnail(child, self.settings.thumbnail_size) for child in node.children]
         target_thumbnail = thumbnails[node.children.index(target)] if target else None
         super().load(thumbnails, target=target_thumbnail)
 
@@ -47,7 +47,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = NodeGrid(self.app.settings.thumbnail_size)
+        grid = NodeGrid(self.app.settings)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
