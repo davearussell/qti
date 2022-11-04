@@ -2,7 +2,7 @@ import copy
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader, QPalette, QFont
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 
 import library
 import browser
@@ -85,6 +85,7 @@ class Window(QMainWindow):
 
 class Application(QApplication):
     quitting = Signal()
+    thumbnail_size = QSize(200, 250)
 
     def __init__(self, json_file):
         super().__init__([])
@@ -96,7 +97,7 @@ class Application(QApplication):
         self.window = Window(self, self.primaryScreen().size())
         self.cacher = background_cacher(
             self, self.library.root_dir, self.library.images,
-            [self.window.size(), self.window.browser.thumbnail_size],
+            [self.window.size(), self.thumbnail_size],
         )
 
     def exec(self):

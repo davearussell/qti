@@ -73,16 +73,14 @@ def apply_template(template, spec):
 
 
 class NewImage(QLabel):
-    thumbnail_size = QSize(200, 250)
-
-    def __init__(self, library, image_path, spec):
+    def __init__(self, library, image_path, spec, size):
         super().__init__()
         self.library = library
         self.abspath = image_path
         self.path = os.path.relpath(self.abspath, self.library.root_dir)
         self.spec = spec
         self.pixmap = None
-        self.setFixedSize(self.thumbnail_size)
+        self.setFixedSize(size)
         self.setAlignment(Qt.AlignCenter)
         self.fill_in_spec()
 
@@ -102,7 +100,7 @@ class NewImage(QLabel):
 
     def paintEvent(self, event):
         if self.pixmap is None:
-            self.pixmap = load_pixmap(self.library.root_dir, self.abspath, self.thumbnail_size)
+            self.pixmap = load_pixmap(self.library.root_dir, self.abspath, self.size())
             self.setPixmap(self.pixmap)
         super().paintEvent(event)
 
@@ -169,7 +167,7 @@ class ImporterDialog(QDialog):
         pal = self.grid.palette()
         pal.setColor(QPalette.Window, Qt.black)
         self.grid.setPalette(pal)
-        self.images = [NewImage(self.library, path, default_values.copy())
+        self.images = [NewImage(self.library, path, default_values.copy(), self.app.thumbnail_size)
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)
         self.grid.load(self.images)
