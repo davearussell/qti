@@ -24,6 +24,7 @@ ACTIONS = {
     'filter_config': [Qt.Key_V],
     'delete':        [Qt.Key_D],
     'edit_metadata': [Qt.Key_M],
+    'app_settings':  [Qt.Key_A],
 
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],

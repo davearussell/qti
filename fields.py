@@ -60,6 +60,7 @@ class Field(QWidget):
         self.setLayout(layout)
         layout.addWidget(self.label)
         layout.addWidget(self.body)
+        layout.addStretch(1)
         layout.setContentsMargins(0, 0, 0, 0)
 
     def focusInEvent(self, event):

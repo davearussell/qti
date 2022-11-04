@@ -16,7 +16,7 @@ from metadata import MetadataEditorDialog
 from cache import background_cacher
 import keys
 
-stylesheet = """
+STYLESHEET_TMPL = """
 *[qtiColors="default"] {
   background-color: black;
   color: white;
@@ -35,23 +35,23 @@ stylesheet = """
 *#GridCell[selected="false"] { border: 2px solid black;  }
 
 *[qtiFont="thumbnailName"] {
-  font-size: 14pt;
-  font-family: "Liberation Mono";
+  font-size: %(thumbnail_name_font_size)spt;
+  font-family: "%(font)s";
 }
 
 *[qtiFont="thumbnailCount"] {
-  font-size: 30pt;
-  font-family: "Liberation Mono";
+  font-size: %(thumbnail_count_font_size)spt;
+  font-family: "%(font)s";
 }
 
 *[qtiFont="pathbar"] {
-  font-size: 16pt;
-  font-family: "Liberation Mono";
+  font-size: %(pathbar_font_size)spt;
+  font-family: "%(font)s";
 }
 
 *[qtiFont="statusbar"] {
-  font-size: 16pt;
-  font-family: "Liberation Mono";
+  font-size: %(statusbar_font_size)spt;
+  font-family: "%(font)s";
 }
 
 *[qtiFontStyle="sep"]       { color: cyan;  }
@@ -123,6 +123,8 @@ class Window(QMainWindow):
             self.jump_to_subject()
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
+        elif action == 'app_settings':
+            settings.SettingsDialog(self.app).exec()
         else:
             event.ignore()
 
@@ -143,7 +145,7 @@ class Application(QApplication):
             self, self.library.root_dir, self.library.images,
             [self.window.size(), self.settings.thumbnail_size],
         )
-        self.setStyleSheet(stylesheet)
+        self.apply_settings()
         self.status_bar.set_text("XXX this is some test text 123 XXX")
 
     def exec(self):
@@ -151,6 +153,9 @@ class Application(QApplication):
         self.window.showFullScreen()
         super().exec()
         self.quitting.emit()
+
+    def apply_settings(self):
+        self.setStyleSheet(STYLESHEET_TMPL % self.settings.to_dict())
 
     def reload_tree(self):
         target = self.window.browser.target
