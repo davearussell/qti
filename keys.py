@@ -18,11 +18,11 @@ ACTIONS = {
     'unselect': [Qt.Key_Backspace, (Qt.Key_0, Qt.KeypadModifier)],
     'cancel':   [Qt.Key_Escape],
 
-    'toggle_hide': [Qt.Key_H],
-    'quit':        [Qt.Key_Q],
-    'edit':        [Qt.Key_E],
-    'view_config': [Qt.Key_V],
-    'delete':      [Qt.Key_D],
+    'toggle_hide':   [Qt.Key_H],
+    'quit':          [Qt.Key_Q],
+    'edit':          [Qt.Key_E],
+    'filter_config': [Qt.Key_V],
+    'delete':        [Qt.Key_D],
     'edit_metadata': [Qt.Key_M],
 
     'save_snapshot':    [Qt.Key_S],
