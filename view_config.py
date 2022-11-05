@@ -1,6 +1,3 @@
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPalette
-
 from dialog import FieldDialog
 from fields import SetField, TextField, LineEdit
 import expr
@@ -26,9 +23,8 @@ class ExprEdit(LineEdit):
             return ''
 
     def check_valid(self, value):
-        palette = self.palette()
-        palette.setColor(QPalette.Text, Qt.black if self.is_valid(value) else Qt.red)
-        self.setPalette(palette)
+        self.setProperty("valid", self.is_valid(value))
+        self.setStyleSheet("/* /") # force stylesheet recalc
 
     def keyPressEvent(self, event):
         if keys.get_action(event) == 'select':

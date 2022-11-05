@@ -13,6 +13,7 @@ class Viewer(QLabel):
 
     def __init__(self, size):
         super().__init__()
+        self.setProperty("qtiColors", "default")
         self.setFixedSize(size)
         self.setAlignment(Qt.AlignCenter)
         self.node = None

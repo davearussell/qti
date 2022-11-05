@@ -1,16 +1,15 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
-from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt, QSize, Signal
+from PySide6.QtWidgets import QWidget, QLabel, QFrame, QHBoxLayout
+from PySide6.QtCore import Qt, Signal
 from library import Node
 
 
 class PathbarLabel(QLabel):
-    def __init__(self, text, color):
+    def __init__(self, text, style):
         super().__init__()
+        self.setProperty("qtiColors", "transparent")
+        self.setProperty("qtiFont", "pathbar")
+        self.setProperty("qtiFontStyle", style)
         self.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        palette = self.palette()
-        palette.setColor(QPalette.WindowText, color)
-        self.setPalette(palette)
         self.setText(text)
 
 
@@ -30,23 +29,16 @@ class NodeLabel(PathbarLabel):
         self.clicked.emit(self.node)
 
 
-class Pathbar(QWidget):
+class Pathbar(QFrame):
     clicked = Signal(Node)
 
-    background_opacity = 0.5
     fade_target = False
 
     def __init__(self):
         super().__init__()
+        self.setProperty("qtiColors", "semitransparent")
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
-        font = self.font()
-        font.setPointSize(16)
-        self.setFont(font)
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QPalette.Window, QColor(0, 0, 0, int(255 *self.background_opacity)))
-        self.setPalette(palette)
 
     def clear(self):
         QWidget().setLayout(self.layout)
@@ -66,15 +58,15 @@ class Pathbar(QWidget):
             nodes.insert(0, node)
             node = node.parent
 
-        sep_color = Qt.cyan
-        node_color = Qt.white
+        sep_style = "sep"
+        node_style = "node"
         for node in nodes:
             if self.fade_target and node is target:
-                sep_color = Qt.blue
-                node_color = Qt.gray
+                sep_style += "_fade"
+                node_style += "_fade"
             if self.layout.count():
-                self.layout.addWidget(PathbarLabel('>', sep_color))
-            label = NodeLabel(node, node_color)
+                self.layout.addWidget(PathbarLabel('>', sep_style))
+            label = NodeLabel(node, node_style)
             label.clicked.connect(self.clicked)
             self.layout.addWidget(label)
         self.layout.addStretch(1)

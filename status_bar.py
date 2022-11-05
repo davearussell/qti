@@ -1,27 +1,17 @@
 import time
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
-from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt, QObject, QTimer, Signal
+from PySide6.QtWidgets import QLabel, QFrame, QHBoxLayout
+from PySide6.QtCore import QObject, QTimer, Signal
 
 
-class StatusBarWidget(QWidget):
-    background_opacity = 0.5
-
+class StatusBarWidget(QFrame):
     def __init__(self, text=''):
         super().__init__()
-        font = self.font()
-        font.setPointSize(16)
-        self.setFont(font)
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QPalette.Window, QColor(0, 0, 0, int(255 * self.background_opacity)))
-        self.setPalette(palette)
+        self.setProperty("qtiColors", "semitransparent")
 
         self.setLayout(QHBoxLayout())
         self.label = QLabel()
-        palette = self.label.palette()
-        palette.setColor(QPalette.WindowText, Qt.white)
-        self.label.setPalette(palette)
+        self.label.setProperty("qtiColors", "transparent")
+        self.label.setProperty("qtiFont", "statusbar")
         self.set_text(text)
         self.layout().addWidget(self.label)
 
@@ -84,6 +74,6 @@ class StatusBar(QObject):
             self.timer.start(1000 * (first_expiry - now))
 
     def make_widget(self):
-        bar = StatusBarWidget()
+        bar = StatusBarWidget(self.msg)
         self.text_update.connect(bar.set_text)
         return bar
