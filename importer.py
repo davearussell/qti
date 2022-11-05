@@ -5,7 +5,6 @@ import jinja2
 
 from PySide6.QtWidgets import QDialog, QLabel
 from PySide6.QtWidgets import QHBoxLayout
-from PySide6.QtGui import QPalette, QPixmap
 from PySide6.QtCore import Qt, QSize
 
 from PIL import Image
@@ -164,9 +163,6 @@ class ImporterDialog(QDialog):
         self.setFixedSize(self.app.window.size() - QSize(200, 200))
         self.grid = Grid()
         self.grid.setFocusPolicy(Qt.NoFocus)
-        pal = self.grid.palette()
-        pal.setColor(QPalette.Window, Qt.black)
-        self.grid.setPalette(pal)
         self.images = [NewImage(self.library, path, default_values.copy(), self.app.thumbnail_size)
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)

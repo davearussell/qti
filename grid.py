@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QWidget, QFrame, QScrollArea, QStackedLayout
 from PySide6.QtWidgets import QLayout
-from PySide6.QtGui import QPalette
 from PySide6.QtCore import Qt, Signal, Slot, QRect, QPoint, QSize
 
 import keys
@@ -90,19 +89,18 @@ class FlowLayout(QLayout):
 class Cell(QFrame):
     def __init__(self, grid, widget):
         super().__init__()
+        self.setObjectName("GridCell")
+        self.set_selected(False)
         self.grid = grid
         layout = QStackedLayout()
         self.setLayout(layout)
         layout.addWidget(widget)
         self.widget = widget
         self.setFocusPolicy(Qt.NoFocus)
-        self.setFrameShape(QFrame.Box)
-        self.setLineWidth(2)
 
-    def enable_border(self, enabled):
-        palette = self.palette()
-        palette.setColor(QPalette.WindowText, Qt.yellow if enabled else Qt.black)
-        self.setPalette(palette)
+    def set_selected(self, selected):
+        self.setProperty("selected", selected)
+        self.setStyleSheet("/* /") # force stylesheet recalc
 
     def mousePressEvent(self, event):
         self.grid._set_target(self)
@@ -119,8 +117,10 @@ class Grid(QScrollArea):
 
     def __init__(self):
         super().__init__()
+        self.setProperty("qtiColors", "default")
         self.setWidgetResizable(True)
         self.setWidget(QWidget())
+        self.widget().setProperty("qtiColors", "default")
         self._target = None
         self._cells = {}
         self.action_map = {
@@ -151,10 +151,10 @@ class Grid(QScrollArea):
     @Slot(QFrame)
     def _set_target(self, cell):
         if self._target:
-            self._target.enable_border(False)
+            self._target.set_selected(False)
         self._target = cell
         if cell:
-            cell.enable_border(True)
+            cell.set_selected(True)
         self.target_updated.emit(self._cell_to_userobj(cell))
 
     @Slot(QFrame)

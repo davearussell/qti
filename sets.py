@@ -1,7 +1,6 @@
 import os
 
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QLineEdit, QCompleter
-from PySide6.QtGui import QPalette
 from PySide6.QtCore import Qt, Signal
 
 from grid import FlowLayout
@@ -36,13 +35,10 @@ class ValueBox(QLabel):
 
     def __init__(self, value):
         super().__init__()
+        self.setObjectName("ValueBox")
         self.value = value
         self.setText(value)
         self.setContentsMargins(3, 3, 3, 3)
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QPalette.Window, Qt.white)
-        self.setPalette(palette)
 
     def mousePressEvent(self, event):
         self.clicked.emit(self)

@@ -25,6 +25,7 @@ class NodeGrid(Grid):
 class Browser(QWidget):
     def __init__(self, app, size):
         super().__init__()
+        self.setProperty("qtiColors", "default")
         self.app = app
         self.setFixedSize(size)
         self.mode = None

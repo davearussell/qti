@@ -1,8 +1,8 @@
 import copy
 
 from PySide6.QtWidgets import QMainWindow, QApplication
-from PySide6.QtGui import QImageReader, QPalette, QFont
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtGui import QImageReader
+from PySide6.QtCore import Signal, QSize
 
 import library
 import browser
@@ -16,16 +16,60 @@ from metadata import MetadataEditorDialog
 from cache import background_cacher
 import keys
 
+stylesheet = """
+*[qtiColors="default"] {
+  background-color: black;
+  color: white;
+}
+
+*[qtiColors="semitransparent"] {
+  background-color: rgba(0, 0, 0, 128);
+  color: white;
+}
+
+*[qtiColors="transparent"] {
+  color: white;
+}
+
+*#GridCell[selected="true"]  { border: 2px solid yellow; }
+*#GridCell[selected="false"] { border: 2px solid black;  }
+
+*[qtiFont="thumbnailName"] {
+  font-size: 14pt;
+  font-family: "Liberation Mono";
+}
+
+*[qtiFont="thumbnailCount"] {
+  font-size: 30pt;
+  font-family: "Liberation Mono";
+}
+
+*[qtiFont="pathbar"] {
+  font-size: 16pt;
+  font-family: "Liberation Mono";
+}
+
+*[qtiFont="statusbar"] {
+  font-size: 16pt;
+  font-family: "Liberation Mono";
+}
+
+*[qtiFontStyle="sep"]       { color: cyan;  }
+*[qtiFontStyle="sep_fade"]  { color: blue;  }
+*[qtiFontStyle="node"]      { color: white; }
+*[qtiFontStyle="node_fade"] { color: gray;  }
+
+*#ValueBox {background-color: white; }
+QLineEdit[valid="false"] { color: red; }
+"""
+
 
 class Window(QMainWindow):
     def __init__(self, app, size):
         super().__init__()
+        self.setProperty("qtiColors", "default")
         self.setFixedSize(size)
         self.app = app
-        self.setFont(QFont("Liberation mono"))
-        pal = self.palette()
-        pal.setColor(QPalette.Window, Qt.black)
-        self.setPalette(pal)
         self.browser = browser.Browser(app, size)
         self.setCentralWidget(self.browser)
         self.snapshots = []
@@ -99,6 +143,8 @@ class Application(QApplication):
             self, self.library.root_dir, self.library.images,
             [self.window.size(), self.thumbnail_size],
         )
+        self.setStyleSheet(stylesheet)
+        self.status_bar.set_text("XXX this is some test text 123 XXX")
 
     def exec(self):
         self.reload_tree()
