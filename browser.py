@@ -1,25 +1,59 @@
 #! /bin/python3
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
-from PySide6.QtCore import Qt, Signal
-from grid import Grid
+from PySide6.QtGui import QPainter, QFont, QPixmap, QColor
+from PySide6.QtCore import Qt
+from grid import Grid, Cell
 from viewer import Viewer
-from thumbnail import Thumbnail
 from pathbar import Pathbar
 import keys
+import cache
 
 
-class NodeGrid(Grid):
-    def __init__(self, settings):
-        super().__init__()
+class Thumbnail(Cell):
+    def __init__(self, settings, node):
+        super().__init__(settings.thumbnail_size)
         self.settings = settings
+        self.node = node
+        if node.children:
+            self.image_path = next(node.leaves()).abspath
+            self.count = str(len(node.children))
+            self.name = node.name
+        else:
+            self.image_path = node.abspath
+            self.count = None
+            self.name = None
 
-    def _cell_to_userobj(self, cell):
-        return cell.widget.node
+    def load_pixmap(self):
+        pixmap = super().load_pixmap()
+        image = cache.load_pixmap(self.node.library.root_dir, self.image_path, self.size)
+        iw, ih = image.size().toTuple()
+        p = QPainter(pixmap)
+        p.setPen(Qt.white)
+        p.fillRect(0, 0, self.width, self.height, Qt.black)
+        p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
 
-    def load(self, node, target=None):
-        thumbnails = [Thumbnail(child, self.settings.thumbnail_size) for child in node.children]
-        target_thumbnail = thumbnails[node.children.index(target)] if target else None
-        super().load(thumbnails, target=target_thumbnail)
+        if self.name:
+            p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
+            r = p.fontMetrics().tightBoundingRect(self.name)
+            r.adjust(0, 0, 10, 10)
+            r.moveTop(0)
+            r.moveLeft(pixmap.width() / 2 - r.width() / 2)
+            p.fillRect(r, QColor(0, 0, 0, 128))
+            p.drawText(r, Qt.AlignCenter, self.name)
+
+        if self.count:
+            p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
+            r = p.fontMetrics().tightBoundingRect(self.count)
+            # If we render using the rect returned by tightBoundingRect, it cuts off the
+            # top of the text and leaves empty space at the bottom. Account for this by
+            # increasing rect size and moving its bottom outside the bounds of the pixmap
+            r.adjust(0, 0, 10, 12)
+            r.moveBottom(self.height + 7)
+            r.moveRight(self.width)
+            p.fillRect(r, QColor(0, 0, 0, 128))
+            p.drawText(r, Qt.AlignCenter, self.count)
+
+        return pixmap
 
 
 class Browser(QWidget):
@@ -47,7 +81,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = NodeGrid(self.app.settings)
+        grid = Grid()
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
@@ -89,6 +123,8 @@ class Browser(QWidget):
         self.setLayout(base_layout)
 
     def _target_updated(self, target):
+        if isinstance(target, Thumbnail):
+            target = target.node
         self.pathbar.set_target(target)
         self.target = target
 
@@ -107,10 +143,16 @@ class Browser(QWidget):
         self.node = node
         self.target = target or (node.children[0] if node.children else None)
         self.set_mode(mode)
-        widget = self.grid if self.mode == 'grid' else self.viewer
-        widget.load(self.node, self.target)
+        if self.mode == 'grid':
+            thumbs = [Thumbnail(self.app.settings, child) for child in self.node.children]
+            tthumb = thumbs[self.node.children.index(self.target)] if self.target else None
+            self.grid.load(thumbs, target=tthumb)
+        else:
+            self.viewer.load(self.node, self.target)
 
-    def select(self, target):
+    def select(self, widget):
+        assert isinstance(widget, Thumbnail), widget
+        target = widget.node
         if target.children:
             self.load_node(target, mode='grid')
         else:

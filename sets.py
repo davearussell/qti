@@ -3,7 +3,6 @@ import os
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QLineEdit, QCompleter
 from PySide6.QtCore import Qt, Signal
 
-from grid import FlowLayout
 from line_edit import TabCompleteLineEdit
 import keys
 

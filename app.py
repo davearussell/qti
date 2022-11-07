@@ -33,9 +33,6 @@ STYLESHEET_TMPL = """
   color: white;
 }
 
-*#GridCell[selected="true"]  { border: 2px solid yellow; }
-*#GridCell[selected="false"] { border: 2px solid black;  }
-
 *[qtiFont="thumbnailName"] {
   font-size: {{ thumbnail_name_font_size }}pt;
   font-family: "{{ font }}";

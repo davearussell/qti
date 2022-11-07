@@ -1,128 +1,153 @@
-from PySide6.QtWidgets import QWidget, QFrame, QScrollArea, QStackedLayout
-from PySide6.QtWidgets import QLayout
-from PySide6.QtCore import Qt, Signal, Slot, QRect, QPoint, QSize
+from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
+from PySide6.QtCore import Qt, Signal, QRect, QEvent, QSize
+from PySide6.QtGui import QPainter, QPen, QPixmap
 
 import keys
 
 
-class FlowLayout(QLayout):
-    def __init__(self, spacing=10, margin=10):
-        super().__init__()
-        self._margin = margin
-        self._spacing = spacing
-        self.items = []
-        self.neighbours = {}
+class Cell:
+    def __init__(self, size):
+        self.size = size
+        self.width = size.width()
+        self.height = size.height()
+        self.pixmap = None
+        self.row = None
+        self.col = None
+        self.index = None
+        self.border_rect = None
+        self.pixmap_rect = None
+        self.spacing_rect = None
 
-    def addItem(self, item):
-        self.items.append(item)
+    def load_pixmap(self):
+        return QPixmap(self.width, self.height)
 
-    def count(self):
-        return len(self.items)
-
-    def itemAt(self, index):
-        if 0 <= index < len(self.items):
-            return self.items[index]
-
-    def takeAt(self, index):
-        item = self.itemAt(index)
-        if item:
-            self.items.remove(item)
-        return item
-
-    def hasHeightForWidth(self):
-        return True
-
-    def heightForWidth(self, width):
-        rect = QRect(0, 0, width, 0)
-        return self.do_layout(rect, dry_run=True)
-
-    def setGeometry(self, rect):
-        super().setGeometry(rect)
-        self.do_layout(rect)
-
-    def sizeHint(self):
-        return self.minimumSize()
-
-    def minimumSize(self):
-        size = QSize()
-        for item in self.items:
-            size = size.expandedTo(item.minimumSize())
-        return size
-
-    def do_layout(self, rect, dry_run=False):
-        grid_left = x = rect.x() + self._margin
-        y = rect.y() + self._margin
-        grid_right = rect.right()
-        row_height = 0
-        rows = [[]]
-        for item in self.items:
-            item_width, item_height = item.sizeHint().toTuple()
-            if row_height and x + item_width + self._margin > grid_right:
-                x = grid_left
-                y += row_height + self._spacing
-                row_height = 0
-                rows.append([])
-            if not dry_run:
-                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
-            rows[-1].append(item.widget())
-            x += item_width + self._spacing
-            row_height = max(row_height, item_height)
-
-        if not dry_run:
-            self.neighbours = {}
-            for j, row in enumerate(rows):
-                for i, cell in enumerate(row):
-                    row_up = rows[(j - 1) % len(rows)]
-                    row_down = rows[(j + 1) % len(rows)]
-                    self.neighbours[cell] = {
-                        'left': row[(i - 1) % len(row)],
-                        'right': row[(i + 1) % len(row)],
-                        'down': row_down[min(i, len(row_down) - 1)],
-                        'up': row_up[min(i, len(row_up) - 1)],
-                }
-        return y + row_height - rect.y() + self._margin
-
-    def scroll(self, widget, direction):
-        return self.neighbours[widget][direction]
+    def get_pixmap(self):
+        if self.pixmap is None:
+            self.pixmap = self.load_pixmap()
+        return self.pixmap
 
 
-class Cell(QFrame):
-    def __init__(self, grid, widget):
-        super().__init__()
-        self.setObjectName("GridCell")
-        self.set_selected(False)
-        self.grid = grid
-        layout = QStackedLayout()
-        self.setLayout(layout)
-        layout.addWidget(widget)
-        self.widget = widget
-        self.setFocusPolicy(Qt.NoFocus)
+class GridBody(QWidget):
+    mouse_click = Signal(object, object)
+    height_updated = Signal(int)
+    pos_updated = Signal(int)
 
-    def set_selected(self, selected):
-        self.setProperty("selected", selected)
-        self.setStyleSheet("/* /") # force stylesheet recalc
-
-    def mousePressEvent(self, event):
-        self.grid._set_target(self)
-
-    def mouseDoubleClickEvent(self, event):
-        self.grid._select_target(self)
-
-
-class Grid(QScrollArea):
-    target_selected = Signal(object)
-    unselected = Signal()
-    target_updated = Signal(object)
     spacing = 10
+    border_width = 2
 
     def __init__(self):
         super().__init__()
-        self.setProperty("qtiColors", "default")
-        self.setWidgetResizable(True)
-        self.setWidget(QWidget())
-        self.widget().setProperty("qtiColors", "default")
-        self._target = None
-        self._cells = {}
+        self.setFocusPolicy(Qt.NoFocus)
+        self.pos = None
+        self.cells = None
+        self.grid_width = None
+        self.grid_height = None
+        self.grid = None
+        self.target = None
+        self.cell_width = None
+        self.cell_height = None
+
+    def set_pos(self, pos):
+        if pos != self.pos:
+            self.pos = pos
+            self.pos_updated.emit(pos)
+            self.repaint()
+
+    @property
+    def viewport(self):
+        return QRect(0, self.pos, *self.size().toTuple())
+
+    def load(self, cells):
+        self.cells = cells
+        self.pos = 0
+        self.pos_updated.emit(0)
+        if cells:
+            self.cell_width = cells[0].width
+            self.cell_height = cells[0].height
+            self.row_height = self.cell_height + 2 * self.border_width + self.spacing
+            self.col_width = self.cell_width + 2 * self.border_width + self.spacing
+            self.setMinimumSize(QSize(self.col_width, self.row_height))
+        self.setup_grid()
+
+    def setup_grid(self):
+        self.grid_width = self.width()
+        self.grid = []
+        if self.cells:
+            n_cols = max(1, (self.grid_width - self.spacing) // self.col_width)
+            for i, cell in enumerate(self.cells):
+                cell.index = i
+                cell.row, cell.col = divmod(i, n_cols)
+                if cell.row >= len(self.grid):
+                    self.grid.append([])
+                assert len(self.grid[cell.row]) == cell.col, (cell.row, cell.col)
+                self.grid[cell.row].append(cell)
+                cell_x = self.spacing + cell.col * self.col_width
+                cell_y = self.spacing + cell.row * self.row_height - self.pos
+                cell.border_rect = QRect(cell_x, cell_y,
+                                         self.col_width - self.spacing,
+                                         self.row_height - self.spacing)
+                cell.pixmap_rect = QRect(cell_x + self.border_width, cell_y + self.border_width,
+                                         self.cell_width, self.cell_height)
+                cell.spacing_rect = QRect(cell_x - self.spacing, cell_y - self.spacing,
+                                          self.col_width + self.spacing,
+                                          self.row_height + self.spacing)
+            self.grid_height = self.cells[-1].spacing_rect.bottom()
+        else:
+            self.grid_height = 0
+        self.height_updated.emit(self.grid_height)
+
+    def ensure_visible(self, cell):
+        if cell.spacing_rect.bottom() > self.viewport.bottom(): # Need to scroll down
+            self.set_pos(cell.spacing_rect.bottom() - self.viewport.height() + 1)
+            return True
+        elif cell.spacing_rect.top() < self.pos: # Need to scroll up
+            self.set_pos(cell.spacing_rect.top())
+            return True
+        return False
+
+    def handle_click(self, event):
+        col, col_rem = divmod(event.pos().x(), self.col_width)
+        row, row_rem = divmod(event.pos().y() + self.pos, self.row_height)
+        if (col_rem >= self.spacing and # ignore clicks in the space between cells
+            row_rem >= self.spacing and
+            row < len(self.grid) and
+            col < len(self.grid[row])):
+            self.mouse_click.emit(self.grid[row][col], event.type())
+
+    def mousePressEvent(self, event):
+        self.handle_click(event)
+
+    def mouseDoubleClickEvent(self, event):
+        self.handle_click(event)
+
+    def wheelEvent(self, event):
+        new_pos = self.pos + self.row_height * (-1 if event.angleDelta().y() > 0 else 1)
+        self.set_pos(max(min(new_pos, self.grid_height - self.height()), 0))
+
+    def resizeEvent(self, event):
+        self.setup_grid()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        for i, cell in enumerate(self.cells):
+            if cell.border_rect.intersects(self.viewport):
+                painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), cell.get_pixmap())
+                if cell is self.target:
+                    pen = QPen(Qt.yellow)
+                    pen.setWidth(self.border_width)
+                    pen.setJoinStyle(Qt.MiterJoin)
+                    painter.setPen(pen)
+                    painter.drawRect(cell.border_rect.translated(0, -self.pos))
+
+
+class Grid(QFrame):
+    target_selected = Signal(object)
+    unselected = Signal()
+    target_updated = Signal(object)
+
+    def __init__(self):
+        super().__init__()
         self.action_map = {
             'up': self.scroll,
             'down': self.scroll,
@@ -131,89 +156,83 @@ class Grid(QScrollArea):
             'select': self.select_current_target,
             'unselect': self.unselect,
         }
+        self.setProperty('qtiColors', 'default')
 
-    def _cell_to_userobj(self, cell):
-        """Returns the user object (i.e. one of the widgets passed in to self.load())
-        that is wrapped by this cell."""
-        return cell.widget if cell else None
+        self.body = GridBody()
+        self.body.mouse_click.connect(self.handle_click)
+        self.body.height_updated.connect(self.body_height_update)
+        self.body.pos_updated.connect(self.body_pos_update)
 
-    def _userobj_to_cell(self, obj):
-        return self._cells[obj]
+        self.scroll_bar = QScrollBar()
+        self.scroll_bar.setMinimum(0)
+        self.scroll_bar.valueChanged.connect(self.scroll_bar_moved)
 
+        self.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.body)
+        self.layout().addWidget(self.scroll_bar)
+
+    @property
     def target(self):
-        return self._cell_to_userobj(self._target)
+        return self.body.target
 
-    def neighbour(self, obj, direction):
-        cell = self._userobj_to_cell(obj)
-        neighbour_cell = self.widget().layout().scroll(cell, direction)
-        return self._cell_to_userobj(neighbour_cell)
+    def load(self, cells, target):
+        self.body.load(cells)
+        self.scroll_bar.setSingleStep(self.body.row_height)
+        self.set_target(target)
 
-    @Slot(QFrame)
-    def _set_target(self, cell):
-        if self._target:
-            self._target.set_selected(False)
-        self._target = cell
-        if cell:
-            cell.set_selected(True)
-        self.target_updated.emit(self._cell_to_userobj(cell))
+    def set_target(self, cell, ensure_visible=True):
+        self.body.target = cell
+        redrawn = cell and ensure_visible and self.body.ensure_visible(cell)
+        if not redrawn:
+            self.body.repaint()
+        self.target_updated.emit(cell)
 
-    @Slot(QFrame)
-    def _select_target(self, cell):
-        self.target_selected.emit(self._cell_to_userobj(cell))
-
-    @Slot()
-    def select_current_target(self, _action=None):
-        if self._target:
-            self._select_target(self._target)
-
-    @Slot(str)
-    def scroll(self, direction):
-        cell = self.widget().layout().scroll(self._target, direction)
-        self._set_target(cell)
-        self.ensureWidgetVisible(cell)
-
-    @Slot()
     def unselect(self, _action=None):
         self.unselected.emit()
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if self._target:
-            self.ensureWidgetVisible(self._target)
+    def select_target(self, cell):
+        self.target_selected.emit(cell)
 
-    def load(self, widgets, target=None):
-        self._target = None
-        if widgets and target is None:
-            target = widgets[0]
-        self.hide() # adding cells is much quicker if done while the grid is hidden
-        QWidget().setLayout(self.widget().layout()) # clears our layout
-        layout = FlowLayout(self.spacing)
-        self.widget().setLayout(layout)
+    def select_current_target(self, _action=None):
+        if self.target:
+            self.select_target(self.target)
 
-        self._cells = {}
-        for widget in widgets:
-            cell = Cell(self, widget)
-            self._cells[self._cell_to_userobj(cell)] = cell
-            layout.addWidget(cell)
-            if widget is target:
-                self._set_target(cell)
-        self.show()
-        if self._target:
-            self.ensureWidgetVisible(self._target)
+    def body_height_update(self, height):
+        if height <= self.body.height():
+            self.scroll_bar.setMaximum(0)
+            self.scroll_bar.hide()
         else:
-            self.target_updated.emit(None)
+            self.scroll_bar.show()
+            self.scroll_bar.setMaximum(height - self.body.height())
+            self.scroll_bar.setPageStep(self.body.height())
 
-    def remove_idx(self, i):
-        layout = self.widget().layout()
-        cell = layout.takeAt(i).widget()
-        cell.hide()
-        if cell == self._target:
-            if layout.items:
-                if i == len(layout.items):
-                    i -= 1
-                self._set_target(layout.itemAt(i).widget())
-            else:
-                self._set_target(None)
+    def body_pos_update(self, pos):
+        self.scroll_bar.setValue(pos)
+
+    def scroll_bar_moved(self, value):
+        self.body.set_pos(value)
+
+    def handle_click(self, cell, click_type):
+        if click_type == QEvent.MouseButtonPress:
+            self.set_target(cell, ensure_visible=False)
+        elif click_type == QEvent.MouseButtonDblClick:
+            self.select_target(cell)
+
+    def neighbour(self, cell, direction):
+        row, col = cell.row, cell.col
+        if direction in ('left', 'right'):
+            offset = (1 if direction == 'right' else -1)
+            col = (col + offset) % len(self.body.grid[row])
+        elif direction in ('up', 'down'):
+            offset = (1 if direction == 'down' else -1)
+            row = (row + offset) % len(self.body.grid)
+            if col >= len(self.body.grid[row]):
+                col = len(self.body.grid[row]) - 1
+        return self.body.grid[row][col]
+
+    def scroll(self, direction):
+        if self.target:
+            self.set_target(self.neighbour(self.target, direction))
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
