@@ -141,12 +141,12 @@ class Browser(QWidget):
     def swap_cells(self, direction):
         cells = self.node.children
         i1 = cells.index(self.target)
-        if self.mode == 'grid':
-            i2 = cells.index(self.grid.neighbour(self.target, direction))
-        else:
-            if direction in ['up', 'down']:
-                return # It only makes sense to swap horizontally when in viewer mode
+        if direction in ['left', 'right']:
             i2 = (i1 + (1 if direction == 'right' else -1)) % len(cells)
+        elif self.mode == 'grid':
+            i2 = cells.index(self.grid.neighbour(self.grid.target, direction).node)
+        else:
+            return # Cannot swap verticaly when in viewer mode
         cells[i1], cells[i2] = cells[i2], cells[i1]
         self.node.root.dirty = True
         self.load_node(self.node, self.target)
