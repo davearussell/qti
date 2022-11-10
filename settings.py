@@ -70,6 +70,9 @@ class IntField(Field):
     def __init__(self, key, value, max_digits=3, *args, **kwargs):
         self.max_digits = max_digits
         super().__init__(key, value, *args, **kwargs)
+        # Because our editor has a fixed width, we need a stretch to
+        # keep ourselves horozontally aligned with other fields
+        self.layout().addStretch(1)
 
     def make_body(self, value):
         edit = NumberEdit(value, self.max_digits)
