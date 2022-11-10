@@ -25,7 +25,7 @@ class Thumbnail(Cell):
 
     def load_pixmap(self):
         pixmap = super().load_pixmap()
-        image = cache.load_pixmap(self.node.library.root_dir, self.image_path, self.size)
+        image = cache.load_pixmap(self.image_path, self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.setPen(Qt.white)

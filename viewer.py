@@ -29,7 +29,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.pixmap = load_pixmap(self.target.library.root_dir, self.target.abspath, self.size())
+        self.pixmap = load_pixmap(self.target.abspath, self.size())
         self.setPixmap(self.pixmap)
         self.target_updated.emit(target)
 
