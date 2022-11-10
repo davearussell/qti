@@ -6,13 +6,14 @@ import jinja2
 from PySide6.QtWidgets import QDialog, QLabel
 from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QPainter
 
 from PIL import Image
 
 import keys
 from dialog import YesNoDialog, TextBoxDialog
-from cache import load_pixmap
-from grid import Grid
+import cache
+from grid import Grid, Cell
 from fields import FieldList, TextField,  ReadOnlyField
 
 
@@ -71,16 +72,12 @@ def apply_template(template, spec):
     return env.from_string(template).render(spec)
 
 
-class NewImage(QLabel):
+class NewImage(Cell):
     def __init__(self, library, image_path, spec, size):
-        super().__init__()
-        self.library = library
+        super().__init__(size)
         self.abspath = image_path
-        self.path = os.path.relpath(self.abspath, self.library.root_dir)
+        self.path = os.path.relpath(self.abspath, library.root_dir)
         self.spec = spec
-        self.pixmap = None
-        self.setFixedSize(size)
-        self.setAlignment(Qt.AlignCenter)
         self.fill_in_spec()
 
     def format_value(self, key):
@@ -97,11 +94,15 @@ class NewImage(QLabel):
         self.spec['name'] = self.spec['basename']
         self.spec['resolution'] = Image.open(self.abspath).size
 
-    def paintEvent(self, event):
-        if self.pixmap is None:
-            self.pixmap = load_pixmap(self.library.root_dir, self.abspath, self.size())
-            self.setPixmap(self.pixmap)
-        super().paintEvent(event)
+    def load_pixmap(self):
+        # TODO: refactor away duplication with browser.Thumbnail
+        pixmap = super().load_pixmap()
+        image = cache.load_pixmap(self.abspath, self.size)
+        iw, ih = image.size().toTuple()
+        p = QPainter(pixmap)
+        p.fillRect(0, 0, self.width, self.height, Qt.black)
+        p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
+        return pixmap
 
 
 class ImporterDialog(QDialog):
@@ -140,8 +141,8 @@ class ImporterDialog(QDialog):
         default_values = self.get_default_values()
         self.setup_fields(default_values)
         self.load_grid(new_images, default_values)
-        self.layout().setStretch(0, 1) # Fields get 25% of horizontal space
-        self.layout().setStretch(1, 3) # Grid gets 75%
+        self.setFixedSize(self.app.window.size() - QSize(200, 200))
+        self.field_list.setFixedWidth(self.width() // 3)
 
     def setup_fields(self, default_values):
         km = keys.KeyMap()
@@ -160,21 +161,30 @@ class ImporterDialog(QDialog):
         self.field_list.field_committed.connect(self.field_committed)
 
     def load_grid(self, new_images, default_values):
-        self.setFixedSize(self.app.window.size() - QSize(200, 200))
         self.grid = Grid()
-        self.grid.setFocusPolicy(Qt.NoFocus)
         self.images = [NewImage(self.library, path, default_values.copy(),
                                 self.app.settings.thumbnail_size)
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)
-        self.grid.load(self.images)
+        self.grid.load(self.images, target=self.images[0])
         self.layout().addWidget(self.grid)
 
+    def drop_images(self, images):
+        self.images = [image for image in self.images if image not in images]
+        if self.grid.target in images:
+            if not self.images:
+                target = None
+            elif self.grid.target.index >= len(self.images):
+                target = self.images[-1]
+            else:
+                target = self.images[self.grid.target.index]
+        else:
+            target = self.grid.target
+        self.grid.load(self.images, target=target)
+
     def delete_target(self):
-        target = self.grid.target()
-        if target:
-            self.grid.remove_idx(self.images.index(target))
-            self.images.remove(target)
+        if self.grid.target:
+            self.drop_images([self.grid.target])
 
     def grid_target_updated(self, image):
         field_keys = self.field_list.fields.keys()
@@ -186,7 +196,7 @@ class ImporterDialog(QDialog):
             self.field_list.fields[key].set_value(values[key])
 
     def field_committed(self, field, value):
-        target = self.grid.target()
+        target = self.grid.target
         if '{' in value or field.key in self.library.hierarchy:
             # If the value is a template, or the key is in the default group hierarchy,
             # it is likely to be applicable to more than just this image, so we apply it
@@ -218,10 +228,9 @@ class ImporterDialog(QDialog):
         self.accept()
 
     def exclude_images(self, pattern):
-        for image in list(self.images):
-            if pattern in image.path:
-                self.grid.remove_idx(self.images.index(image))
-                self.images.remove(image)
+        matches = [image for image in self.images if pattern.lower() in image.path.lower()]
+        if matches:
+            self.drop_images(matches)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
