@@ -162,7 +162,7 @@ class ImporterDialog(QDialog):
         self.field_list.field_committed.connect(self.field_committed)
 
     def load_grid(self, new_images, default_values):
-        self.grid = Grid()
+        self.grid = Grid(self.app.settings)
         self.images = [NewImage(self.app.settings, self.library, path, default_values.copy(),
                                 self.app.settings.thumbnail_size)
                        for path in new_images]

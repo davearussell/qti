@@ -35,9 +35,10 @@ class GridBody(QWidget):
     spacing = 10
     border_width = 2
 
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
         self.setFocusPolicy(Qt.NoFocus)
+        self.settings = settings
         self.pos = None
         self.cells = None
         self.grid_width = None
@@ -134,7 +135,7 @@ class GridBody(QWidget):
             if cell.border_rect.intersects(self.viewport):
                 painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), cell.get_pixmap())
                 if cell is self.target:
-                    pen = QPen(Qt.yellow)
+                    pen = QPen(self.settings.get('selection_color'))
                     pen.setWidth(self.border_width)
                     pen.setJoinStyle(Qt.MiterJoin)
                     painter.setPen(pen)
@@ -146,7 +147,7 @@ class Grid(QFrame):
     unselected = Signal()
     target_updated = Signal(object)
 
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
         self.action_map = {
             'up': self.scroll,
@@ -158,7 +159,7 @@ class Grid(QFrame):
         }
         self.setProperty('qtiColors', 'default')
 
-        self.body = GridBody()
+        self.body = GridBody(settings)
         self.body.mouse_click.connect(self.handle_click)
         self.body.height_updated.connect(self.body_height_update)
         self.body.pos_updated.connect(self.body_pos_update)

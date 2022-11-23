@@ -21,16 +21,16 @@ import keys
 STYLESHEET_TMPL = """
 *[qtiColors="default"] {
   background-color: {{ background_color.name() }};
-  color: white;
+  color: {{ text_color.name() }};
 }
 
 *[qtiColors="semitransparent"] {
   background-color: rgba(0, 0, 0, 128);
-  color: white;
+  color: {{ text_color.name() }};
 }
 
 *[qtiColors="transparent"] {
-  color: white;
+  color: {{ text_color.name() }};
 }
 
 *[qtiFont="thumbnailName"] {
@@ -53,10 +53,10 @@ STYLESHEET_TMPL = """
   font-family: "{{ font }}";
 }
 
-*[qtiFontStyle="sep"]       { color: cyan;  }
-*[qtiFontStyle="sep_fade"]  { color: blue;  }
-*[qtiFontStyle="node"]      { color: white; }
-*[qtiFontStyle="node_fade"] { color: gray;  }
+*[qtiFontStyle="sep"]       { color: {{ pathbar_separator.name() }};  }
+*[qtiFontStyle="sep_fade"]  { color: {{ pathbar_separator.darker().name() }};  }
+*[qtiFontStyle="node"]      { color: {{ text_color.name() }}; }
+*[qtiFontStyle="node_fade"] { color: {{ text_color.darker().name() }};  }
 
 *#ValueBox {background-color: white; }
 QLineEdit[valid="false"] { color: red; }

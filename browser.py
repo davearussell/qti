@@ -28,7 +28,7 @@ class Thumbnail(Cell):
         image = cache.load_pixmap(self.image_path, self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
-        p.setPen(Qt.white)
+        p.setPen(self.settings.get('text_color'))
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
         p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
 
@@ -81,7 +81,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = Grid()
+        grid = Grid(self.app.settings)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)

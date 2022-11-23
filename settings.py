@@ -11,6 +11,9 @@ import keys
 _settings = [
     # Key                  Type      Default value
     ('background_color',          'color',  QColor(Qt.black)),
+    ('text_color',                'color',  QColor(Qt.white)),
+    ('selection_color',           'color',  QColor(Qt.yellow)),
+    ('pathbar_separator',         'color',  QColor(Qt.cyan)),
     ('thumbnail_size',            'qsize',  QSize(250, 200)),
     ('font',                      'str',    'Liberation mono'),
     ('pathbar_font_size',         'int',    16),
