@@ -1,5 +1,7 @@
 import copy
 
+import jinja2
+
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader
 from PySide6.QtCore import Signal, QSize
@@ -35,23 +37,23 @@ STYLESHEET_TMPL = """
 *#GridCell[selected="false"] { border: 2px solid black;  }
 
 *[qtiFont="thumbnailName"] {
-  font-size: %(thumbnail_name_font_size)spt;
-  font-family: "%(font)s";
+  font-size: {{ thumbnail_name_font_size }}pt;
+  font-family: "{{ font }}";
 }
 
 *[qtiFont="thumbnailCount"] {
-  font-size: %(thumbnail_count_font_size)spt;
-  font-family: "%(font)s";
+  font-size: {{ thumbnail_count_font_size }}pt;
+  font-family: "{{ font }}";
 }
 
 *[qtiFont="pathbar"] {
-  font-size: %(pathbar_font_size)spt;
-  font-family: "%(font)s";
+  font-size: {{ pathbar_font_size }}pt;
+  font-family: "{{ font }}";
 }
 
 *[qtiFont="statusbar"] {
-  font-size: %(statusbar_font_size)spt;
-  font-family: "%(font)s";
+  font-size: {{ statusbar_font_size }}pt;
+  font-family: "{{ font }}";
 }
 
 *[qtiFontStyle="sep"]       { color: cyan;  }
@@ -155,7 +157,9 @@ class Application(QApplication):
         self.quitting.emit()
 
     def apply_settings(self):
-        self.setStyleSheet(STYLESHEET_TMPL % self.settings.to_dict())
+        env = jinja2.Environment().from_string(STYLESHEET_TMPL)
+        stylesheet = env.render(self.settings.to_dict())
+        self.setStyleSheet(stylesheet)
 
     def reload_tree(self):
         target = self.window.browser.target
