@@ -144,10 +144,12 @@ class Browser(QWidget):
         self.target = target or (node.children[0] if node.children else None)
         self.set_mode(mode)
         if self.mode == 'grid':
+            self.pathbar.fade_target = True
             thumbs = [Thumbnail(self.app.settings, child) for child in self.node.children]
             tthumb = thumbs[self.node.children.index(self.target)] if self.target else None
             self.grid.load(thumbs, target=tthumb)
         else:
+            self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
 
     def select(self, widget):
