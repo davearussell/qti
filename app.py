@@ -20,7 +20,7 @@ import keys
 
 STYLESHEET_TMPL = """
 *[qtiColors="default"] {
-  background-color: black;
+  background-color: {{ background_color.name() }};
   color: white;
 }
 

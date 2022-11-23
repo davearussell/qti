@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QColorDialog
 from PySide6.QtCore import Qt, QSettings, QSize, Signal
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtGui import QFontMetrics, QPalette, QColor
 
 from dialog import FieldDialog
 from fields import Field, TextField
@@ -10,6 +10,7 @@ import keys
 
 _settings = [
     # Key                  Type      Default value
+    ('background_color',          'color',  QColor(Qt.black)),
     ('thumbnail_size',            'qsize',  QSize(250, 200)),
     ('font',                      'str',    'Liberation mono'),
     ('pathbar_font_size',         'int',    16),
@@ -66,6 +67,39 @@ class DimensionEdit(NumberEdit):
             super().keyPressEvent(event)
 
 
+class ColorPicker(QLabel):
+    color_picked = Signal(QColor)
+
+    def __init__(self, color):
+        super().__init__()
+        self.setContentsMargins(5, 5, 5, 5)
+        self.setAutoFillBackground(True)
+        self.set_color(color)
+
+    def set_color(self, color):
+        self.color = color
+        self.setText("Click to edit [%s]" % color.name())
+        pal = self.palette()
+        pal.setColor(QPalette.Window, color)
+        pal.setColor(QPalette.WindowText, self.contrasting_color(color))
+        self.setPalette(pal)
+
+    def contrasting_color(self, color):
+        values = [color.red(), color.green(), color.blue()]
+        for i in range(len(values)):
+            values[i] = 255 if values[i] < 128 else 0
+        return QColor(*values)
+
+    def pick_new_color(self):
+        new_color = QColorDialog.getColor(self.color)
+        if new_color.isValid():
+            self.set_color(new_color)
+            self.color_picked.emit(new_color)
+
+    def mousePressEvent(self, event):
+        self.pick_new_color()
+
+
 class IntField(Field):
     def __init__(self, key, value, max_digits=3, *args, **kwargs):
         self.max_digits = max_digits
@@ -114,6 +148,22 @@ class SizeField(Field):
         self.xbox.setFocus()
 
 
+class ColorField(Field):
+    def make_body(self, color):
+        self.picker = ColorPicker(color)
+        self.picker.color_picked.connect(self.commit_value)
+        container = QWidget()
+        layout = QHBoxLayout()
+        container.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.picker)
+        layout.addStretch(1)
+        return container
+
+    def focusInEvent(self, event):
+        self.picker.pick_new_color()
+
+
 class SettingsDialog(FieldDialog):
     title = 'App settings'
 
@@ -127,6 +177,7 @@ class SettingsDialog(FieldDialog):
             'qsize': SizeField,
             'str': TextField,
             'int': IntField,
+            'color': ColorField,
             }
         keymap = keys.KeyMap()
         return [

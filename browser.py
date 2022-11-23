@@ -29,7 +29,7 @@ class Thumbnail(Cell):
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.setPen(Qt.white)
-        p.fillRect(0, 0, self.width, self.height, Qt.black)
+        p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
         p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
 
         if self.name:

@@ -73,8 +73,9 @@ def apply_template(template, spec):
 
 
 class NewImage(Cell):
-    def __init__(self, library, image_path, spec, size):
+    def __init__(self, settings, library, image_path, spec, size):
         super().__init__(size)
+        self.settings = settings
         self.abspath = image_path
         self.path = os.path.relpath(self.abspath, library.root_dir)
         self.spec = spec
@@ -100,7 +101,7 @@ class NewImage(Cell):
         image = cache.load_pixmap(self.abspath, self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
-        p.fillRect(0, 0, self.width, self.height, Qt.black)
+        p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
         p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
         return pixmap
 
@@ -162,7 +163,7 @@ class ImporterDialog(QDialog):
 
     def load_grid(self, new_images, default_values):
         self.grid = Grid()
-        self.images = [NewImage(self.library, path, default_values.copy(),
+        self.images = [NewImage(self.app.settings, self.library, path, default_values.copy(),
                                 self.app.settings.thumbnail_size)
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)
