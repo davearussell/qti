@@ -57,18 +57,15 @@ class Thumbnail(Cell):
 
 
 class Browser(QWidget):
-    def __init__(self, app, size):
+    def __init__(self, app):
         super().__init__()
-        self.setProperty("qtiColors", "default")
         self.app = app
-        self.setFixedSize(size)
         self.mode = None
         self.grid = None
         self.node = None
         self.target = None
         self.pathbar = None
         self.status_bar = None
-        self.status_text = ''
         self.hide_bars = False
         self.setup_layout()
 
@@ -88,7 +85,7 @@ class Browser(QWidget):
         return grid
 
     def make_viewer(self):
-        viewer = Viewer(self.size())
+        viewer = Viewer()
         viewer.target_updated.connect(self._target_updated)
         viewer.target_selected.connect(self.unselect)
         viewer.unselected.connect(self.unselect)

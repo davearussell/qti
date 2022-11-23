@@ -11,14 +11,11 @@ class Viewer(QLabel):
     unselected = Signal(Node)
     target_updated = Signal(Node)
 
-    def __init__(self, size):
+    def __init__(self):
         super().__init__()
-        self.setProperty("qtiColors", "default")
-        self.setFixedSize(size)
         self.setAlignment(Qt.AlignCenter)
         self.node = None
         self.target = None
-        self.pixmap = None
         self.action_map = {
             'left': self.scroll,
             'right': self.scroll,
@@ -29,8 +26,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.pixmap = load_pixmap(self.target.abspath, self.size())
-        self.setPixmap(self.pixmap)
+        self.setPixmap(load_pixmap(self.target.abspath, self.size()))
         self.target_updated.emit(target)
 
     def scroll(self, action):

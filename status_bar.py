@@ -6,11 +6,10 @@ from PySide6.QtCore import QObject, QTimer, Signal
 class StatusBarWidget(QFrame):
     def __init__(self, text=''):
         super().__init__()
-        self.setProperty("qtiColors", "semitransparent")
+        self.setProperty("qtiOverlay", "true")
 
         self.setLayout(QHBoxLayout())
         self.label = QLabel()
-        self.label.setProperty("qtiColors", "transparent")
         self.label.setProperty("qtiFont", "statusbar")
         self.set_text(text)
         self.layout().addWidget(self.label)

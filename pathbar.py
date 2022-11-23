@@ -6,7 +6,6 @@ from library import Node
 class PathbarLabel(QLabel):
     def __init__(self, text, style):
         super().__init__()
-        self.setProperty("qtiColors", "transparent")
         self.setProperty("qtiFont", "pathbar")
         self.setProperty("qtiFontStyle", style)
         self.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -36,7 +35,7 @@ class Pathbar(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setProperty("qtiColors", "semitransparent")
+        self.setProperty("qtiOverlay", "true")
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 

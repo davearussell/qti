@@ -149,6 +149,7 @@ class Grid(QFrame):
 
     def __init__(self, settings):
         super().__init__()
+        self.setObjectName("Grid")
         self.action_map = {
             'up': self.scroll,
             'down': self.scroll,
@@ -157,7 +158,6 @@ class Grid(QFrame):
             'select': self.select_current_target,
             'unselect': self.unselect,
         }
-        self.setProperty('qtiColors', 'default')
 
         self.body = GridBody(settings)
         self.body.mouse_click.connect(self.handle_click)

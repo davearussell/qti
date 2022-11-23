@@ -19,28 +19,17 @@ from cache import background_cacher, set_root_dir
 import keys
 
 STYLESHEET_TMPL = """
-*[qtiColors="default"] {
+
+QMainWindow {
   background-color: {{ background_color.name() }};
-  color: {{ text_color.name() }};
 }
 
-*[qtiColors="semitransparent"] {
+*#Grid {
+  background-color: {{ background_color.name() }};
+}
+
+*[qtiOverlay="true"] {
   background-color: rgba(0, 0, 0, 128);
-  color: {{ text_color.name() }};
-}
-
-*[qtiColors="transparent"] {
-  color: {{ text_color.name() }};
-}
-
-*[qtiFont="thumbnailName"] {
-  font-size: {{ thumbnail_name_font_size }}pt;
-  font-family: "{{ font }}";
-}
-
-*[qtiFont="thumbnailCount"] {
-  font-size: {{ thumbnail_count_font_size }}pt;
-  font-family: "{{ font }}";
 }
 
 *[qtiFont="pathbar"] {
@@ -49,6 +38,7 @@ STYLESHEET_TMPL = """
 }
 
 *[qtiFont="statusbar"] {
+  color: {{ text_color.name() }};
   font-size: {{ statusbar_font_size }}pt;
   font-family: "{{ font }}";
 }
@@ -66,10 +56,8 @@ QLineEdit[valid="false"] { color: red; }
 class Window(QMainWindow):
     def __init__(self, app, size):
         super().__init__()
-        self.setProperty("qtiColors", "default")
-        self.setFixedSize(size)
         self.app = app
-        self.browser = browser.Browser(app, size)
+        self.browser = browser.Browser(app)
         self.setCentralWidget(self.browser)
         self.snapshots = []
 
@@ -142,7 +130,7 @@ class Application(QApplication):
         self.window = Window(self, self.primaryScreen().size())
         set_root_dir(self.library.root_dir)
         self.cacher = background_cacher(self, self.library.images,
-                                        [self.window.size(), self.settings.thumbnail_size])
+                                        [self.primaryScreen().size(), self.settings.thumbnail_size])
         self.apply_settings()
         self.status_bar.set_text("XXX this is some test text 123 XXX")
 
