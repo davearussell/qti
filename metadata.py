@@ -15,6 +15,7 @@ class CheckBox(QCheckBox):
     def __init__(self, label, selected, ctx=None, cb=None):
         super().__init__(label)
         self.setChecked(selected)
+        self.setFocusPolicy(Qt.NoFocus)
         self.ctx = ctx
         self.stateChanged.connect(self._updated)
         if cb:
@@ -29,6 +30,7 @@ class ActionButton(QPushButton):
 
     def __init__(self, action, ctx=None, cb=None):
         super().__init__()
+        self.setFocusPolicy(Qt.NoFocus)
         self.action = action
         self.ctx = ctx
         style = QCommonStyle()
