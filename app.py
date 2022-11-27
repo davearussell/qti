@@ -132,7 +132,6 @@ class Application(QApplication):
         self.cacher = background_cacher(self, self.library.images,
                                         [self.primaryScreen().size(), self.settings.thumbnail_size])
         self.apply_settings()
-        self.status_bar.set_text("XXX this is some test text 123 XXX")
 
     def exec(self):
         self.reload_tree()
