@@ -16,6 +16,7 @@ from deleter import DeleterDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
 from app_settings import AppSettingsDialog
+from key_config import KeybindDialog
 from cache import background_cacher, set_root_dir
 import keys
 
@@ -38,6 +39,11 @@ QMainWindow {
   font-family: "{{ font }}";
 }
 
+*[qtiFont="keypicker"] {
+  font-size: {{ key_picker_font_size }}pt;
+  font-family: "{{ font }}";
+}
+
 *[qtiFont="statusbar"] {
   color: {{ text_color.name() }};
   font-size: {{ statusbar_font_size }}pt;
@@ -50,7 +56,7 @@ QMainWindow {
 *[qtiFontStyle="node_fade"] { color: {{ text_color.darker().name() }};  }
 
 *#ValueBox {background-color: white; }
-QLineEdit[valid="false"] { color: red; }
+*[valid="false"] { color: red; }
 """
 
 
@@ -103,6 +109,8 @@ class Window(QMainWindow):
             DeleterDialog(self.app, self.browser.target).exec()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self.app).exec()
+        elif action == 'edit_keybinds':
+            KeybindDialog(self.app).exec()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':

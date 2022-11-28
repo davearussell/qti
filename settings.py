@@ -45,6 +45,7 @@ KEYBINDS = {
     'delete':        [Qt.Key_D],
     'edit_metadata': [Qt.Key_M],
     'app_settings':  [Qt.Key_A],
+    'edit_keybinds': [Qt.Key_K],
 
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],
@@ -59,7 +60,10 @@ for action, bindings in KEYBINDS.items():
     for i, binding in enumerate(bindings):
         if not isinstance(binding, tuple):
             binding = (binding, Qt.KeyboardModifier(0))
+            bindings[i] = binding
         KEY_SETTINGS['keybind_%s_%d' % (action, i)] = binding
+    if len(bindings) == 1:
+       KEY_SETTINGS['keybind_%s_1' % (action,)] = None
 
 
 TYPE_MAP = {}
