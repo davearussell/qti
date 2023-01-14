@@ -42,30 +42,69 @@ class TextBoxDialog(VBoxDialog):
         self.result.emit(self.edit.text())
 
 
-class FieldDialog(VBoxDialog):
-    title = "Dialog"
+class DataDialog(QDialog):
+    title = 'Dialog'
 
     def __init__(self, app):
-        super().__init__(app.window, self.title)
+        super().__init__(app.window)
         self.app = app
+        self.setWindowTitle(self.title)
+        self.setLayout(QVBoxLayout())
+
+    def add_buttons(self):
+        roles = QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply
+        self.buttons = QDialogButtonBox(roles)
+        self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+        self.buttons.clicked.connect(self._clicked)
+        for button in self.buttons.buttons():
+            button.setFocusPolicy(Qt.NoFocus)
+        self.layout().addWidget(self.buttons)
+
+    def _clicked(self, button):
+        role = self.buttons.buttonRole(button)
+        if role == QDialogButtonBox.ApplyRole:
+            self.commit()
+            self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+        elif role == QDialogButtonBox.AcceptRole:
+            self.accept()
+        else:
+            self.reject()
+
+    def dirty(self):
+        raise NotImplementedError()
+
+    def commit(self):
+        raise NotImplementedError()
+
+    def accept(self):
+        if self.dirty():
+            self.commit()
+        super().accept()
+
+    def data_updated(self):
+        self.buttons.button(QDialogButtonBox.Apply).setEnabled(self.dirty())
+
+
+class FieldDialog(DataDialog):
+    def __init__(self, app):
+        super().__init__(app)
         self.field_list = FieldList()
+        self.field_list.field_updated.connect(self.data_updated)
         self.layout().addWidget(self.field_list)
-        self.need_reload = False
+        self.add_buttons()
 
     def init_fields(self, fields):
         self.field_list.init_fields(fields)
         self.field_list.setFocus()
 
-    def reload(self):
-        self.app.reload_tree()
+    def dirty(self):
+        return any(field.dirty() for field in self.field_list.fields.values())
 
-    def accept(self):
-        if self.need_reload:
-            self.reload()
-        super().accept()
+    def commit(self):
+        for field in self.field_list.fields.values():
+            if field.dirty():
+                self.apply_field_update(field, field.get_value())
+                field.mark_clean()
 
-    def keyPressEvent(self, event):
-        if keys.get_action(event) == 'select':
-            self.accept()
-        else:
-            event.ignore()
+    def apply_field_update(self, field, value):
+        raise NotImplementedError()

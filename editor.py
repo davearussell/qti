@@ -1,7 +1,6 @@
 import os
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox
-from PySide6.QtCore import Qt, Signal
-from fields import FieldList, TextField, ReadOnlyField, SetField
+from PySide6.QtCore import Signal
+from fields import TextField, ReadOnlyField, SetField
 from dialog import FieldDialog
 import keys
 
@@ -106,70 +105,31 @@ def choose_fields(node):
     return fields
 
 
-class EditorDialog(QDialog):
+class EditorDialog(FieldDialog):
     request_scroll = Signal(str, object)
     title = "Editor"
 
     def __init__(self, app, node):
-        super().__init__(app.window)
-        self.app = app
-        self.setWindowTitle("Editor")
-        self.setLayout(QVBoxLayout())
-
-        self.field_list = FieldList()
-        self.field_list.field_updated.connect(self.field_updated)
-        self.layout().addWidget(self.field_list)
-
-        roles = QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply
-        self.buttons = QDialogButtonBox(roles)
-        self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
-        self.buttons.clicked.connect(self._clicked)
-        for button in self.buttons.buttons():
-            button.setFocusPolicy(Qt.NoFocus)
-        self.layout().addWidget(self.buttons)
-
+        super().__init__(app)
         self.load_node(node)
-
-    def _clicked(self, button):
-        role = self.buttons.buttonRole(button)
-        if role == QDialogButtonBox.ApplyRole:
-            self.commit()
-            self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
-        elif role == QDialogButtonBox.AcceptRole:
-            self.commit()
-            self.accept()
-        else:
-            self.reject()
 
     def load_node(self, node):
         self.node = node
-        fields = choose_fields(node)
-        self.field_list.init_fields(fields)
-        self.field_list.setFocus()
+        self.init_fields(choose_fields(node))
 
     def scroll_node(self, node):
-        self.commit()
+        if self.dirty():
+            self.commit()
         self.load_node(node)
 
-    def dirty(self):
-        return any(field.dirty() for field in self.field_list.fields.values())
-
-    def field_updated(self):
-        self.buttons.button(QDialogButtonBox.Apply).setEnabled(self.dirty())
-
     def commit(self):
-        if self.dirty():
-            self.node.library.refresh_images()
-            for field in self.field_list.fields.values():
-                if field.dirty():
-                    field.update_node(field.get_value())
-                    field.mark_clean()
-            self.app.reload_tree()
-            self.app.library.scan_keys()
+        self.node.library.refresh_images()
+        super().commit()
+        self.app.reload_tree()
+        self.app.library.scan_keys()
 
-    def accept(self):
-        self.commit()
-        super().accept()
+    def apply_field_update(self, field, value):
+        field.update_node(value)
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
