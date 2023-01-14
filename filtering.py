@@ -109,8 +109,9 @@ class FilterConfigDialog(FieldDialog):
             ExprField('custom_expr', config.custom_expr, keybind='U'),
         ]
 
-    def field_committed(self, field, value):
-        self.need_reload = True
-        assert field.key in self.config.defaults, (field.key, value)
+    def commit(self):
+        super().commit()
+        self.app.reload_tree()
+
+    def apply_field_update(self, field, value):
         setattr(self.config, field.key, value)
-        super().field_committed(field, value)
