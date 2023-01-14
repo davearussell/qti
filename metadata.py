@@ -3,8 +3,9 @@ import copy
 from PySide6.QtWidgets import QDialog, QWidget, QVBoxLayout, QGridLayout
 from PySide6.QtWidgets import QLabel, QCheckBox, QPushButton
 from PySide6.QtWidgets import QStyle, QCommonStyle
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QTimer
 
+from dialog import DataDialog
 from line_edit import LineEdit
 import keys
 
@@ -49,17 +50,13 @@ class ActionButton(QPushButton):
 
 
 class MetadataGrid(QWidget):
-    rename_key = Signal(str, str)
-    delete_key = Signal(str)
-    new_key = Signal(str)
-    reorder_keys = Signal(list)
-    set_key_multi = Signal(str, bool)
-    set_hierarchy = Signal(list)
+    data_updated = Signal()
 
     def __init__(self, metadata_keys):
         super().__init__()
         self.metadata_keys = copy.deepcopy(metadata_keys)
         self.do_layout()
+        self.actions = []
 
     def do_layout(self):
         QWidget().setLayout(self.layout()) # clears any existing layout
@@ -70,47 +67,53 @@ class MetadataGrid(QWidget):
                     self.layout().addWidget(cell, i, j)
         self.layout().setRowStretch(i + 1, 1)
 
+    def action(self, action, *args):
+        self.actions.append((action, args))
+        self.data_updated.emit()
+
     def button_cb(self, action, i):
         if action == 'delete':
             mk = self.metadata_keys.pop(i)
-            self.delete_key.emit(mk['name'])
-            if mk.get('in_hierarchy'):
-                self.refresh_hierarchy()
+            self.action('delete', mk['name'])
         else:
             j = i + (1 if action == 'down' else -1)
             m = self.metadata_keys
             m[i], m[j] = m[j], m[i]
-            self.reorder_keys.emit([key['name'] for key in self.metadata_keys])
+            self.action('reorder', [key['name'] for key in m])
         self.do_layout()
 
     def new_row(self, name):
         is_valid = name and name not in [key['name'] for key in self.metadata_keys]
         if is_valid:
             self.metadata_keys.append({'name': name})
-            self.new_key.emit(name)
+            self.action('append', name)
         self.setFocus()
-        self.do_layout()
+        # This function is called from the context of a QLineEdit event callback.
+        # self.do_layout will destroy the QLineEdit so we delay calling it until
+        # the callback has returned
+        QTimer.singleShot(0, self.do_layout)
 
     def update_name(self, name, i):
         is_valid = name and name not in [key['name'] for key in self.metadata_keys]
         if is_valid:
-            self.rename_key.emit(self.metadata_keys[i]['name'], name)
+            old_name = self.metadata_keys[i]['name']
+            if self.actions: # Merge consecutive renames of the same key
+                action, args = self.actions[-1]
+                if action == 'rename' and args[1] == old_name:
+                    old_name = args[0]
+                    self.actions.pop()
+            self.action('rename', old_name, name)
             self.metadata_keys[i]['name'] = name
-        self.do_layout()
 
     def update_multi(self, value, i):
         assert isinstance(value, bool), (value, i)
         self.metadata_keys[i]['multi'] = value
-        self.set_key_multi.emit(self.metadata_keys[i]['name'], value)
-
-    def refresh_hierarchy(self):
-        keys = [mk['name'] for mk in self.metadata_keys if mk.get('in_hierarchy')]
-        self.set_hierarchy.emit(keys)
+        self.action('multi', self.metadata_keys[i]['name'], value)
 
     def update_hierarchy(self, value, i):
         assert isinstance(value, bool), (value, i)
         self.metadata_keys[i]['in_hierarchy'] = value
-        self.refresh_hierarchy()
+        self.action('hierarchy', self.metadata_keys[i]['name'], value)
 
     def make_grid(self, metadata_keys):
         grid = []
@@ -118,8 +121,8 @@ class MetadataGrid(QWidget):
         for i, key in enumerate(metadata_keys):
             is_last = i == len(metadata_keys) - 1
 
-            edit = LineEdit(key['name'], read_only=key.get('builtin'),
-                            ctx=i, commit_cb=self.update_name)
+            edit = LineEdit(key['name'], read_only=key.get('builtin'), ctx=i)
+            edit.updated.connect(self.update_name)
             row = [edit, None, None, None, None, None]
             if not key.get('builtin'):
                 row[1] = CheckBox('Multi-value', bool(key.get('multi')),
@@ -139,28 +142,29 @@ class MetadataGrid(QWidget):
         return grid
 
 
-class MetadataEditorDialog(QDialog):
-    def __init__(self, app):
-        super().__init__(app.window)
-        self.setWindowTitle("Metadata Editor")
-        self.app = app
-        self.app.library.refresh_images()
-        self.setLayout(QVBoxLayout())
-        self.grid = MetadataGrid(self.app.library.metadata_keys())
-        self.grid.rename_key.connect(self.app.library.rename_key)
-        self.grid.delete_key.connect(self.app.library.delete_key)
-        self.grid.new_key.connect(self.app.library.new_key)
-        self.grid.reorder_keys.connect(self.app.library.reorder_keys)
-        self.grid.set_key_multi.connect(self.app.library.set_key_multi)
-        self.grid.set_hierarchy.connect(self.app.library.set_hierarchy)
-        self.layout().addWidget(self.grid)
-        done = QPushButton("Done")
-        done.setDefault(True)
-        done.clicked.connect(self.accept)
-        self.layout().addWidget(done)
+class MetadataEditorDialog(DataDialog):
+    title = 'Metadata Editor'
 
-    def keyPressEvent(self, event):
-        if keys.get_action(event) == 'select':
-            self.accept()
-        else:
-            event.ignore()
+    def __init__(self, app):
+        super().__init__(app)
+        self.app.library.refresh_images()
+        self.grid = MetadataGrid(self.app.library.metadata_keys())
+        self.grid.data_updated.connect(self.data_updated)
+        self.layout().addWidget(self.grid)
+        self.add_buttons()
+
+    def dirty(self):
+        return bool(self.grid.actions)
+
+    def commit(self):
+        handlers = {
+            'rename': self.app.library.rename_key,
+            'delete': self.app.library.delete_key,
+            'append': self.app.library.new_key,
+            'reorder': self.app.library.reorder_keys,
+            'multi': self.app.library.set_key_multi,
+            'hierarchy': self.app.library.set_key_in_hierarchy,
+        }
+        for action, args in self.grid.actions:
+            handlers[action](*args)
+        self.grid.actions = []

@@ -96,12 +96,15 @@ class Library:
         with open(self.json_path, 'r', encoding='UTF-8') as f:
             spec = json.load(f)
         self._custom_keys = spec['keys']
-        self.hierarchy = [ck['name'] for ck in self._custom_keys if ck.get('in_hierarchy')]
         self.images = []
         for image_spec in spec['images']:
             self.add_image(image_spec)
         self.scan_keys()
         self.tree = None
+
+    @property
+    def hierarchy(self):
+        return [ck['name'] for ck in self._custom_keys if ck.get('in_hierarchy')]
 
     def groupable_keys(self):
         return [key['name'] for key in self._custom_keys]
@@ -136,8 +139,6 @@ class Library:
         self._custom_keys.remove(key)
         # For simplicity, we don't bother to delete the key from every image
         # at this point. It will get deleted automatically on next app restart
-        if name in self.hierarchy:
-            self.hierarchy.remove(name)
 
     def new_key(self, name):
         print("new_key", name)
@@ -161,13 +162,10 @@ class Library:
             else:
                 image_spec[name] = ' '.join(image_spec[name])
 
-    def set_hierarchy(self, hierarchy):
-        self.hierarchy = hierarchy
-        for ck in self._custom_keys:
-            if ck['name'] in hierarchy:
-                ck['in_hierarchy'] = True
-            else:
-                ck.pop('in_hierarchy', None)
+    def set_key_in_hierarchy(self, name, value):
+        print("set_key_in_hierarchy", name, value)
+        key = self.find_key(name)
+        key['in_hierarchy'] = value
 
     def add_image(self, spec):
         all_keys = [key['name'] for key in self.metadata_keys()]

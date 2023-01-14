@@ -8,6 +8,7 @@ import keys
 
 class LineEdit(QLineEdit):
     commit = Signal(str, object)
+    updated = Signal(str, object)
     tab_complete = Signal(str)
 
     def __init__(self, initial_value=None, read_only=False, ctx=None, commit_cb=None):
@@ -22,9 +23,13 @@ class LineEdit(QLineEdit):
         self.ctx = ctx
         if commit_cb:
             self.commit.connect(commit_cb)
+        self.textChanged.connect(self._update)
 
     def _commit(self):
         self.commit.emit(self.text(), self.ctx)
+
+    def _update(self):
+        self.updated.emit(self.text(), self.ctx)
 
     def focusOutEvent(self, event):
         self._commit()
