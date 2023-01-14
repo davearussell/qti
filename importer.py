@@ -159,7 +159,7 @@ class ImporterDialog(QDialog):
         self.field_list.init_fields(fields)
         self.layout().addWidget(self.field_list)
         self.field_list.setFocus()
-        self.field_list.field_committed.connect(self.field_committed)
+        self.field_list.field_unfocused.connect(self.field_updated)
 
     def load_grid(self, new_images, default_values):
         self.grid = Grid(self.app.settings)
@@ -195,8 +195,14 @@ class ImporterDialog(QDialog):
             values = {key: '' for key in field_keys}
         for key in values:
             self.field_list.fields[key].set_value(values[key])
+            self.field_list.fields[key].mark_clean()
 
-    def field_committed(self, field, value):
+    def field_updated(self, field):
+        if not field.dirty():
+            return
+
+        value = field.get_value()
+
         target = self.grid.target
         if '{' in value or field.key in self.library.hierarchy:
             # If the value is a template, or the key is in the default group hierarchy,
@@ -209,6 +215,7 @@ class ImporterDialog(QDialog):
         for image in images:
             image.spec[field.key] = apply_template(value, image.spec)
         field.set_value(target.format_value(field.key))
+        field.mark_clean()
 
     def commit(self):
         if not self.images:

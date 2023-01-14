@@ -9,6 +9,7 @@ import keys
 
 class FieldList(QWidget):
     field_updated = Signal()
+    field_unfocused = Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -28,9 +29,13 @@ class FieldList(QWidget):
             if field.keybind:
                 self.keybinds[getattr(Qt.Key, 'Key_' + field.keybind)] = field
             self.layout().addWidget(field)
-            field.unfocus.connect(self.setFocus)
+            field.unfocus.connect(self.handle_unfocus)
             field.updated.connect(self.field_updated)
         self.layout().addStretch(1)
+
+    def handle_unfocus(self, field):
+        self.setFocus()
+        self.field_unfocused.emit(field)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -41,7 +46,7 @@ class FieldList(QWidget):
 
 
 class Field(QWidget):
-    unfocus = Signal()
+    unfocus = Signal(object)
     updated = Signal()
 
     def __init__(self, key, value, keybind=None, keymap=None):
@@ -81,7 +86,7 @@ class Field(QWidget):
         return label
 
     def done(self):
-        self.unfocus.emit()
+        self.unfocus.emit(self)
 
     def make_body(self):
         raise NotImplementedError()
