@@ -26,11 +26,15 @@ class LineEdit(QLineEdit):
     def _commit(self):
         self.commit.emit(self.text(), self.ctx)
 
+    def focusOutEvent(self, event):
+        self._commit()
+        super().focusOutEvent(event)
+
     def keyPressEvent(self, event):
         if keys.get_action(event) == 'select':
             # Normally a QLineEdit will pass the <Enter> key event up
             # to its parent, which we don't want, so swallow it here.
-            self._commit()
+            self.clearFocus()
         else:
             super().keyPressEvent(event)
 

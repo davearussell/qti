@@ -45,11 +45,13 @@ class ValueBox(QLabel):
 
 class SetPicker(QWidget):
     commit = Signal(list)
+    textChanged = Signal()
 
-    def __init__(self, values, completions):
+    def __init__(self, completions=None):
         super().__init__()
         self.boxes = []
         self.text = TextBox(completions)
+        self.text.textChanged.connect(self.textChanged)
         self.text.push_value.connect(self.push_value)
         self.text.pop_value.connect(self.pop_value)
         self.text.commit.connect(self._commit)
@@ -57,8 +59,21 @@ class SetPicker(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         layout.addWidget(self.text)
+
+    def set_value(self, values):
+        for box in self.boxes:
+            box.hide()
+            self.layout().remoteWidget(box)
+        self.boxes = []
         for value in values:
             self.add_box(ValueBox(value))
+
+    def get_value(self):
+        values = [box.value for box in self.boxes]
+        text = self.text.text()
+        if text:
+            values.append(text)
+        return values
 
     def _commit(self, text):
         if text:
@@ -95,3 +110,4 @@ class SetPicker(QWidget):
     def box_clicked(self, box):
         self.remove_box(box)
         self.text.setFocus()
+        self.textChanged.emit()

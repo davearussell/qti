@@ -49,16 +49,12 @@ class FieldDialog(VBoxDialog):
         super().__init__(app.window, self.title)
         self.app = app
         self.field_list = FieldList()
-        self.field_list.field_committed.connect(self.field_committed)
         self.layout().addWidget(self.field_list)
         self.need_reload = False
 
     def init_fields(self, fields):
         self.field_list.init_fields(fields)
         self.field_list.setFocus()
-
-    def field_committed(self, field, value):
-        pass
 
     def reload(self):
         self.app.reload_tree()

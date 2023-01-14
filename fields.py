@@ -8,7 +8,7 @@ import keys
 
 
 class FieldList(QWidget):
-    field_committed = Signal(object, object)
+    field_updated = Signal()
 
     def __init__(self):
         super().__init__()
@@ -28,12 +28,9 @@ class FieldList(QWidget):
             if field.keybind:
                 self.keybinds[getattr(Qt.Key, 'Key_' + field.keybind)] = field
             self.layout().addWidget(field)
-            field.commit.connect(self._field_committed)
+            field.unfocus.connect(self.setFocus)
+            field.updated.connect(self.field_updated)
         self.layout().addStretch(1)
-
-    def _field_committed(self, field, value):
-        self.setFocus()
-        self.field_committed.emit(field, value)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -44,18 +41,21 @@ class FieldList(QWidget):
 
 
 class Field(QWidget):
-    commit = Signal(object, object)
+    unfocus = Signal()
+    updated = Signal()
 
     def __init__(self, key, value, keybind=None, keymap=None):
         super().__init__()
         self.key = key
+        self.original_value = value
         if keymap:
             assert keybind is None, (keybind, keymap)
             self.keybind = keymap.assign_keybind(self.key)
         else:
             self.keybind = keybind.upper() if keybind else None
         self.label = self.make_label()
-        self.body = self.make_body(value)
+        self.body = self.make_body()
+        self.set_value(value)
         layout = QHBoxLayout()
         self.setLayout(layout)
         layout.addWidget(self.label)
@@ -64,6 +64,12 @@ class Field(QWidget):
 
     def focusInEvent(self, event):
         self.body.setFocus()
+
+    def dirty(self):
+        return self.get_value() != self.original_value
+
+    def mark_clean(self):
+        self.original_value = self.get_value()
 
     def make_label(self):
         label = QLabel()
@@ -74,25 +80,17 @@ class Field(QWidget):
         label.setText(text)
         return label
 
-    def commit_value(self, value):
-        self.commit.emit(self, value)
+    def done(self):
+        self.unfocus.emit()
 
     def make_body(self):
         raise NotImplementedError()
 
-    def set_value(self, value):
-        print(type(self), self.key, value)
+    def get_value(self):
         raise NotImplementedError()
 
-
-class ReadOnlyField(Field):
-    def make_body(self, value):
-        label = QLabel()
-        label.setText(value)
-        return label
-
     def set_value(self, value):
-        self.body.setText(value)
+        raise NotImplementedError()
 
 
 class TextField(Field):
@@ -102,14 +100,29 @@ class TextField(Field):
         self.edit_args = {} if completions is None else {'completions': completions}
         super().__init__(key, value, **kwargs)
 
-    def make_body(self, value):
-        box = self.edit_cls(value, **self.edit_args)
-        box.commit.connect(self.commit_value)
+    def make_body(self):
+        box = self.edit_cls(**self.edit_args)
+        box.commit.connect(self.done)
+        box.textChanged.connect(self.updated)
         return box
+
+    def get_value(self):
+        return self.body.text()
 
     def set_value(self, value):
         self.body.setText(value)
 
 
+class ReadOnlyField(TextField):
+    def make_body(self):
+        return QLabel()
+
+
 class SetField(TextField):
     edit_cls = SetPicker
+
+    def get_value(self):
+        return self.body.get_value()
+
+    def set_value(self, value):
+        self.body.set_value(value)

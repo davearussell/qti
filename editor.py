@@ -1,6 +1,7 @@
 import os
-from PySide6.QtCore import Signal
-from fields import TextField, ReadOnlyField, SetField
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox
+from PySide6.QtCore import Qt, Signal
+from fields import FieldList, TextField, ReadOnlyField, SetField
 from dialog import FieldDialog
 import keys
 
@@ -8,9 +9,8 @@ import keys
 class NameField(TextField):
     def __init__(self, node, **kwargs):
         self.node = node
-        self.original_value = node.name
         kwargs.setdefault('completions', [sibling.name for sibling in node.parent.children])
-        super().__init__('name', self.original_value, **kwargs)
+        super().__init__('name', node.name, **kwargs)
 
     def update_node(self, new_value):
         if self.node.children:
@@ -23,21 +23,18 @@ class NameField(TextField):
                     leaf.spec[self.node.type] = new_value
         else:
             self.node.spec['name'] = new_value
-        self.node.name = new_value # required for reload_tree's path_from_root logic
 
 
 class AncestorField(TextField):
     def __init__(self, node, ancestor, **kwargs):
         self.node = node
         self.ancestor = ancestor
-        self.original_value = ancestor.name
         kwargs.setdefault('completions', [sibling.name for sibling in ancestor.parent.children])
-        super().__init__(ancestor.type, self.original_value, **kwargs)
+        super().__init__(ancestor.type, ancestor.name, **kwargs)
 
     def update_node(self, new_value):
         for leaf in self.node.leaves():
             leaf.spec[self.ancestor.type] = new_value
-        self.ancestor.name = new_value # required for reload_tree's path_from_root logic
 
 
 class EditorSetField(SetField):
@@ -54,7 +51,6 @@ class EditorSetField(SetField):
                 values = [value for value in values if value in leaf.spec[key]]
         if varying:
             values.insert(0, '...')
-        self.original_value = values
         super().__init__(key, values, completions=completions, **kwargs)
 
     def update_node(self, new_value):
@@ -74,12 +70,10 @@ class EditorTextField(TextField):
     def __init__(self, node, key, **kwargs):
         self.node = node
         values = {leaf.spec[key] for leaf in node.leaves()}
-        self.original_value = values.pop() if len(values) == 1 else '...'
-        super().__init__(key, self.original_value, **kwargs)
+        value = values.pop() if len(values) == 1 else '...'
+        super().__init__(key, value, **kwargs)
 
     def update_node(self, new_value):
-        if self.original_value == new_value == '...':
-            return
         for leaf in self.node.leaves():
             leaf.spec[self.key] = new_value
 
@@ -112,32 +106,74 @@ def choose_fields(node):
     return fields
 
 
-class EditorDialog(FieldDialog):
+class EditorDialog(QDialog):
     request_scroll = Signal(str, object)
     title = "Editor"
 
     def __init__(self, app, node):
-        super().__init__(app)
+        super().__init__(app.window)
+        self.app = app
+        self.setWindowTitle("Editor")
+        self.setLayout(QVBoxLayout())
+
+        self.field_list = FieldList()
+        self.field_list.field_updated.connect(self.field_updated)
+        self.layout().addWidget(self.field_list)
+
+        roles = QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply
+        self.buttons = QDialogButtonBox(roles)
+        self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+        self.buttons.clicked.connect(self._clicked)
+        for button in self.buttons.buttons():
+            button.setFocusPolicy(Qt.NoFocus)
+        self.layout().addWidget(self.buttons)
+
         self.load_node(node)
+
+    def _clicked(self, button):
+        role = self.buttons.buttonRole(button)
+        if role == QDialogButtonBox.ApplyRole:
+            self.commit()
+            self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+        elif role == QDialogButtonBox.AcceptRole:
+            self.commit()
+            self.accept()
+        else:
+            self.reject()
 
     def load_node(self, node):
         self.node = node
-        self.init_fields(choose_fields(node))
+        fields = choose_fields(node)
+        self.field_list.init_fields(fields)
+        self.field_list.setFocus()
 
-    def field_committed(self, field, value):
-        self.node.library.refresh_images()
-        if field.original_value != value:
-            field.update_node(value)
-            self.need_reload = True
-        super().field_committed(field, value)
+    def scroll_node(self, node):
+        self.commit()
+        self.load_node(node)
 
-    def reload(self):
-        super().reload()
-        self.app.library.scan_keys()
+    def dirty(self):
+        return any(field.dirty() for field in self.field_list.fields.values())
+
+    def field_updated(self):
+        self.buttons.button(QDialogButtonBox.Apply).setEnabled(self.dirty())
+
+    def commit(self):
+        if self.dirty():
+            self.node.library.refresh_images()
+            for field in self.field_list.fields.values():
+                if field.dirty():
+                    field.update_node(field.get_value())
+                    field.mark_clean()
+            self.app.reload_tree()
+            self.app.library.scan_keys()
+
+    def accept(self):
+        self.commit()
+        super().accept()
 
     def keyPressEvent(self, event):
         action = keys.get_action(event)
         if action in keys.SCROLL_ACTIONS:
-            self.request_scroll.emit(action, self.load_node)
+            self.request_scroll.emit(action, self.scroll_node)
         else:
             super().keyPressEvent(event)
