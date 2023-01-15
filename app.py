@@ -143,6 +143,7 @@ class Application(QApplication):
         env = jinja2.Environment().from_string(STYLESHEET_TMPL)
         stylesheet = env.render(self.settings.to_dict())
         self.setStyleSheet(stylesheet)
+        self.reload_tree()
 
     def reload_tree(self):
         target = self.window.browser.target

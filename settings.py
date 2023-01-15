@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QColorDialog
 from PySide6.QtCore import Qt, QSettings, QSize, Signal
-from PySide6.QtGui import QFontMetrics, QPalette, QColor
+from PySide6.QtGui import QPalette, QColor
 
 from dialog import FieldDialog
-from fields import Field, TextField
-from line_edit import LineEdit
+from fields import Field, TextField, ValidatedTextField
+from line_edit import ValidatedLineEdit
 import keys
 
 
@@ -51,40 +51,23 @@ class Settings:
         return key in _type_map
 
 
-class NumberEdit(LineEdit):
-    def __init__(self, initial_value, max_digits=3):
-        super().__init__(str(initial_value))
-        self.max_digits = max_digits
-        self.setInputMask('0' * (max_digits - 1) + '9;')
-        max_width = QFontMetrics(self.font()).boundingRect('0' * (max_digits + 1)).width()
-        self.setMaximumWidth(max_width)
-
-
-class DimensionEdit(NumberEdit):
-    tab = Signal()
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Tab:
-            self.tab.emit()
-        else:
-            super().keyPressEvent(event)
-
-
 class ColorPicker(QLabel):
     color_picked = Signal(QColor)
 
-    def __init__(self, color):
+    def __init__(self):
         super().__init__()
         self.setContentsMargins(5, 5, 5, 5)
         self.setAutoFillBackground(True)
-        self.set_color(color)
 
     def set_color(self, color):
         self.color = color
         self.setText("Click to edit [%s]" % color.name())
+        self.apply_palette()
+
+    def apply_palette(self):
         pal = self.palette()
-        pal.setColor(QPalette.Window, color)
-        pal.setColor(QPalette.WindowText, self.contrasting_color(color))
+        pal.setColor(QPalette.Window, self.color)
+        pal.setColor(QPalette.WindowText, self.contrasting_color(self.color))
         self.setPalette(pal)
 
     def contrasting_color(self, color):
@@ -103,58 +86,10 @@ class ColorPicker(QLabel):
         self.pick_new_color()
 
 
-class IntField(Field):
-    def __init__(self, key, value, max_digits=3, *args, **kwargs):
-        self.max_digits = max_digits
-        super().__init__(key, value, *args, **kwargs)
-        # Because our editor has a fixed width, we need a stretch to
-        # keep ourselves horozontally aligned with other fields
-        self.layout().addStretch(1)
-
-    def make_body(self, value):
-        edit = NumberEdit(value, self.max_digits)
-        edit.commit.connect(self.commit_value)
-        return edit
-
-    def commit_value(self, value):
-        self.commit.emit(self, int(value))
-
-
-class SizeField(Field):
-    def make_body(self, size):
-        container = QWidget()
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        container.setLayout(layout)
-
-        self.xbox = DimensionEdit(str(size.width()))
-        self.cross = QLabel('x')
-        self.ybox = DimensionEdit(str(size.height()))
-
-        layout.addWidget(self.xbox)
-        layout.addWidget(self.cross)
-        layout.addWidget(self.ybox)
-        layout.addStretch(1)
-
-        self.xbox.commit.connect(self.commit_value)
-        self.ybox.commit.connect(self.commit_value)
-        self.xbox.tab.connect(self.ybox.setFocus)
-        self.ybox.tab.connect(self.xbox.setFocus)
-
-        return container
-
-    def commit_value(self, _):
-        size = QSize(int(self.xbox.text()), int(self.ybox.text()))
-        self.commit.emit(self, size)
-
-    def focusInEvent(self, event):
-        self.xbox.setFocus()
-
-
 class ColorField(Field):
-    def make_body(self, color):
-        self.picker = ColorPicker(color)
-        self.picker.color_picked.connect(self.commit_value)
+    def make_body(self):
+        self.picker = ColorPicker()
+        self.picker.color_picked.connect(self.done)
         container = QWidget()
         layout = QHBoxLayout()
         container.setLayout(layout)
@@ -165,6 +100,66 @@ class ColorField(Field):
 
     def focusInEvent(self, event):
         self.picker.pick_new_color()
+
+    def done(self):
+        self.updated.emit()
+        super().done()
+
+    def get_value(self):
+        return self.picker.color
+
+    def set_value(self, color):
+        self.picker.set_color(color)
+
+
+class TypedEdit(ValidatedLineEdit):
+    def normalise(self, value):
+        return self.to_text(self.from_text(value))
+
+    @classmethod
+    def from_text(cls, text):
+        raise NotImplementedError()
+
+    @classmethod
+    def to_text(cls, value):
+        return str(value)
+
+
+class TypedField(ValidatedTextField):
+    edit_cls = TypedEdit
+
+    def set_value(self, value):
+        super().set_value(self.edit_cls.to_text(value))
+
+    def get_value(self):
+        if self.body.valid:
+            return self.edit_cls.from_text(super().get_value())
+        return self.original_value
+
+
+class IntField(TypedField):
+    class edit_cls(TypedEdit):
+        @classmethod
+        def from_text(cls, text):
+            return int(text, base=0)
+
+
+class SizeField(TypedField):
+    class edit_cls(TypedEdit):
+        @classmethod
+        def from_text(cls, text):
+            values = text.split()
+            if len(values) == 3 and values[1] in [',', 'x']:
+                w, h = values[0], values[2]
+            elif len(values) == 2:
+                w, h = values
+            else:
+                w = h = ''
+            return QSize(int(w), int(h))
+
+        @classmethod
+        def to_text(cls, value):
+            return '%d x %d' % value.toTuple()
 
 
 class SettingsDialog(FieldDialog):
@@ -188,12 +183,14 @@ class SettingsDialog(FieldDialog):
             for (key, _type, _) in _settings
         ]
 
-    def field_committed(self, field, value):
-        self.need_reload = True
+    def apply_field_update(self, field, value):
         assert field.key in self.settings, (field.key, value)
         self.settings.set(field.key, value)
-        super().field_committed(field, value)
 
-    def reload(self):
-        super().reload()
+    def commit(self):
+        super().commit()
         self.app.apply_settings()
+        # The above call discards the custom palette on our ColorFields
+        for field in self.field_list.fields.values():
+            if isinstance(field, ColorField):
+                field.picker.apply_palette()
