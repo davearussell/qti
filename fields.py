@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
-from line_edit import TabCompleteLineEdit
+from line_edit import TabCompleteLineEdit, ValidatedLineEdit
 import keys
 
 
@@ -116,6 +116,18 @@ class TextField(Field):
 
     def set_value(self, value):
         self.body.setText(value)
+
+
+class ValidatedTextField(TextField):
+    edit_cls = ValidatedLineEdit
+
+    def get_value(self):
+        return super().get_value() if self.body.valid else self.original_value
+
+    def done(self):
+        if not self.body.valid:
+            self.set_value(self.original_value)
+        super().done()
 
 
 class ReadOnlyField(TextField):

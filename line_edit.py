@@ -65,3 +65,36 @@ class TabCompleteLineEdit(LineEdit):
                     self.tab_complete.emit(matches[0])
         else:
             super().keyPressEvent(event)
+
+
+class ValidatedLineEdit(LineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.textChanged.connect(self.check_valid)
+        self.valid = True
+
+    def check_valid(self, value):
+        self.valid = self.is_valid(value)
+        self.setProperty("valid", self.valid)
+        self.setStyleSheet("/* /") # force stylesheet recalc
+
+    def is_valid(self, text):
+        try:
+            self.normalise(self.text())
+            return True
+        except:
+            return False
+
+    def try_normalise(self):
+        try:
+            self.setText(self.normalise(self.text()))
+        except:
+            self.setText('')
+            self.valid = False
+
+    def _commit(self):
+        self.try_normalise()
+        super()._commit()
+
+    def normalise(self, value):
+        raise NotImplementedError()

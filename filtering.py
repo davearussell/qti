@@ -1,8 +1,8 @@
 import copy
 
 from dialog import FieldDialog
-from line_edit import LineEdit
-from fields import SetField, TextField
+from line_edit import ValidatedLineEdit
+from fields import SetField, ValidatedTextField
 import expr
 import keys
 
@@ -54,36 +54,10 @@ def default_filter_config(library):
     return c
 
 
-class ExprEdit(LineEdit):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.textChanged.connect(self.check_valid)
-
-    def is_valid(self, value):
-        try:
-            expr.parse_expr(value)
-            return True
-        except expr.BadExpr:
-            return False
-
-    def normalise(self, value):
-        try:
+class ExprField(ValidatedTextField):
+    class edit_cls(ValidatedLineEdit):
+        def normalise(self, value):
             return str(expr.parse_expr(value))
-        except expr.BadExpr:
-            return ''
-
-    def check_valid(self, value):
-        self.setProperty("valid", self.is_valid(value))
-        self.setStyleSheet("/* /") # force stylesheet recalc
-
-    def keyPressEvent(self, event):
-        if keys.get_action(event) == 'select':
-            self.setText(self.normalise(self.text()))
-        super().keyPressEvent(event)
-
-
-class ExprField(TextField):
-    edit_cls = ExprEdit
 
 
 class FilterConfigDialog(FieldDialog):
