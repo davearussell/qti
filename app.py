@@ -15,6 +15,7 @@ from filtering import default_filter_config, FilterConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
+from app_settings import AppSettingsDialog
 from cache import background_cacher, set_root_dir
 import keys
 
@@ -111,7 +112,7 @@ class Window(QMainWindow):
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
-            settings.SettingsDialog(self.app).exec()
+            AppSettingsDialog(self.app).exec()
         else:
             event.ignore()
 
@@ -123,6 +124,7 @@ class Application(QApplication):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
         self.settings = settings.Settings('davesoft', 'qti')
+        keys.load_keybinds(self.settings)
         self.library = library.Library(json_file)
         self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)
