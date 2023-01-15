@@ -3,7 +3,7 @@ import re
 
 import jinja2
 
-from PySide6.QtWidgets import QDialog, QLabel
+from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPainter
@@ -11,7 +11,7 @@ from PySide6.QtGui import QPainter
 from PIL import Image
 
 import keys
-from dialog import YesNoDialog, TextBoxDialog
+from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
 import cache
 from grid import Grid, Cell
 from fields import FieldList, TextField,  ReadOnlyField
@@ -29,6 +29,8 @@ def find_all_images(path):
 def find_new_images_for(node):
     existing_images = {image.abspath for image in node.root.leaves()}
     search_dir = os.path.commonpath({image.abspath for image in node.leaves()})
+    if os.path.isfile(search_dir):
+        search_dir = os.path.dirname(search_dir)
     return sorted(image for image in find_all_images(search_dir) if image not in existing_images)
 
 
@@ -106,14 +108,16 @@ class NewImage(Cell):
         return pixmap
 
 
-class ImporterDialog(QDialog):
+class ImporterDialog(DataDialog):
+    title = 'Import images'
+
     def __init__(self, app, node):
-        super().__init__(app.window)
+        super().__init__(app)
         self.node = node
-        self.app = app
         self.library = app.library
-        self.setWindowTitle("Import images")
-        self.setLayout(QHBoxLayout())
+        self.body = QWidget()
+        self.body.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.body)
         self.images = []
         new_images = find_new_images_for(node)
         if self.app.filter_config.group_by != self.library.hierarchy:
@@ -122,11 +126,15 @@ class ImporterDialog(QDialog):
             self.setup_importer(new_images)
         else:
             self.set_label("No new images found")
+        self.add_buttons(apply=bool(new_images), cancel=bool(new_images))
+
+    def dirty(self):
+        return bool(self.images)
 
     def set_label(self, text):
         label = QLabel()
         label.setText(text)
-        self.layout().addWidget(label)
+        self.body.layout().addWidget(label)
 
     def get_default_values(self):
         default_values = {}
@@ -157,7 +165,7 @@ class ImporterDialog(QDialog):
                   for key in self.library.hierarchy]
         self.field_list = FieldList()
         self.field_list.init_fields(fields)
-        self.layout().addWidget(self.field_list)
+        self.body.layout().addWidget(self.field_list)
         self.field_list.setFocus()
         self.field_list.field_unfocused.connect(self.field_updated)
 
@@ -168,7 +176,7 @@ class ImporterDialog(QDialog):
                        for path in new_images]
         self.grid.target_updated.connect(self.grid_target_updated)
         self.grid.load(self.images, target=self.images[0])
-        self.layout().addWidget(self.grid)
+        self.body.layout().addWidget(self.grid)
 
     def drop_images(self, images):
         self.images = [image for image in self.images if image not in images]
@@ -216,24 +224,25 @@ class ImporterDialog(QDialog):
             image.spec[field.key] = apply_template(value, image.spec)
         field.set_value(target.format_value(field.key))
         field.mark_clean()
+        self.data_updated()
 
     def commit(self):
-        if not self.images:
-            self.accept()
-            return
-
         required_keys = self.library.hierarchy + ['name']
-        ready = [image.spec for image in self.images
+        ready = [image for image in self.images
                  if all(image.spec.get(key) for key in required_keys)]
+        if not ready:
+            InfoDialog(self, "Missing keys", "All images are missing required keys. Canont import.").exec()
+            raise AbortCommit()
         if len(ready) < len(self.images):
             if not YesNoDialog(self, "Missing keys", "Some images are missing required keys. "
                               "These will not be added. Proceed anyway?").exec():
-                return
+                raise AbortCommit()
 
-        for spec in ready:
-            self.library.add_image(spec)
+        for image in ready:
+            self.library.add_image(image.spec)
         self.app.reload_tree()
-        self.accept()
+        self.drop_images(ready)
+
 
     def exclude_images(self, pattern):
         matches = [image for image in self.images if pattern.lower() in image.path.lower()]
@@ -243,11 +252,7 @@ class ImporterDialog(QDialog):
     def keyPressEvent(self, event):
         action = keys.get_action(event)
         key = event.key()
-        if action == 'select':
-            self.commit()
-        elif action == 'cancel':
-            self.reject()
-        elif action == 'delete':
+        if action == 'delete':
             self.delete_target()
         elif action in ['up', 'down', 'left', 'right']:
             self.grid.scroll(action)
@@ -257,4 +262,4 @@ class ImporterDialog(QDialog):
             dialog.result.connect(self.exclude_images)
             dialog.exec()
         else:
-            event.ignore()
+            super().keyPressEvent(event)

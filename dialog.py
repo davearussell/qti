@@ -6,6 +6,10 @@ from fields import FieldList
 import keys
 
 
+class AbortCommit(Exception):
+    pass
+
+
 class VBoxDialog(QDialog):
     def __init__(self, parent, title, label=None):
         super().__init__(parent)
@@ -26,6 +30,17 @@ class YesNoDialog(VBoxDialog):
             button.setShortcut(button.shortcut().toString()[-1]) # 'Alt+X' -> 'X'
             if buttons.buttonRole(button) == QDialogButtonBox.NoRole:
                 button.setDefault(True)
+
+
+class InfoDialog(VBoxDialog):
+    def __init__(self, parent, title, text):
+        super().__init__(parent, title, label=text)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.layout().addWidget(buttons)
+        for button in buttons.buttons():
+            button.setShortcut(button.shortcut().toString()[-1]) # 'Alt+X' -> 'X'
 
 
 class TextBoxDialog(VBoxDialog):
@@ -51,10 +66,15 @@ class DataDialog(QDialog):
         self.setWindowTitle(self.title)
         self.setLayout(QVBoxLayout())
 
-    def add_buttons(self):
-        roles = QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply
+    def add_buttons(self, apply=True, cancel=True):
+        roles = QDialogButtonBox.Ok
+        if cancel:
+            roles |= QDialogButtonBox.Cancel
+        if apply:
+            roles |= QDialogButtonBox.Apply
         self.buttons = QDialogButtonBox(roles)
-        self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+        if apply:
+            self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
         self.buttons.clicked.connect(self._clicked)
         for button in self.buttons.buttons():
             button.setFocusPolicy(Qt.NoFocus)
@@ -63,8 +83,11 @@ class DataDialog(QDialog):
     def _clicked(self, button):
         role = self.buttons.buttonRole(button)
         if role == QDialogButtonBox.ApplyRole:
-            self.commit()
-            self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+            try:
+                self.commit()
+                self.buttons.button(QDialogButtonBox.Apply).setEnabled(False)
+            except AbortCommit:
+                pass
         elif role == QDialogButtonBox.AcceptRole:
             self.accept()
         else:
@@ -78,11 +101,16 @@ class DataDialog(QDialog):
 
     def accept(self):
         if self.dirty():
-            self.commit()
+            try:
+                self.commit()
+            except AbortCommit:
+                return
         super().accept()
 
     def data_updated(self):
-        self.buttons.button(QDialogButtonBox.Apply).setEnabled(self.dirty())
+        button = self.buttons.button(QDialogButtonBox.Apply)
+        if button:
+            button.setEnabled(self.dirty())
 
 
 class FieldDialog(DataDialog):
