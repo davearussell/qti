@@ -218,9 +218,24 @@ class Browser(QWidget):
         # Our stacked layout means the viewer never can never get mouse events
         # directly so we catch them here and pass them on
         if self.mode == 'viewer':
-            self.viewer.handle_wheel(event)
+            self.viewer.handle_mousewheel(event)
         else:
             super().wheelEvent(event)
 
     def mousePressEvent(self, event):
-        print(event)
+        if self.mode == 'viewer':
+            self.viewer.handle_mousedown(event)
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.mode == 'viewer':
+            self.viewer.handle_mousemove(event)
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.mode == 'viewer':
+            self.viewer.handle_mouseup(event)
+        else:
+            super().mouseReleaseEvent(event)
