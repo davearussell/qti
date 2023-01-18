@@ -3,6 +3,7 @@ import multiprocessing.connection
 import os
 
 from PySide6.QtCore import QObject, QTimer
+import cache
 
 
 class Worker:
@@ -30,54 +31,35 @@ class Worker:
     # Remaining methods run in the child process
 
     def run_job(self, job):
-        raise NotImplementedError()
+        image_path, cache_path, size = job
+        if not os.path.exists(cache_path):
+            cache.save_cache(image_path, cache_path, size)
 
     def main_loop(self, pipe):
         while True:
             job = pipe.recv()
-            if job is None:
-                break
             result = self.run_job(job)
             pipe.send((job, result))
 
 
-class BackgroundJob(QObject):
+class BackgroundCacher(QObject):
     poll_interval_ms = 100
+    max_job_count = 10
 
-    def __init__(self, app):
+    def __init__(self, app, jobs, skipped):
         super().__init__()
         self.app = app
         self.timer = QTimer()
-        self.timer.timeout.connect(self._poll)
+        self.timer.timeout.connect(self.poll)
         self.timer.start(self.poll_interval_ms)
         app.quitting.connect(self.stop)
-
-    def poll(self):
-        raise NotImplementedError()
-
-    def _poll(self):
-        if self.poll():
-            self.stop()
-
-    def stop(self):
-        self.timer.stop()
-
-
-class Dispatcher(BackgroundJob):
-    max_job_count = 10
-
-    def __init__(self, app, jobs):
-        super().__init__(app)
         self.n_workers = multiprocessing.cpu_count() - 1
-        self.workers = [self.worker_type() for i in range(self.n_workers)]
+        self.workers = [Worker() for i in range(self.n_workers)]
         self.jobs = iter(jobs)
         self.done = 0
         self.dispatched = 0
+        self.skipped = skipped
         self.total = len(jobs)
-
-    @property
-    def worker_type(self):
-        raise NotImplementedError()
 
     def poll(self):
         while True:
@@ -95,9 +77,32 @@ class Dispatcher(BackgroundJob):
                 for i in range(n):
                     self.dispatched += 1
                     worker.dispatch(next(self.jobs))
-        return self.done == self.total
+
+        text = "Cached %d / %d images" % (self.done + self.skipped, self.total + self.skipped)
+        if self.done < self.total:
+            self.app.status_bar.set_text(text, priority=-10, duration_s=self.poll_interval_ms / 800)
+        else:
+            self.app.status_bar.set_text(text, duration_s=5)
+            self.stop()
 
     def stop(self):
-        super().stop()
+        self.timer.stop()
         for worker in self.workers:
             worker.stop()
+
+
+
+def background_cacher(app, images, sizes):
+    jobs = []
+    skipped = 0
+    for image in images:
+        image_path = os.path.join(cache.ROOT_DIR, image['path'])
+        for size in sizes:
+            cache_path = cache.get_cached_path(image_path, size)
+            if os.path.exists(cache_path):
+                skipped += 1
+                continue
+            if not os.path.isdir(os.path.dirname(cache_path)):
+                os.makedirs(os.path.dirname(cache_path))
+            jobs.append((image_path, cache_path, size))
+    return BackgroundCacher(app, jobs, skipped) if jobs else None

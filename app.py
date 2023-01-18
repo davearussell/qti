@@ -17,7 +17,8 @@ from importer import ImporterDialog
 from metadata import MetadataEditorDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
-from cache import background_cacher, set_root_dir
+from cache import set_root_dir
+from background import background_cacher
 import keys
 
 STYLESHEET_TMPL = """
