@@ -18,7 +18,7 @@ from metadata import MetadataEditorDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
 from cache import set_root_dir
-from background import background_cacher
+from background import BackgroundCacher
 import keys
 
 STYLESHEET_TMPL = """
@@ -140,8 +140,7 @@ class Application(QApplication):
         self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
         set_root_dir(self.library.root_dir)
-        self.cacher = background_cacher(self, self.library.images,
-                                        [self.primaryScreen().size(), self.settings.thumbnail_size])
+        self.cacher = BackgroundCacher(self)
         self.apply_settings()
 
     def exec(self):
@@ -155,6 +154,7 @@ class Application(QApplication):
         stylesheet = env.render(self.settings.to_dict())
         self.setStyleSheet(stylesheet)
         self.reload_tree()
+        self.cacher.cache_all_images()
 
     def reload_tree(self):
         target = self.window.browser.target
