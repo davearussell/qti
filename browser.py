@@ -213,3 +213,14 @@ class Browser(QWidget):
             self.set_bar_visibility(not self.hide_bars)
         else:
             event.ignore()
+
+    def wheelEvent(self, event):
+        # Our stacked layout means the viewer never can never get mouse events
+        # directly so we catch them here and pass them on
+        if self.mode == 'viewer':
+            self.viewer.handle_wheel(event)
+        else:
+            super().wheelEvent(event)
+
+    def mousePressEvent(self, event):
+        print(event)

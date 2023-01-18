@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, Signal, QEvent
+from PySide6.QtCore import Qt, Signal, QEvent, QSize
+from PySide6.QtGui import QPixmap, QPainter
 from library import Node
 
 import keys
@@ -26,7 +27,14 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.setPixmap(load_pixmap(self.target.abspath, self.size()))
+        self.base_pixmap = load_pixmap(self.target.abspath, self.size())
+        self.raw_pixmap = None
+        self.base_zoom = None
+        self.zoom_level = 0
+        sw, sh = self.size().toTuple()
+        iw, ih = self.base_pixmap.size().toTuple()
+        self.xoff = self.yoff = None
+        self.setPixmap(self.base_pixmap)
         self.target_updated.emit(target)
 
     def scroll(self, action):
@@ -49,3 +57,46 @@ class Viewer(QLabel):
             self.action_map[action](action)
         else:
             event.ignore()
+
+    def handle_wheel(self, event):
+        zoom_by = 1 if event.angleDelta().y() > 0 else -1
+        if self.zoom_level + zoom_by < 0:
+            return
+
+        sx, sy = event.position().toTuple()
+        sw, sh = self.size().toTuple()
+
+        if self.raw_pixmap is None:
+            self.raw_pixmap = QPixmap(self.target.abspath)
+            self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
+
+        old_zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        iw, ih = self.raw_pixmap.size().toTuple()
+        if self.xoff is None:
+            self.xoff = (iw - int(sw / old_zoom)) // 2
+            self.yoff = (ih - int(sh / old_zoom)) // 2
+
+        # ix, iy: image pixel we clicked on. Will be centered after zoom
+        ix = int(sx / old_zoom) + self.xoff
+        iy = int(sy / old_zoom) + self.yoff
+
+        self.zoom_level += zoom_by
+        new_zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        vw = int(sw / new_zoom)
+        vh = int(sh / new_zoom)
+        self.xoff, self.yoff = (ix - vw // 2, iy - vh // 2)
+
+        viewport = QPixmap(QSize(vw, vh))
+        viewport.fill(Qt.black)
+        p = QPainter(viewport)
+        p.drawPixmap(-self.xoff, -self.yoff, self.raw_pixmap)
+        p.end()
+        scaled = viewport.scaled(self.size(), aspectMode=Qt.KeepAspectRatio,
+                                 mode=Qt.SmoothTransformation)
+        
+              
+        
+        self.setPixmap(scaled)
+        
+
+        
