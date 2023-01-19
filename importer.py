@@ -55,6 +55,14 @@ def f_strip_words(text, *strip_words):
         words = words[1:]
     return ' '.join(words)
 
+def f_strip_from(text, *strip_words):
+    pats = [word.lower() for word in strip_words]
+    words = text.split()
+    for i, word in enumerate(words):
+        if any(re.match(pat, word.lower()) for pat in pats):
+            return ' '.join(words[:i])
+    return ' '.join(words)
+
 def f_strip_digits(text):
     return text.rstrip('0123456789')
 
@@ -68,6 +76,7 @@ def apply_template(template, spec):
         'lstrip': f_lstrip,
         'rstrip': f_rstrip,
         'strip_words': f_strip_words,
+        'strip_from': f_strip_from,
         'strip_digits': f_strip_digits,
         'dirat': f_dirat,
     })
