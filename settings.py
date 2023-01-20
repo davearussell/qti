@@ -48,6 +48,8 @@ KEYBINDS = {
     'app_settings':  [Qt.Key_A],
     'edit_keybinds': [Qt.Key_K],
 
+    'reset_zoom':    [(Qt.Key_R, Qt.ControlModifier)],
+
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],
     'jump_to_subject': [Qt.Key_J],

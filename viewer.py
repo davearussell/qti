@@ -23,6 +23,7 @@ class Viewer(QLabel):
             'right': self.scroll,
             'select': self.select,
             'unselect': self.unselect,
+            'reset_zoom': self.reset_zoom,
         }
 
     def load(self, node, target):
@@ -72,16 +73,25 @@ class Viewer(QLabel):
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
 
-    def load_raw_pixmap(self):
-        self.raw_pixmap = QPixmap(self.target.abspath)
+    def _reset_zoom(self):
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
         zoom = self.zoom_factor()
+        self.zoom_level = 0
         iw, ih = self.raw_pixmap.size().toTuple()
         sw, sh = self.size().toTuple()
         self.view_width = int(sw / zoom)
         self.view_height = int(sh / zoom)
         self.xoff = (iw - self.view_width) // 2
         self.yoff = (ih - self.view_height) // 2
+
+    def load_raw_pixmap(self):
+        self.raw_pixmap = QPixmap(self.target.abspath)
+        self._reset_zoom()
+
+    def reset_zoom(self, _action=None):
+        if self.raw_pixmap is not None:
+            self._reset_zoom()
+            self.redraw_image()
 
     def zoom(self, pos, direction):
         if self.zoom_level + direction < 0:
