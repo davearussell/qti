@@ -5,17 +5,18 @@ from PySide6.QtGui import QColor
 
 APP_SETTINGS = [
     # Key                          Type     Default value
-    ('background_color',          'color',  QColor(Qt.black)),
-    ('text_color',                'color',  QColor(Qt.white)),
-    ('selection_color',           'color',  QColor(Qt.yellow)),
-    ('pathbar_separator',         'color',  QColor(Qt.cyan)),
-    ('thumbnail_size',            'qsize',  QSize(250, 200)),
-    ('font',                      'str',    'Liberation mono'),
-    ('pathbar_font_size',         'int',    16),
-    ('statusbar_font_size',       'int',    16),
-    ('thumbnail_name_font_size',  'int',    14),
-    ('thumbnail_count_font_size', 'int',    30),
-    ('key_picker_font_size',      'int',    20),
+    ('background_color',           QColor,  QColor(Qt.black)),
+    ('text_color',                 QColor,  QColor(Qt.white)),
+    ('selection_color',            QColor,  QColor(Qt.yellow)),
+    ('pathbar_separator',          QColor,  QColor(Qt.cyan)),
+    ('thumbnail_size',             QSize,   QSize(250, 200)),
+    ('font',                       str,     'Liberation mono'),
+    ('zoom_rate',                  float,   1.2),
+    ('pathbar_font_size',          int,     16),
+    ('statusbar_font_size',        int,     16),
+    ('thumbnail_name_font_size',   int,     14),
+    ('thumbnail_count_font_size',  int,     30),
+    ('key_picker_font_size',       int,     20),
 ]
 
 
@@ -80,10 +81,9 @@ class Settings:
     def get(self, key):
         _type, default = TYPE_MAP[key]
         value = self.q.value(key, defaultValue=default)
-        if _type == 'int':
-            # QSettings bug: if you store an int, restart the app and then read it back,
-            # it is returned as a str
-            value = int(value)
+        if _type in (int, float):
+            # QSettings returns numeric values as strings by default
+            value = _type(value)
         return value
 
     def to_dict(self):

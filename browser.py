@@ -85,7 +85,7 @@ class Browser(QWidget):
         return grid
 
     def make_viewer(self):
-        viewer = Viewer()
+        viewer = Viewer(self.app)
         viewer.target_updated.connect(self._target_updated)
         viewer.target_selected.connect(self.unselect)
         viewer.unselected.connect(self.unselect)

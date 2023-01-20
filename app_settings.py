@@ -102,6 +102,13 @@ class IntField(TypedField):
             return int(text, base=0)
 
 
+class FloatField(TypedField):
+    class edit_cls(TypedEdit):
+        @classmethod
+        def from_text(cls, text):
+            return float(text)
+
+
 class SizeField(TypedField):
     class edit_cls(TypedEdit):
         @classmethod
@@ -130,11 +137,12 @@ class AppSettingsDialog(FieldDialog):
 
     def choose_fields(self):
         field_types = {
-            'qsize': SizeField,
-            'str': TextField,
-            'int': IntField,
-            'color': ColorField,
-            }
+            QSize: SizeField,
+            str: TextField,
+            int: IntField,
+            float: FloatField,
+            QColor: ColorField,
+        }
         keymap = keys.KeyMap()
         return [
             field_types[_type](key, self.settings.get(key), keymap=keymap)

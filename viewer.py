@@ -12,9 +12,10 @@ class Viewer(QLabel):
     unselected = Signal(Node)
     target_updated = Signal(Node)
 
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
+        self.app = app
         self.node = None
         self.target = None
         self.action_map = {
@@ -68,10 +69,13 @@ class Viewer(QLabel):
                                       mode=Qt.SmoothTransformation)
         self.setPixmap(self.scaled)
 
+    def zoom_factor(self):
+        return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
+
     def load_raw_pixmap(self):
         self.raw_pixmap = QPixmap(self.target.abspath)
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
-        zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        zoom = self.zoom_factor()
         iw, ih = self.raw_pixmap.size().toTuple()
         sw, sh = self.size().toTuple()
         self.view_width = int(sw / zoom)
@@ -89,7 +93,7 @@ class Viewer(QLabel):
         if self.raw_pixmap is None:
             self.load_raw_pixmap()
 
-        old_zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        old_zoom = self.zoom_factor()
         iw, ih = self.raw_pixmap.size().toTuple()
 
         # ix, iy: image pixel we clicked on. Will be centered after zoom
@@ -97,7 +101,7 @@ class Viewer(QLabel):
         iy = int(sy / old_zoom) + self.yoff
 
         self.zoom_level += direction
-        new_zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        new_zoom = self.zoom_factor()
         self.view_width = int(sw / new_zoom)
         self.view_height = int(sh / new_zoom)
         self.xoff, self.yoff = (ix - self.view_width // 2, iy - self.view_height // 2)
@@ -115,7 +119,7 @@ class Viewer(QLabel):
         cx, cy = self.click_pos
         x, y = event.position().toTuple()
         self.click_pos = (x, y)
-        zoom = self.base_zoom * (1.2 ** self.zoom_level)
+        zoom = self.zoom_factor()
         self.xoff += (cx - x) // zoom
         self.yoff += (cy - y) // zoom
         self.redraw_image()
