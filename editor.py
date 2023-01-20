@@ -3,7 +3,7 @@ from PySide6.QtCore import Signal
 from fields import TextField, ReadOnlyField, SetField
 from dialog import FieldDialog
 from zoom import ZoomField
-import keys
+from keys import KeyMap
 
 
 class NameField(TextField):
@@ -79,7 +79,7 @@ class EditorTextField(TextField):
 
 
 def choose_fields(node, viewer):
-    keymap = keys.KeyMap()
+    keymap = KeyMap()
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
@@ -109,34 +109,37 @@ def choose_fields(node, viewer):
 
 
 class EditorDialog(FieldDialog):
-    request_scroll = Signal(str, object)
     title = "Editor"
 
-    def __init__(self, app, node):
+    def __init__(self, app, browser):
         super().__init__(app)
-        self.load_node(node)
+        self.library = app.library
+        self.browser = browser
+        self.keybinds = self.app.keybinds
+        self.setup_fields()
 
-    def load_node(self, node):
-        self.node = node
-        self.init_fields(choose_fields(node, self.app.viewer))
+    @property
+    def node(self):
+        return self.browser.target
 
-    def scroll_node(self, node):
-        if self.dirty():
-            self.commit()
-        self.load_node(node)
+    def setup_fields(self):
+        self.init_fields(choose_fields(self.node, self.app.viewer))
 
     def commit(self):
-        self.node.library.refresh_images()
+        self.library.refresh_images()
         super().commit()
         self.app.reload_tree()
-        self.app.library.scan_keys()
+        self.library.scan_keys()
 
     def apply_field_update(self, field, value):
         field.update_node(value)
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
-        if action in keys.SCROLL_ACTIONS:
-            self.request_scroll.emit(action, self.scroll_node)
+        action = self.keybinds.get_action(event)
+        if self.keybinds.is_scroll(action):
+            self.browser.scroll(action)
+            if self.dirty:
+                self.commit()
+            self.setup_fields()
         else:
             super().keyPressEvent(event)

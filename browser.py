@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 from grid import Grid, Cell
 from viewer import Viewer
 from pathbar import Pathbar
-import keys
 import cache
 
 
@@ -60,6 +59,7 @@ class Browser(QWidget):
     def __init__(self, app):
         super().__init__()
         self.app = app
+        self.keybinds = app.keybinds
         self.mode = None
         self.grid = None
         self.node = None
@@ -78,7 +78,7 @@ class Browser(QWidget):
         return self.app.status_bar.make_widget()
 
     def make_grid(self):
-        grid = Grid(self.app.settings)
+        grid = Grid(self.app.settings, self.keybinds)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
@@ -171,14 +171,12 @@ class Browser(QWidget):
         new_node = siblings[(siblings.index(self.node) + offset) % len(siblings)]
         self.load_node(new_node)
 
-    def scroll(self, action, callback):
-        assert action in keys.SCROLL_ACTIONS, action
+    def scroll(self, action):
         widget = self.grid if self.mode == 'grid' else self.viewer
         if action in widget.action_map:
             widget.action_map[action](action)
         else:
             self.scroll_node(action)
-        callback(self.target)
 
     def swap_cells(self, direction):
         cells = self.node.children
@@ -202,7 +200,7 @@ class Browser(QWidget):
                 bar.show()
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
+        action = self.keybinds.get_action(event)
         if action in ['prev', 'next', 'up', 'down']:
             # NOTE: up/down here is only reachable in viewer mode; in grid
             # mode the grid class consumes them to scroll with in the grid

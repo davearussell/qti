@@ -3,7 +3,6 @@ from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtCore import Qt, Signal
 
 from fields import FieldList
-import keys
 
 
 class AbortCommit(Exception):

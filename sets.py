@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QLineEdit, QComplete
 from PySide6.QtCore import Qt, Signal
 
 from line_edit import TabCompleteLineEdit
-import keys
 
 
 class TextBox(TabCompleteLineEdit):

@@ -4,7 +4,6 @@ from dialog import FieldDialog
 from line_edit import ValidatedLineEdit
 from fields import SetField, ValidatedTextField
 import expr
-import keys
 
 
 class FilterConfig:

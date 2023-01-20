@@ -8,7 +8,7 @@ from PySide6.QtGui import QPainter
 from PIL import Image
 
 import template
-import keys
+from keys import KeyMap
 from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
 import cache
 from grid import Grid, Cell
@@ -73,6 +73,7 @@ class ImporterDialog(DataDialog):
         super().__init__(app)
         self.node = node
         self.library = app.library
+        self.keybinds = app.keybinds
         self.body = QWidget()
         self.body.setLayout(QHBoxLayout())
         self.layout().addWidget(self.body)
@@ -112,7 +113,7 @@ class ImporterDialog(DataDialog):
         self.field_list.setFixedWidth(self.width() // 3)
 
     def setup_fields(self, default_values):
-        km = keys.KeyMap()
+        km = KeyMap()
         fields = [
             ReadOnlyField('directory', ''),
             ReadOnlyField('filename', ''),
@@ -128,7 +129,7 @@ class ImporterDialog(DataDialog):
         self.field_list.field_unfocused.connect(self.field_updated)
 
     def load_grid(self, new_images, default_values):
-        self.grid = Grid(self.app.settings)
+        self.grid = Grid(self.app.settings, self.keybinds)
         self.images = [NewImage(self.app.settings, self.library, path, default_values.copy(),
                                 self.app.settings.thumbnail_size)
                        for path in new_images]
@@ -209,7 +210,7 @@ class ImporterDialog(DataDialog):
             self.drop_images(matches)
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
+        action = self.keybinds.get_action(event)
         key = event.key()
         if action == 'delete':
             self.delete_target()

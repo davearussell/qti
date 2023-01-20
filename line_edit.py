@@ -3,8 +3,6 @@ import os
 from PySide6.QtWidgets import QLineEdit, QCompleter
 from PySide6.QtCore import Qt, Signal
 
-import keys
-
 
 class LineEdit(QLineEdit):
     commit = Signal(str, object)
@@ -39,7 +37,7 @@ class LineEdit(QLineEdit):
         super().focusOutEvent(event)
 
     def keyPressEvent(self, event):
-        if keys.get_action(event) == 'select':
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             # Normally a QLineEdit will pass the <Enter> key event up
             # to its parent, which we don't want, so swallow it here.
             if not self.commit_on_unfocus:

@@ -1,30 +1,94 @@
+import copy
+from PySide6.QtCore import Qt
+
 SCROLL_ACTIONS = ['up', 'down', 'left', 'right', 'top', 'bottom', 'prev', 'next']
 
 
-KEYS = {} # KEY -> action
-def load_keybinds(settings):
-    global KEYS
-    for key, binding in settings.to_dict().items():
-        if key.startswith('keybind') and binding is not None:
-            action = '_'.join(key.split('_')[1:-1]) # 'keybind_<action>_<idx>'
-            if binding in KEYS:
-                raise Exception("Duplicate keybind %s (%s, %s)" % (binding, KEYS[binding], action))
-            KEYS[binding] = action
+DEFAULT_KEYBINDS = {
+    #Action   First bind     Second bind(key, modifier)
+    'up':    [Qt.Key_Up,    (Qt.Key_5, Qt.KeypadModifier)],
+    'down':  [Qt.Key_Down,  (Qt.Key_2, Qt.KeypadModifier)],
+    'left':  [Qt.Key_Left,  (Qt.Key_1, Qt.KeypadModifier)],
+    'right': [Qt.Key_Right, (Qt.Key_3, Qt.KeypadModifier)],
+
+    'top':    [Qt.Key_Home],
+    'bottom': [Qt.Key_End],
+
+    'swap_up':  [(Qt.Key_Up, Qt.ControlModifier)],
+    'swap_down':  [(Qt.Key_Down, Qt.ControlModifier)],
+    'swap_left':  [(Qt.Key_Left, Qt.ControlModifier)],
+    'swap_right':  [(Qt.Key_Right, Qt.ControlModifier)],
+
+    'prev':  [Qt.Key_PageUp,   (Qt.Key_4, Qt.KeypadModifier)],
+    'next':  [Qt.Key_PageDown, (Qt.Key_6, Qt.KeypadModifier)],
+
+    'select':   [Qt.Key_Return,    (Qt.Key_Enter, Qt.KeypadModifier)],
+    'unselect': [Qt.Key_Backspace, (Qt.Key_0, Qt.KeypadModifier)],
+    'cancel':   [Qt.Key_Escape],
+
+    'toggle_hide':   [Qt.Key_H],
+    'quit':          [Qt.Key_Q],
+    'edit':          [Qt.Key_E],
+    'bulk_edit':     [Qt.Key_B],
+    'filter_config': [Qt.Key_V],
+    'delete':        [Qt.Key_D],
+    'edit_metadata': [Qt.Key_M],
+    'app_settings':  [Qt.Key_A],
+    'edit_keybinds': [Qt.Key_K],
+
+    'reset_zoom':    [(Qt.Key_R, Qt.ControlModifier)],
+
+    'save_snapshot':    [Qt.Key_S],
+    'restore_snapshot': [Qt.Key_R],
+    'jump_to_subject': [Qt.Key_J],
+
+    'add_new_images':   [Qt.Key_N],
+}
 
 
-def get_keybind(settings, action, idx):
-    k = 'keybind_%s_%d' % (action, idx)
-    return settings.get(k)
+class Keybinds:
+    binds_per_action = 2
 
+    def __init__(self, qsettings):
+        self.q = qsettings
+        self.actions = copy.deepcopy(DEFAULT_KEYBINDS)
+        for action, bindings in self.actions.items():
+            if len(bindings) < self.binds_per_action:
+                bindings += [None] * (self.binds_per_action - len(bindings))
+            for i in range(len(bindings)):
+                if not isinstance(bindings[i], (tuple, type(None))):
+                    bindings[i] = (bindings[i], Qt.KeyboardModifier(0))
+        self.bindings = self.load_bindings()
 
-def save_keybind(settings, action, idx, binding):
-    k = 'keybind_%s_%d' % (action, idx)
-    settings.set(k, binding)
+    def load_bindings(self):
+        bindings = {}
+        for action, action_bindings in self.actions.items():
+            for idx in range(len(action_bindings)):
+                k = 'keybind_%s_%d' % (action, idx)
+                if self.q.contains(k):
+                    action_bindings[idx] = self.q.value(k)
+                bindings[action_bindings[idx]] = action
+        return bindings
 
+    def get_keybind(self, action, idx):
+        return self.actions[action][idx]
 
-def get_action(event):
-    k = (event.key(), event.modifiers())
-    return KEYS.get(k)
+    def save_keybind(self, action, idx, binding):
+        old_binding = self.actions[action][idx]
+        if old_binding == binding:
+            return
+        self.actions[action][idx] = binding
+        self.bindings[binding] = action
+        if old_binding:
+            assert self.bindings.pop(old_binding) == action
+        self.q.setValue('keybind_%s_%d' % (action, idx), binding)
+
+    def get_action(self, event):
+        binding = (event.key(), event.modifiers())
+        return self.bindings.get(binding)
+
+    def is_scroll(self, action):
+        return action in SCROLL_ACTIONS
 
 
 class KeyMap:

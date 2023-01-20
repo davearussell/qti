@@ -5,8 +5,7 @@ from PySide6.QtGui import QPalette, QColor
 from dialog import FieldDialog
 from fields import Field, TextField, ValidatedTextField
 from line_edit import ValidatedLineEdit
-from settings import APP_SETTINGS
-import keys
+from keys import KeyMap
 
 
 class ColorPicker(QLabel):
@@ -143,10 +142,10 @@ class AppSettingsDialog(FieldDialog):
             float: FloatField,
             QColor: ColorField,
         }
-        keymap = keys.KeyMap()
+        keymap = KeyMap()
         return [
             field_types[_type](key, self.settings.get(key), keymap=keymap)
-            for (key, _type, _) in APP_SETTINGS
+            for key, _type in self.settings.types.items()
         ]
 
     def apply_field_update(self, field, value):

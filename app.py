@@ -4,7 +4,7 @@ import jinja2
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader
-from PySide6.QtCore import Signal, QSize
+from PySide6.QtCore import Signal, QSize, QSettings
 
 import library
 import browser
@@ -66,6 +66,7 @@ class Window(QMainWindow):
     def __init__(self, app, size):
         super().__init__()
         self.app = app
+        self.keybinds = app.keybinds
         self.browser = browser.Browser(app)
         self.setCentralWidget(self.browser)
         self.snapshots = []
@@ -97,13 +98,12 @@ class Window(QMainWindow):
         self.browser.load_node(node, mode=mode)
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
+        action = self.keybinds.get_action(event)
         if action == 'quit':
             self.app.quit()
         elif action == 'edit':
             if self.browser.target:
-                editor = EditorDialog(self.app, self.browser.target)
-                editor.request_scroll.connect(self.browser.scroll)
+                editor = EditorDialog(self.app, self.browser)
                 editor.exec()
         elif action == 'bulk_edit':
             if self.browser.target:
@@ -136,8 +136,9 @@ class Application(QApplication):
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
-        self.settings = settings.Settings('davesoft', 'qti')
-        keys.load_keybinds(self.settings)
+        self.q = QSettings('davesoft', 'qti')
+        self.settings = settings.Settings(self.q)
+        self.keybinds = keys.Keybinds(self.q)
         self.library = library.Library(json_file)
         self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)

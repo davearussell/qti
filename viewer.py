@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QPixmap, QPainter
 from library import Node
-
-import keys
 from cache import load_pixmap
 
 
@@ -16,6 +14,7 @@ class Viewer(QLabel):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
         self.app = app
+        self.keybinds = app.keybinds
         self.node = None
         self.target = None
         self.action_map = {
@@ -58,7 +57,7 @@ class Viewer(QLabel):
         self.unselected.emit(self.target)
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
+        action = self.keybinds.get_action(event)
         if action in self.action_map:
             self.action_map[action](action)
         else:

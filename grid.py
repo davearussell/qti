@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QEvent, QSize
 from PySide6.QtGui import QPainter, QPen, QPixmap
 
-import keys
-
 
 class Cell:
     def __init__(self, size):
@@ -147,8 +145,9 @@ class Grid(QFrame):
     unselected = Signal()
     target_updated = Signal(object)
 
-    def __init__(self, settings):
+    def __init__(self, settings, keybinds):
         super().__init__()
+        self.keybinds = keybinds
         self.setObjectName("Grid")
         self.action_map = {
             'up': self.scroll,
@@ -240,7 +239,7 @@ class Grid(QFrame):
             self.set_target(self.neighbour(self.target, direction))
 
     def keyPressEvent(self, event):
-        action = keys.get_action(event)
+        action = self.keybinds.get_action(event)
         if action in self.action_map:
             self.action_map[action](action)
         else:

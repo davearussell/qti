@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt, Signal, QTimer
 
 from dialog import DataDialog
 from line_edit import LineEdit
-import keys
 
 
 class CheckBox(QCheckBox):

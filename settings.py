@@ -1,9 +1,8 @@
-from PySide6.QtCore import QSettings
 from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QColor
 
 
-APP_SETTINGS = [
+DEFAULT_APP_SETTINGS = [
     # Key                          Type     Default value
     ('background_color',           QColor,  QColor(Qt.black)),
     ('text_color',                 QColor,  QColor(Qt.white)),
@@ -20,86 +19,33 @@ APP_SETTINGS = [
 ]
 
 
-KEYBINDS = {
-    #Action   First bind     Second bind(key, modifier)
-    'up':    [Qt.Key_Up,    (Qt.Key_5, Qt.KeypadModifier)],
-    'down':  [Qt.Key_Down,  (Qt.Key_2, Qt.KeypadModifier)],
-    'left':  [Qt.Key_Left,  (Qt.Key_1, Qt.KeypadModifier)],
-    'right': [Qt.Key_Right, (Qt.Key_3, Qt.KeypadModifier)],
-
-    'top':    [Qt.Key_Home],
-    'bottom': [Qt.Key_End],
-
-    'swap_up':  [(Qt.Key_Up, Qt.ControlModifier)],
-    'swap_down':  [(Qt.Key_Down, Qt.ControlModifier)],
-    'swap_left':  [(Qt.Key_Left, Qt.ControlModifier)],
-    'swap_right':  [(Qt.Key_Right, Qt.ControlModifier)],
-
-    'prev':  [Qt.Key_PageUp,   (Qt.Key_4, Qt.KeypadModifier)],
-    'next':  [Qt.Key_PageDown, (Qt.Key_6, Qt.KeypadModifier)],
-
-    'select':   [Qt.Key_Return,    (Qt.Key_Enter, Qt.KeypadModifier)],
-    'unselect': [Qt.Key_Backspace, (Qt.Key_0, Qt.KeypadModifier)],
-    'cancel':   [Qt.Key_Escape],
-
-    'toggle_hide':   [Qt.Key_H],
-    'quit':          [Qt.Key_Q],
-    'edit':          [Qt.Key_E],
-    'bulk_edit':     [Qt.Key_B],
-    'filter_config': [Qt.Key_V],
-    'delete':        [Qt.Key_D],
-    'edit_metadata': [Qt.Key_M],
-    'app_settings':  [Qt.Key_A],
-    'edit_keybinds': [Qt.Key_K],
-
-    'reset_zoom':    [(Qt.Key_R, Qt.ControlModifier)],
-
-    'save_snapshot':    [Qt.Key_S],
-    'restore_snapshot': [Qt.Key_R],
-    'jump_to_subject': [Qt.Key_J],
-
-    'add_new_images':   [Qt.Key_N],
-}
-
-
-KEY_SETTINGS = {}
-for action, bindings in KEYBINDS.items():
-    for i, binding in enumerate(bindings):
-        if not isinstance(binding, tuple):
-            binding = (binding, Qt.KeyboardModifier(0))
-            bindings[i] = binding
-        KEY_SETTINGS['keybind_%s_%d' % (action, i)] = binding
-    if len(bindings) == 1:
-       KEY_SETTINGS['keybind_%s_1' % (action,)] = None
-
-
-TYPE_MAP = {}
-for k, _type, default in APP_SETTINGS:
-    TYPE_MAP[k] = (_type, default)
-for k, binding in KEY_SETTINGS.items():
-    TYPE_MAP[k] = ('keybind', binding)
-
-
 class Settings:
-    def __init__(self, orgname, appname):
-        self.q = QSettings(orgname, appname)
+    def __init__(self, qsettings):
+        self.q = qsettings
+        self.data = {}
+        self.types = {}
+        for k, _type, default in DEFAULT_APP_SETTINGS:
+            self.types[k] = _type
+            value = self.q.value(k)
+            if value is None:
+                value = default
+            elif _type in(int, float):
+                # QSettings returns numeric values as strings by default
+                value = _type(value)
+            self.data[k] = value
 
     def get(self, key):
-        _type, default = TYPE_MAP[key]
-        value = self.q.value(key, defaultValue=default)
-        if _type in (int, float):
-            # QSettings returns numeric values as strings by default
-            value = _type(value)
-        return value
+        return self.data.get(key)
 
     def to_dict(self):
-        return {key: self.get(key) for key in TYPE_MAP}
+        return self.data.copy()
 
     def set(self, key, value):
+        self.data[key] = value
         self.q.setValue(key, value)
 
     def __getattr__(self, key):
         return self.get(key)
 
     def __contains__(self, key):
-        return key in TYPE_MAP
+        return key in self.data

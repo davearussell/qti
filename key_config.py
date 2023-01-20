@@ -4,8 +4,6 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPalette
 
 from dialog import DataDialog
-from settings import KEYBINDS
-import keys
 
 
 MODIFIERS = [
@@ -21,10 +19,10 @@ MODIFIER_KEYS = [
     Qt.Key_Shift,
 ]
 
-def make_label(binding):
-    if binding is None:
+def make_label(keybind):
+    if keybind is None:
         return '(none)'
-    key, modifier = binding
+    key, modifier = keybind
     keyname = key.name[len('Key_'):] if key else ''
     modifiers = [label for (mod, label) in MODIFIERS if modifier & mod]
     return '-'.join(modifiers + [keyname])
@@ -33,26 +31,26 @@ def make_label(binding):
 class KeyChooser(QDialog):
     result = Signal(object, object)
 
-    def __init__(self, parent, keybind, keymap):
+    def __init__(self, parent, setter, keymap):
         super().__init__(parent)
         self.setWindowTitle("Select keybind")
-        self.keybind = keybind
+        self.setter = setter
         self.keymap = keymap
         self.setLayout(QVBoxLayout())
 
-        if keybind.binding:
-            self.key, self.modifiers = keybind.binding
+        if setter.keybind:
+            self.key, self.modifiers = setter.keybind
         else:
             self.key = None
             self.modifiers = Qt.KeyboardModifier(0)
         self.extra_modifiers = Qt.KeyboardModifier(0)
         self.count = 0
 
-        self.header = QLabel("Select keybind for action '%s'" % (keybind.action,))
+        self.header = QLabel("Select keybind for action '%s'" % (setter.action,))
         self.header.setAlignment(Qt.AlignHCenter)
         self.layout().addWidget(self.header)
 
-        self.label = Keybind(None, None, keybind.binding)
+        self.label = KeybindSetter(None, None, setter.keybind)
         self.label.setProperty("qtiFont", "keypicker")
         self.layout().addWidget(self.label)
 
@@ -73,16 +71,16 @@ class KeyChooser(QDialog):
         self.layout().addWidget(self.buttons)
 
     @property
-    def binding(self):
+    def keybind(self):
         if self.key:
             return (self.key, self.modifiers | self.extra_modifiers)
         return None
 
     def update_label(self):
-        self.label.set_binding(self.binding)
-        keybind = self.keymap.get(self.binding)
-        if keybind not in (None, self.keybind):
-            warning = "Already bound to '%s'" % (keybind.action,)
+        self.label.set_keybind(self.keybind)
+        setter = self.keymap.get(self.keybind)
+        if setter not in (None, self.setter):
+            warning = "Already bound to '%s'" % (setter.action,)
         else:
             warning = ''
         self.warning.setText(warning)
@@ -94,7 +92,7 @@ class KeyChooser(QDialog):
         self.update_label()
 
     def accept(self):
-        self.result.emit(self.keybind, self.binding)
+        self.result.emit(self.setter, self.keybind)
         super().accept()
 
     def keyPressEvent(self, event):
@@ -112,24 +110,24 @@ class KeyChooser(QDialog):
         self.count -= 1
 
 
-class Keybind(QLabel):
+class KeybindSetter(QLabel):
     clicked = Signal(object)
 
-    def __init__(self, action, idx, binding):
+    def __init__(self, action, idx, keybind):
         super().__init__()
         self.action = action
         self.idx = idx
-        self.binding = binding
+        self.keybind = keybind
         self.setAutoFillBackground(True)
         pal = self.palette()
         pal.setColor(QPalette.Window, Qt.white)
         self.setAlignment(Qt.AlignCenter)
         self.setPalette(pal)
-        self.set_binding(binding)
+        self.set_keybind(keybind)
 
-    def set_binding(self, binding):
-        self.binding = binding
-        self.setText(make_label(self.binding))
+    def set_keybind(self, keybind):
+        self.keybind = keybind
+        self.setText(make_label(self.keybind))
 
     def mousePressEvent(self, event):
         self.clicked.emit(self)
@@ -140,6 +138,7 @@ class KeybindDialog(DataDialog):
 
     def __init__(self, app):
         super().__init__(app)
+        self.keybinds = app.keybinds
         self.setup_grid()
         self.add_buttons()
 
@@ -150,42 +149,42 @@ class KeybindDialog(DataDialog):
         self.body.setLayout(layout)
         self.setLayout(layout)
         self.keymap = {}
-        self.keybinds = []
-        for i, action in enumerate(KEYBINDS):
+        self.setters = []
+        for i, action in enumerate(self.keybinds.actions):
             layout.addWidget(QLabel(action.replace('_', ' ').title()), i, 0)
             for idx in range(2):
-                binding = keys.get_keybind(self.app.settings, action, idx)
-                keybind = Keybind(action, idx, binding)
-                self.keybinds.append(keybind)
-                if binding:
-                    self.keymap[binding] = keybind
-                keybind.clicked.connect(self.clicked)
-                layout.addWidget(keybind, i, idx + 1)
+                keybind = self.keybinds.get_keybind(action, idx)
+                setter = KeybindSetter(action, idx, keybind)
+                self.setters.append(setter)
+                if keybind:
+                    self.keymap[keybind] = setter
+                setter.clicked.connect(self.clicked)
+                layout.addWidget(setter, i, idx + 1)
         self.layout().addWidget(self.body)
         self.orig_keymap = self.keymap.copy()
 
-    def clicked(self, keybind):
-        kc = KeyChooser(self, keybind, self.keymap)
+    def clicked(self, setter):
+        kc = KeyChooser(self, setter, self.keymap)
         kc.result.connect(self.update_keybind)
         kc.exec()
 
-    def update_keybind(self, keybind, binding):
-        existing = self.keymap.get(binding)
-        if existing is keybind:
+    def update_keybind(self, setter, keybind):
+        existing = self.keymap.get(keybind)
+        if existing is setter:
             return
-        self.keymap.pop(keybind.binding, None)
+        self.keymap.pop(setter.keybind, None)
         if existing:
-            existing.set_key(keybind.binding)
-            if keybind.binding:
-                self.keymap[keybind.binding] = existing
-        keybind.set_binding(binding)
-        if binding:
-            self.keymap[binding] = keybind
+            existing.set_keybind(setter.keybind)
+            if setter.keybind:
+                self.keymap[setter.keybind] = existing
+        setter.set_keybind(keybind)
+        if keybind:
+            self.keymap[keybind] = setter
         self.data_updated()
 
     def dirty(self):
         return self.keymap != self.orig_keymap
 
     def commit(self):
-        for keybind in self.keybinds:
-            keys.save_keybind(self.app.settings, keybind.action, keybind.idx, keybind.binding)
+        for setter in self.setters:
+            self.keybinds.save_keybind(setter.action, setter.idx, setter.keybind)

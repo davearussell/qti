@@ -4,7 +4,6 @@ from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
 from line_edit import TabCompleteLineEdit, ValidatedLineEdit
-import keys
 
 
 class FieldList(QWidget):
