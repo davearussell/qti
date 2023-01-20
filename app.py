@@ -11,6 +11,7 @@ import browser
 import settings
 from status_bar import StatusBar
 from editor import EditorDialog
+from bulk_edit import BulkEditDialog
 from filtering import default_filter_config, FilterConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
@@ -104,6 +105,9 @@ class Window(QMainWindow):
                 editor = EditorDialog(self.app, self.browser.target)
                 editor.request_scroll.connect(self.browser.scroll)
                 editor.exec()
+        elif action == 'bulk_edit':
+            if self.browser.target:
+                BulkEditDialog(self.app, self.browser.node).exec()
         elif action == 'filter_config':
             FilterConfigDialog(self.app, self.app.library, self.app.filter_config).exec()
         elif action == 'delete':

@@ -45,6 +45,7 @@ KEYBINDS = {
     'toggle_hide':   [Qt.Key_H],
     'quit':          [Qt.Key_Q],
     'edit':          [Qt.Key_E],
+    'bulk_edit':     [Qt.Key_B],
     'filter_config': [Qt.Key_V],
     'delete':        [Qt.Key_D],
     'edit_metadata': [Qt.Key_M],

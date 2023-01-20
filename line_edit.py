@@ -11,8 +11,10 @@ class LineEdit(QLineEdit):
     updated = Signal(str, object)
     tab_complete = Signal(str)
 
-    def __init__(self, initial_value=None, read_only=False, ctx=None, commit_cb=None):
+    def __init__(self, initial_value=None, read_only=False, ctx=None, commit_on_unfocus=True,
+                 commit_cb=None):
         super().__init__()
+        self.commit_on_unfocus = commit_on_unfocus
         # Disable scrolling between fields with <TAB> as we want to define custom behaviour for it
         self.setFocusPolicy(Qt.ClickFocus)
         if initial_value is not None:
@@ -32,13 +34,16 @@ class LineEdit(QLineEdit):
         self.updated.emit(self.text(), self.ctx)
 
     def focusOutEvent(self, event):
-        self._commit()
+        if self.commit_on_unfocus:
+            self._commit()
         super().focusOutEvent(event)
 
     def keyPressEvent(self, event):
         if keys.get_action(event) == 'select':
             # Normally a QLineEdit will pass the <Enter> key event up
             # to its parent, which we don't want, so swallow it here.
+            if not self.commit_on_unfocus:
+                self._commit()
             self.clearFocus()
         else:
             super().keyPressEvent(event)
