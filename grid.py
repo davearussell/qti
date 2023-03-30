@@ -155,6 +155,8 @@ class Grid(QFrame):
             'down': self.scroll,
             'left': self.scroll,
             'right': self.scroll,
+            'top': self.scroll,
+            'bottom': self.scroll,
             'select': self.select_current_target,
             'unselect': self.unselect,
         }
@@ -229,6 +231,8 @@ class Grid(QFrame):
             row = (row + offset) % len(self.body.grid)
             if col >= len(self.body.grid[row]):
                 col = len(self.body.grid[row]) - 1
+        elif direction in ('top', 'bottom'):
+            row = col = (0 if direction == 'top' else -1)
         return self.body.grid[row][col]
 
     def scroll(self, direction):

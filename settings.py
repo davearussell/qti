@@ -27,6 +27,9 @@ KEYBINDS = {
     'left':  [Qt.Key_Left,  (Qt.Key_1, Qt.KeypadModifier)],
     'right': [Qt.Key_Right, (Qt.Key_3, Qt.KeypadModifier)],
 
+    'top':    [Qt.Key_Home],
+    'bottom': [Qt.Key_End],
+
     'swap_up':  [(Qt.Key_Up, Qt.ControlModifier)],
     'swap_down':  [(Qt.Key_Down, Qt.ControlModifier)],
     'swap_left':  [(Qt.Key_Left, Qt.ControlModifier)],

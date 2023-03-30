@@ -1,4 +1,4 @@
-SCROLL_ACTIONS = ['up', 'down', 'left', 'right', 'prev', 'next']
+SCROLL_ACTIONS = ['up', 'down', 'left', 'right', 'top', 'bottom', 'prev', 'next']
 
 
 KEYS = {} # KEY -> action

@@ -21,6 +21,8 @@ class Viewer(QLabel):
         self.action_map = {
             'left': self.scroll,
             'right': self.scroll,
+            'top': self.scroll,
+            'bottom': self.scroll,
             'select': self.select,
             'unselect': self.unselect,
             'reset_zoom': self.reset_zoom,
@@ -42,7 +44,7 @@ class Viewer(QLabel):
     def scroll(self, action):
         images = self.node.children
         index = images.index(self.target)
-        offset = {'right': 1, 'left': -1}[action]
+        offset = {'right': 1, 'left': -1, 'top': -index, 'bottom': -index - 1}[action]
         target = images[(index + offset) % (len(images))]
         self.load(self.node, target)
         self.target_updated.emit(target)
