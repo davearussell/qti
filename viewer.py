@@ -35,8 +35,6 @@ class Viewer(QLabel):
         self.raw_pixmap = None
         self.base_zoom = None
         self.zoom_level = 0
-        sw, sh = self.size().toTuple()
-        iw, ih = self.base_pixmap.size().toTuple()
         self.xoff = self.yoff = None
         self.setPixmap(self.base_pixmap)
         self.target_updated.emit(target)
@@ -77,12 +75,11 @@ class Viewer(QLabel):
 
     def _reset_zoom(self):
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
-        zoom = self.zoom_factor()
         self.zoom_level = 0
         iw, ih = self.raw_pixmap.size().toTuple()
         sw, sh = self.size().toTuple()
-        self.view_width = int(sw / zoom)
-        self.view_height = int(sh / zoom)
+        self.view_width = int(sw / self.base_zoom)
+        self.view_height = int(sh / self.base_zoom)
         self.xoff = (iw - self.view_width) // 2
         self.yoff = (ih - self.view_height) // 2
 
