@@ -88,6 +88,8 @@ class Library:
         {'name': 'name', 'builtin': True},
         {'name': 'path', 'builtin': True},
         {'name': 'resolution', 'builtin': True},
+        {'name': 'zoom', 'builtin': True, 'optional': True},
+        {'name': 'pan', 'builtin': True, 'optional': True},
     ]
 
     def __init__(self, json_path):
@@ -171,7 +173,7 @@ class Library:
         all_keys = [key['name'] for key in self.metadata_keys()]
         spec = {key: spec[key] for key in spec if key in all_keys}
         for key in self._builtin_keys:
-            if key['name'] not in spec:
+            if key['name'] not in spec and not key['optional']:
                 raise Exception("Missing required key '%s'" % (key,))
         for key in self._custom_keys:
             name, multi = key['name'], key.get('multi')

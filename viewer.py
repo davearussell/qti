@@ -36,7 +36,11 @@ class Viewer(QLabel):
         self.base_zoom = None
         self.zoom_level = 0
         self.xoff = self.yoff = None
-        self.setPixmap(self.base_pixmap)
+        if target.spec.get('zoom') is not None:
+            self.load_raw_pixmap(zoom=target.spec['zoom'], pan=target.spec['pan'])
+            self.redraw_image()
+        else:
+            self.setPixmap(self.base_pixmap)
         self.target_updated.emit(target)
 
     def scroll(self, action):
@@ -73,19 +77,22 @@ class Viewer(QLabel):
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
 
-    def _reset_zoom(self):
+    def _reset_zoom(self, zoom=0, pan=None):
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
-        self.zoom_level = 0
+        self.zoom_level = zoom
         iw, ih = self.raw_pixmap.size().toTuple()
         sw, sh = self.size().toTuple()
-        self.view_width = int(sw / self.base_zoom)
-        self.view_height = int(sh / self.base_zoom)
-        self.xoff = (iw - self.view_width) // 2
-        self.yoff = (ih - self.view_height) // 2
+        self.view_width = int(sw / self.zoom_factor())
+        self.view_height = int(sh / self.zoom_factor())
+        if pan:
+            self.xoff, self.yoff = pan
+        else:
+            self.xoff = (iw - self.view_width) // 2
+            self.yoff = (ih - self.view_height) // 2
 
-    def load_raw_pixmap(self):
+    def load_raw_pixmap(self, **kwargs):
         self.raw_pixmap = QPixmap(self.target.abspath)
-        self._reset_zoom()
+        self._reset_zoom(**kwargs)
 
     def reset_zoom(self, _action=None):
         if self.raw_pixmap is not None:

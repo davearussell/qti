@@ -2,6 +2,7 @@ import os
 from PySide6.QtCore import Signal
 from fields import TextField, ReadOnlyField, SetField
 from dialog import FieldDialog
+from zoom import ZoomField
 import keys
 
 
@@ -77,7 +78,7 @@ class EditorTextField(TextField):
             leaf.spec[self.key] = new_value
 
 
-def choose_fields(node):
+def choose_fields(node, viewer):
     keymap = keys.KeyMap()
 
     fields = [
@@ -102,6 +103,8 @@ def choose_fields(node):
             if key['name'] not in node.library.hierarchy and not key.get('builtin'):
                 cls = EditorSetField if key.get('multi') else EditorTextField
                 fields.append(cls(node, key['name'], keymap=keymap))
+    if viewer:
+        fields.append(ZoomField(viewer, node))
     return fields
 
 
@@ -115,7 +118,7 @@ class EditorDialog(FieldDialog):
 
     def load_node(self, node):
         self.node = node
-        self.init_fields(choose_fields(node))
+        self.init_fields(choose_fields(node, self.app.viewer))
 
     def scroll_node(self, node):
         if self.dirty():

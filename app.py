@@ -143,6 +143,12 @@ class Application(QApplication):
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
 
+    @property
+    def viewer(self):
+        if self.window.browser.mode != 'viewer':
+            return None
+        return self.window.browser.viewer
+
     def exec(self):
         self.reload_tree()
         self.window.showFullScreen()
