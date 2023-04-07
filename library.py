@@ -24,6 +24,11 @@ class Node:
             node = node.parent
         return node
 
+    @property
+    def index(self):
+        if self.parent:
+            return self.parent.children.index(self)
+
     def ancestors(self, predicate=None):
         node = self
         while node:

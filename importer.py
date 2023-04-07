@@ -1,7 +1,4 @@
 import os
-import re
-
-import jinja2
 
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtWidgets import QHBoxLayout
@@ -10,11 +7,13 @@ from PySide6.QtGui import QPainter
 
 from PIL import Image
 
+import template
 import keys
 from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
 import cache
 from grid import Grid, Cell
 from fields import FieldList, TextField,  ReadOnlyField
+from library import Node
 
 
 def find_all_images(path):
@@ -34,61 +33,15 @@ def find_new_images_for(node):
     return sorted(image for image in find_all_images(search_dir) if image not in existing_images)
 
 
-def f_title(text):
-    """Converts 'hello_world_i_am_a_title' -> 'Hello World I Am A Title' """
-    return ' '.join(text.split('_')).title()
-
-def f_lstrip(text):
-    """Converts 'Prefix Interesting Title' -> 'Interesting Title'"""
-    return ' '.join(text.split()[1:])
-
-def f_rstrip(text):
-    """Converts 'Interesting Title Suffix' -> 'Interesting Title'"""
-    return ' '.join(text.split()[:-1])
-
-def f_strip_words(text, *strip_words):
-    pats = [word.lower() for word in strip_words]
-    words = text.split()
-    while words and any(re.match(pat, words[-1].lower()) for pat in pats):
-        words = words[:-1]
-    while words and any(re.match(pat, words[0].lower()) for pat in pats):
-        words = words[1:]
-    return ' '.join(words)
-
-def f_strip_from(text, *strip_words):
-    pats = [word.lower() for word in strip_words]
-    words = text.split()
-    for i, word in enumerate(words):
-        if any(re.match(pat, word.lower()) for pat in pats):
-            return ' '.join(words[:i])
-    return ' '.join(words)
-
-def f_strip_digits(text):
-    return text.rstrip('0123456789')
-
-def f_dirat(path, i):
-    return path.split(os.path.sep)[int(i)]
-
-def apply_template(template, spec):
-    env = jinja2.Environment()
-    env.filters.update({
-        'title': f_title,
-        'lstrip': f_lstrip,
-        'rstrip': f_rstrip,
-        'strip_words': f_strip_words,
-        'strip_from': f_strip_from,
-        'strip_digits': f_strip_digits,
-        'dirat': f_dirat,
-    })
-    return env.from_string(template).render(spec)
-
-
 class NewImage(Cell):
+    type = 'image'
+
     def __init__(self, settings, library, image_path, spec, size):
         super().__init__(size)
         self.settings = settings
         self.abspath = image_path
         self.path = os.path.relpath(self.abspath, library.root_dir)
+        self.name = template.f_title(os.path.splitext(os.path.basename(self.path))[0])
         self.spec = spec
         self.fill_in_spec()
 
@@ -98,12 +51,8 @@ class NewImage(Cell):
         return self.spec[key]
 
     def fill_in_spec(self):
+        self.spec['name'] = self.name
         self.spec['path'] = self.path
-        self.spec['directory'] = os.path.dirname(self.spec['path'])
-        self.spec['dirname'] = os.path.basename(self.spec['directory'])
-        self.spec['filename'] = os.path.basename(self.spec['path'])
-        self.spec['basename'] = f_title(os.path.splitext(self.spec['filename'])[0])
-        self.spec['name'] = self.spec['basename']
         self.spec['resolution'] = Image.open(self.abspath).size
 
     def load_pixmap(self):
@@ -221,16 +170,17 @@ class ImporterDialog(DataDialog):
         value = field.get_value()
 
         target = self.grid.target
+        i = self.images.index(target)
         if '{' in value or field.key in self.library.hierarchy:
             # If the value is a template, or the key is in the default group hierarchy,
             # it is likely to be applicable to more than just this image, so we apply it
             # to this and all subsequent images in the import list for convenience.
-            i = self.images.index(target)
             images = self.images[i:]
         else:
             images = [target]
-        for image in images:
-            image.spec[field.key] = apply_template(value, image.spec)
+        for j, image in enumerate(images):
+            image.index = i + j
+            image.spec[field.key] = template.evaluate(image, value)
         field.set_value(target.format_value(field.key))
         field.mark_clean()
         self.data_updated()
