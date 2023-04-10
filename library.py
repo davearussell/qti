@@ -221,6 +221,16 @@ class Library:
         filter_expr = filter_config.filter
         self.tree = Root(self, filter_config)
         child_map = {} # parent -> child_name -> child
+
+        group_by = []
+        for word in filter_config.group_by:
+            if ':' in word:
+                key, values_ = word.split(':')
+                include_values = values_.split(',')
+            else:
+                key, include_values = word, None
+            group_by.append((key, include_values))
+
         for image_spec in self.images:
             if filter_expr:
                 tags = set()
@@ -231,10 +241,12 @@ class Library:
                     continue
 
             parents = [self.tree]
-            for key in filter_config.group_by:
+            for key, include_values in group_by:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
                     values = [values]
+                if include_values:
+                    values = [value for value in values if value in include_values]
 
                 new_parents = []
                 for value in values:

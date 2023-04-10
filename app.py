@@ -90,9 +90,8 @@ class Window(QMainWindow):
         if not subjects:
             return
         self.save_snapshot()
-        self.app.filter_config.group_by = ['subjects']
+        self.app.filter_config.group_by = ['subjects:%s' % ','.join(subjects)]
         self.app.filter_config.clear_filters()
-        self.app.filter_config.include_tags = subjects
         root = self.app.library.make_tree(self.app.filter_config)
         node = [x for x in root.children if x.name in subjects][0]
         self.browser.load_node(node, mode=mode)
