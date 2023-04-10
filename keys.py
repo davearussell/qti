@@ -70,6 +70,25 @@ class Keybinds:
                 bindings[action_bindings[idx]] = action
         return bindings
 
+    def add_action(self, action):
+        assert action not in self.actions, action
+        self.actions[action] = [None] * self.binds_per_action
+        for idx in range(self.binds_per_action):
+            k = 'keybind_%s_%d' % (action, idx)
+            binding = self.q.value(k)
+            if binding in self.bindings:
+                self.q.setValue(k, None)
+            else:
+                self.actions[action][idx] = binding
+                self.bindings[binding] = action
+
+    def delete_action(self, action):
+        assert action in self.actions, action
+        for binding in self.actions[action]:
+            if binding in self.bindings:
+                del self.bindings[binding]
+        del self.actions[action]
+
     def get_keybind(self, action, idx):
         return self.actions[action][idx]
 

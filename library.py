@@ -103,6 +103,7 @@ class Library:
         with open(self.json_path, 'r', encoding='UTF-8') as f:
             spec = json.load(f)
         self._custom_keys = spec['keys']
+        self.quick_filters = spec.get('quick_filters', {})
         self.images = []
         for image_spec in spec['images']:
             self.add_image(image_spec)
@@ -212,6 +213,7 @@ class Library:
         spec = {
             'images': self.images,
             'keys': self._custom_keys,
+            'quick_filters': self.quick_filters,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)

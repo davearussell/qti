@@ -139,6 +139,8 @@ class Application(QApplication):
         self.settings = settings.Settings(self.q)
         self.keybinds = keys.Keybinds(self.q)
         self.library = library.Library(json_file)
+        for qf in self.library.quick_filters:
+            self.keybinds.add_action('quick_filter_' + qf)
         self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
