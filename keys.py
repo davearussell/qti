@@ -40,7 +40,6 @@ DEFAULT_KEYBINDS = {
 
     'save_snapshot':    [Qt.Key_S],
     'restore_snapshot': [Qt.Key_R],
-    'jump_to_subject': [Qt.Key_J],
 
     'add_new_images':   [Qt.Key_N],
 }

@@ -81,21 +81,6 @@ class Window(QMainWindow):
             node, target, mode, self.app.filter_config = self.snapshots.pop()
             self.browser.load_node(node, target=target, mode=mode)
 
-    def jump_to_subject(self):
-        # TODO generalize this via a dialog
-        mode = self.browser.mode
-        target = self.browser.target
-        image = next(target.leaves())
-        subjects = image.spec['subjects']
-        if not subjects:
-            return
-        self.save_snapshot()
-        self.app.filter_config.group_by = ['subjects:%s' % ','.join(subjects)]
-        self.app.filter_config.clear_filters()
-        root = self.app.library.make_tree(self.app.filter_config)
-        node = [x for x in root.children if x.name in subjects][0]
-        self.browser.load_node(node, mode=mode)
-
     def keyPressEvent(self, event):
         action = self.keybinds.get_action(event)
         if action == 'quit':
@@ -119,8 +104,6 @@ class Window(QMainWindow):
             self.save_snapshot()
         elif action == 'restore_snapshot':
             self.restore_snapshot()
-        elif action == 'jump_to_subject':
-            self.jump_to_subject()
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
