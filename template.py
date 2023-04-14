@@ -45,8 +45,7 @@ def f_dirat(path, i):
 
 
 def evaluate(node, template_string):
-    env = jinja2.Environment()
-    env.filters.update({
+    filters = {
         'title': f_title,
         'lstrip': f_lstrip,
         'rstrip': f_rstrip,
@@ -54,7 +53,7 @@ def evaluate(node, template_string):
         'strip_from': f_strip_from,
         'strip_digits': f_strip_digits,
         'dirat': f_dirat,
-    })
+    }
 
     spec = {
         'i': node.index,
@@ -66,6 +65,13 @@ def evaluate(node, template_string):
             'file': os.path.splitext(os.path.basename(node.abspath))[0],
         })
 
+    return apply(spec, template_string, filters)
+
+
+def apply(spec, template_string, filters=None):
+    env = jinja2.Environment()
+    if filters:
+        env.filters.update(filters)
     try:
         return env.from_string(template_string).render(spec)
     except jinja2.exceptions.TemplateError:

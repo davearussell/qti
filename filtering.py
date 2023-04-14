@@ -30,7 +30,8 @@ class FilterConfig:
         return type(self)(**copy.deepcopy(kwargs))
 
     def clear_filters(self):
-        for k in ['include_tags', 'exclude_tags', 'custom_expr']:
+        for k in ['include_tags', 'exclude_tags', 'custom_expr',
+                  'group_by', 'order_by']:
             setattr(self, k, self.defaults[k])
 
     @property

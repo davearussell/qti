@@ -21,6 +21,7 @@ from key_config import KeybindDialog
 from cache import set_root_dir
 from background import BackgroundCacher
 import keys
+import template
 
 STYLESHEET_TMPL = """
 
@@ -81,6 +82,41 @@ class Window(QMainWindow):
             node, target, mode, self.app.filter_config = self.snapshots.pop()
             self.browser.load_node(node, target=target, mode=mode)
 
+    def apply_quick_filter(self, name):
+        qf = self.app.library.quick_filters.get(name)
+        if qf is None:
+            return
+
+        target = self.browser.target
+        keys = self.app.library.groupable_keys()
+        key_values = {key: set() for key in keys}
+
+        for leaf in target.leaves():
+            for key in keys:
+                if leaf.spec.get(key):
+                    value = leaf.spec[key]
+                    if isinstance(value, str):
+                        value = [value]
+                    key_values[key] |= set(value)
+        spec = {key: ','.join(values) for key, values in key_values.items()}
+        spec['name'] = target.name
+
+        self.save_snapshot()
+        self.app.filter_config.clear_filters()
+        skip_root = False
+        if qf.get('group'):
+            group_by = []
+            for i, word in enumerate(qf['group']):
+                if i == 0 and ':' in word:
+                    skip_root = True
+                group_by.append(template.apply(spec, word))
+            self.app.filter_config.group_by = group_by
+
+        root = self.app.library.make_tree(self.app.filter_config)
+        node = root.children[0] if root.children and skip_root else root
+        mode = 'grid' if node.type != 'image' else self.browser.mode
+        self.browser.load_node(node, mode=mode)
+
     def keyPressEvent(self, event):
         action = self.keybinds.get_action(event)
         if action == 'quit':
@@ -104,6 +140,8 @@ class Window(QMainWindow):
             self.save_snapshot()
         elif action == 'restore_snapshot':
             self.restore_snapshot()
+        elif action and action.startswith('quick_filter_'):
+            self.apply_quick_filter(action[len('quick_filter_'):])
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
