@@ -16,6 +16,7 @@ from filtering import default_filter_config, FilterConfigDialog
 from deleter import DeleterDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
+from quick_filters import QuickFilterDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
 from cache import set_root_dir
@@ -134,6 +135,8 @@ class Window(QMainWindow):
             DeleterDialog(self.app, self.browser.target).exec()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self.app).exec()
+        elif action == 'edit_quick_filters':
+            QuickFilterDialog(self.app).exec()
         elif action == 'edit_keybinds':
             KeybindDialog(self.app).exec()
         elif action == 'save_snapshot':
