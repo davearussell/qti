@@ -112,6 +112,10 @@ class Window(QMainWindow):
                     skip_root = True
                 group_by.append(template.apply(spec, word))
             self.app.filter_config.group_by = group_by
+        if qf.get('order'):
+            self.app.filter_config.order_by = qf['order'].copy()
+        if qf.get('expr'):
+            self.app.filter_config.custom_expr = qf['expr']
 
         root = self.app.library.make_tree(self.app.filter_config)
         node = root.children[0] if root.children and skip_root else root

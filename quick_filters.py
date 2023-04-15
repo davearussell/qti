@@ -22,6 +22,8 @@ class FilterEditor(FieldDialog):
         self.init_fields([
             TextField("name", self.qf['name'], keymap=km),
             SetField("group", self.qf['group'], keymap=km),
+            SetField("order", self.qf['order'], keymap=km),
+            TextField("expr", self.qf['expr'], keymap=km),
         ])
         self.data_updated()
 
@@ -74,7 +76,7 @@ class FilterGrid(QWidget):
         elif action == 'delete':
             del self.filters[name]
         elif action == 'new':
-            qf = {'name': '', 'group': []}
+            qf = {'name': '', 'group': [], 'order': [], 'expr': '', }
             if FilterEditor(self.app, self.filters, qf, mode='new').exec():
                 self.filters[qf['name']] = qf
         else:
