@@ -48,7 +48,7 @@ class Pathbar(QFrame):
         self.clear()
 
         if target is None:
-            self.layout.addWidget(PathbarLabel('No images found', Qt.gray))
+            self.layout.addWidget(PathbarLabel('No images found', 'node'))
             return
 
         nodes = []
