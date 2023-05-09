@@ -18,6 +18,7 @@ class ZoomBody(QWidget):
             self.scope_box.addItem(node.type.title())
             node = node.parent
         self.scope_box.currentIndexChanged.connect(self.scope_updated)
+        self.scope_box.setFocusPolicy(Qt.ClickFocus)
 
         self.set_button = QPushButton("Use current zoom")
         self.set_button.clicked.connect(self.set_from_viewer)
