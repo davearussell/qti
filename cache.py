@@ -3,15 +3,8 @@ from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtCore import Qt
 
 
-ROOT_DIR = None
-def set_root_dir(root_dir):
-    global ROOT_DIR
-    ROOT_DIR = root_dir
-
-
-def get_cached_path(image_path, size):
-    relpath = os.path.relpath(image_path, ROOT_DIR)
-    return os.path.join(ROOT_DIR, '.cache', '%dx%d' % size.toTuple(), relpath)
+def get_cached_path(root_dir, relpath, size):
+    return os.path.join(root_dir, '.cache', '%dx%d' % size.toTuple(), relpath)
 
 
 def save_cache(image_path, cache_path, size):
@@ -23,8 +16,9 @@ def save_cache(image_path, cache_path, size):
     scaled.save(cache_path)
 
 
-def load_pixmap(image_path, size):
-    cache_path = get_cached_path(image_path, size)
+def load_pixmap(root_dir, relpath, size):
+    abspath = os.path.join(root_dir, relpath)
+    cache_path = get_cached_path(root_dir, relpath, size)
     if not os.path.exists(cache_path):
-        save_cache(image_path, cache_path, size)
+        save_cache(abspath, cache_path, size)
     return QPixmap(cache_path)

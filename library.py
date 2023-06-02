@@ -74,7 +74,9 @@ class Image(Node):
     def __init__(self, library, spec):
         super().__init__(library, spec['name'])
         self.spec = spec
-        self.abspath = os.path.join(library.root_dir, spec['path'])
+        self.root_dir = spec['_root_dir']
+        self.relpath = spec['path']
+        self.abspath = os.path.join(self.root_dir, self.relpath)
 
     def delete_from_library(self):
         self.library.images.remove(self.spec)
@@ -177,6 +179,7 @@ class Library:
     def add_image(self, spec):
         all_keys = [key['name'] for key in self.metadata_keys()]
         spec = {key: spec[key] for key in spec if key in all_keys}
+        spec['_root_dir'] = self.root_dir
         for key in self._builtin_keys:
             if key['name'] not in spec and not key['optional']:
                 raise Exception("Missing required key '%s'" % (key,))
@@ -207,8 +210,10 @@ class Library:
             self.images = [image.spec for image in self.tree.leaves()]
 
     def save(self):
+        images = [{k: v for k, v in spec.items() if not k.startswith('_')}
+                  for spec in self.images]
         spec = {
-            'images': self.images,
+            'images': images,
             'keys': self._custom_keys,
             'quick_filters': self.quick_filters,
         }

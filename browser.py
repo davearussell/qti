@@ -14,17 +14,17 @@ class Thumbnail(Cell):
         self.settings = settings
         self.node = node
         if node.children:
-            self.image_path = next(node.leaves()).abspath
+            self.image = next(node.leaves())
             self.count = str(len(node.children))
             self.name = node.name
         else:
-            self.image_path = node.abspath
+            self.image = node
             self.count = None
             self.name = None
 
     def load_pixmap(self):
         pixmap = super().load_pixmap()
-        image = cache.load_pixmap(self.image_path, self.size)
+        image = cache.load_pixmap(self.image.root_dir, self.image.relpath, self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.setPen(self.settings.get('text_color'))

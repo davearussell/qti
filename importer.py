@@ -39,9 +39,10 @@ class NewImage(Cell):
     def __init__(self, settings, library, image_path, spec, size):
         super().__init__(size)
         self.settings = settings
+        self.root_dir = library.root_dir
         self.abspath = image_path
-        self.path = os.path.relpath(self.abspath, library.root_dir)
-        self.name = template.f_title(os.path.splitext(os.path.basename(self.path))[0])
+        self.relpath = os.path.relpath(self.abspath, self.root_dir)
+        self.name = template.f_title(os.path.splitext(os.path.basename(self.relpath))[0])
         self.spec = spec
         self.fill_in_spec()
 
@@ -52,13 +53,13 @@ class NewImage(Cell):
 
     def fill_in_spec(self):
         self.spec['name'] = self.name
-        self.spec['path'] = self.path
+        self.spec['path'] = self.relpath
         self.spec['resolution'] = Image.open(self.abspath).size
 
     def load_pixmap(self):
         # TODO: refactor away duplication with browser.Thumbnail
         pixmap = super().load_pixmap()
-        image = cache.load_pixmap(self.abspath, self.size)
+        image = cache.load_pixmap(self.root_dir, self.relpath, self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))

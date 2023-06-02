@@ -19,7 +19,6 @@ from metadata import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
-from cache import set_root_dir
 from background import BackgroundCacher
 import keys
 import template
@@ -124,7 +123,6 @@ class Application(QApplication):
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
-        set_root_dir(self.library.root_dir)
         self.browser = self.window.browser
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
