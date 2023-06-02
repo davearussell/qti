@@ -3,8 +3,7 @@ import os
 import random
 
 class Node:
-    def __init__(self, library, name):
-        self.library = library
+    def __init__(self, name):
         self.name = name
         self.parent = None
         self.children = []
@@ -48,16 +47,15 @@ class Node:
 
 class Root(Node):
     type = 'root'
-    def __init__(self, library, filter_config):
-        super().__init__(library, 'root')
-        self.filter_config = filter_config
+    def __init__(self):
+        super().__init__('root')
 
 
 class Container(Node):
-    def __init__(self, library, name, _type):
-        super().__init__(library, name)
+    def __init__(self, name, _type, is_set):
+        super().__init__(name)
         self.type = _type
-        self.is_set = self.type in library.sets
+        self.is_set = is_set
 
     @property
     def type_label(self):
@@ -71,15 +69,12 @@ class Image(Node):
     type_label = 'image'
     is_set = False
 
-    def __init__(self, library, spec):
-        super().__init__(library, spec['name'])
+    def __init__(self, spec):
+        super().__init__(spec['name'])
         self.spec = spec
         self.root_dir = spec['_root_dir']
         self.relpath = spec['path']
         self.abspath = os.path.join(self.root_dir, self.relpath)
-
-    def delete_from_library(self):
-        self.library.images.remove(self.spec)
 
 
 class Library:
@@ -109,7 +104,6 @@ class Library:
         for image_spec in spec['images']:
             self.add_image(image_spec)
         self.scan_keys()
-        self.tree = None
 
     @property
     def hierarchy(self):
@@ -135,12 +129,8 @@ class Library:
         key['name'] = new_name
         for image_spec in self.images:
             image_spec[new_name] = image_spec.pop(old_name)
-        for l in [self.hierarchy, self.tree.filter_config.group_by]:
-            if old_name in l:
-                l[l.index(old_name)] = new_name
-        for node in self.tree.descendants():
-            if node.type == old_name:
-                node.type = new_name
+        if old_name in self.sets:
+            self.sets[new_name] = self.sets.pop(old_name)
 
     def delete_key(self, name):
         print("delete_key", name)
@@ -192,6 +182,9 @@ class Library:
                 raise Exception("Bad value for key %r in %r" % (key, spec))
         self.images.append(spec)
 
+    def delete_image(self, image):
+        self.images.remove(image.spec)
+
     def scan_keys(self):
         self.sets = {}
         for image_spec in self.images:
@@ -214,7 +207,7 @@ class Library:
 
     def make_tree(self, filter_config):
         filter_expr = filter_config.filter
-        self.tree = Root(self, filter_config)
+        tree = Root()
         child_map = {} # parent -> child_name -> child
 
         group_by = []
@@ -235,7 +228,7 @@ class Library:
                 if not filter_expr.matches(tags):
                     continue
 
-            parents = [self.tree]
+            parents = [tree]
             for key, include_values in group_by:
                 values = image_spec.get(key)
                 if not isinstance(values, list):
@@ -254,20 +247,20 @@ class Library:
                     for parent in parents:
                         node = child_map.setdefault(parent, {}).get(map_value)
                         if node is None:
-                            node = Container(self, value, key)
+                            node = Container(value, key, key in self.sets)
                             parent.add_child(node)
                             child_map[parent][map_value] = node
                         new_parents.append(node)
                 parents = new_parents
             for parent in parents:
-                parent.add_child(Image(self, image_spec))
+                parent.add_child(Image(image_spec))
 
         sort_keys = [self._sort_types.get(k) for k in filter_config.order_by]
-        nodes = [self.tree]
+        nodes = [tree]
         for sort_key in sort_keys:
             if sort_key:
                 for node in nodes:
                     node.children.sort(key=sort_key)
             nodes = [child for node in nodes for child in node.children]
 
-        return self.tree
+        return tree

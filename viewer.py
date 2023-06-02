@@ -1,14 +1,13 @@
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QPixmap, QPainter
-from library import Node
 import cache
 
 
 class Viewer(QLabel):
-    target_selected = Signal(Node)
-    unselected = Signal(Node)
-    target_updated = Signal(Node)
+    target_selected = Signal(object)
+    unselected = Signal(object)
+    target_updated = Signal(object)
 
     def __init__(self, app):
         super().__init__()

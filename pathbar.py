@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QFrame, QHBoxLayout
 from PySide6.QtCore import Qt, Signal
-from library import Node
 
 
 class PathbarLabel(QLabel):
@@ -13,7 +12,7 @@ class PathbarLabel(QLabel):
 
 
 class NodeLabel(PathbarLabel):
-    clicked = Signal(Node)
+    clicked = Signal(object)
 
     def __init__(self, node, color):
         self.node = node
@@ -29,7 +28,7 @@ class NodeLabel(PathbarLabel):
 
 
 class Pathbar(QFrame):
-    clicked = Signal(Node)
+    clicked = Signal(object)
 
     fade_target = False
 

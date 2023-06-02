@@ -10,6 +10,7 @@ class DeleterDialog(QDialog):
         super().__init__(app.window)
         self.node = node
         self.app = app
+        self.library = app.library
         self.setWindowTitle("Confirm delete")
         self.setLayout(QVBoxLayout())
         self.setup_radio_buttons()
@@ -58,7 +59,7 @@ class DeleterDialog(QDialog):
                 image.spec[self.node.type].remove(self.node.name)
             else:
                 assert self.delete_mode in ['disk', 'library']
-                image.delete_from_library()
+                self.library.delete_image(image)
                 if self.delete_mode == 'disk':
                     if os.path.exists(image.abspath):
                         print("Deleting", image.abspath)

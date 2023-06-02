@@ -13,7 +13,6 @@ from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortComm
 import cache
 from grid import Grid, Cell
 from fields import FieldList, TextField,  ReadOnlyField
-from library import Node
 
 
 def find_all_images(path):

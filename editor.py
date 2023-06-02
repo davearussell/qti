@@ -7,7 +7,8 @@ from keys import KeyMap
 
 
 class NameField(TextField):
-    def __init__(self, node, **kwargs):
+    def __init__(self, library, node, **kwargs):
+        self.library = library
         self.node = node
         kwargs.setdefault('completions', [sibling.name for sibling in node.parent.children])
         super().__init__('name', node.name, **kwargs)
@@ -26,7 +27,8 @@ class NameField(TextField):
 
 
 class AncestorField(TextField):
-    def __init__(self, node, ancestor, **kwargs):
+    def __init__(self, library, node, ancestor, **kwargs):
+        self.library = library
         self.node = node
         self.ancestor = ancestor
         kwargs.setdefault('completions', [sibling.name for sibling in ancestor.parent.children])
@@ -38,9 +40,10 @@ class AncestorField(TextField):
 
 
 class EditorSetField(SetField):
-    def __init__(self, node, key, **kwargs):
+    def __init__(self, library, node, key, **kwargs):
+        self.library = library
         self.node = node
-        completions = node.library.sets[key]
+        completions = self.library.sets[key]
         values = None
         varying = False
         for leaf in node.leaves():
@@ -67,7 +70,8 @@ class EditorSetField(SetField):
 
 
 class EditorTextField(TextField):
-    def __init__(self, node, key, **kwargs):
+    def __init__(self, library, node, key, **kwargs):
+        self.library = library
         self.node = node
         values = {leaf.spec[key] for leaf in node.leaves()}
         value = values.pop() if len(values) == 1 else '...'
@@ -78,31 +82,31 @@ class EditorTextField(TextField):
             leaf.spec[self.key] = new_value
 
 
-def choose_fields(node, viewer):
+def choose_fields(library, node, viewer):
     keymap = KeyMap()
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
-        NameField(node, keymap=keymap)
+        NameField(library, node, keymap=keymap)
     ]
     if node.type == 'image':
         fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
         fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
-    if node.type in node.library.hierarchy + ['image']:
+    if node.type in library.hierarchy + ['image']:
         ancestors = {ancestor.type: ancestor for ancestor in node.ancestors()}
-        for ancestor_type in node.library.hierarchy:
+        for ancestor_type in library.hierarchy:
             if ancestor_type == node.type:
                 break
             if ancestor_type in ancestors:
-                field = AncestorField(node, ancestors[ancestor_type], keymap=keymap)
+                field = AncestorField(library, node, ancestors[ancestor_type], keymap=keymap)
             else:
                 value = next(node.leaves()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
-        for key in node.library.metadata_keys():
-            if key['name'] not in node.library.hierarchy and not key.get('builtin'):
+        for key in library.metadata_keys():
+            if key['name'] not in library.hierarchy and not key.get('builtin'):
                 cls = EditorSetField if key.get('multi') else EditorTextField
-                fields.append(cls(node, key['name'], keymap=keymap))
+                fields.append(cls(library, node, key['name'], keymap=keymap))
     if viewer:
         fields.append(ZoomField(viewer, node))
     return fields
@@ -123,7 +127,7 @@ class EditorDialog(FieldDialog):
         return self.browser.target
 
     def setup_fields(self):
-        self.init_fields(choose_fields(self.node, self.app.viewer))
+        self.init_fields(choose_fields(self.library, self.node, self.app.viewer))
 
     def commit(self):
         super().commit()

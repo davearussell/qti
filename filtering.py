@@ -22,6 +22,12 @@ class FilterConfig:
             raise AttributeError("%s does not take attribute(s) %r" % (
                 type(self).__name__, ', '.join(kwargs.keys())))
 
+    def rename_key(self, old_name, new_name):
+        try:
+            self.group_by[self.group_by.index(old_name)] = new_name
+        except ValueError:
+            pass
+
     def is_default(self):
         return all(getattr(self, k) == v for (k, v) in self.defaults.items())
 

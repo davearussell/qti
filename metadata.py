@@ -156,7 +156,7 @@ class MetadataEditorDialog(DataDialog):
 
     def commit(self):
         handlers = {
-            'rename': self.app.library.rename_key,
+            'rename': self.rename_key,
             'delete': self.app.library.delete_key,
             'append': self.app.library.new_key,
             'reorder': self.app.library.reorder_keys,
@@ -166,3 +166,10 @@ class MetadataEditorDialog(DataDialog):
         for action, args in self.grid.actions:
             handlers[action](*args)
         self.grid.actions = []
+
+    def rename_key(self, old_name, new_name):
+        self.app.library.rename_key(old_name, new_name)
+        self.app.filter_config.rename_key(old_name, new_name)
+        for node in self.app.browser.node.root.descendants():
+            if node.type == old_name:
+                node.type = new_name

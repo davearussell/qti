@@ -8,9 +8,9 @@ from line_edit import LineEdit
 
 
 class Model(QAbstractTableModel):
-    def __init__(self, node, keys, font):
+    def __init__(self, library, node, keys, font):
         super().__init__()
-        self.library = node.library
+        self.library = library
         self.parent_node = node
         self.keys = keys
         self.table = [
@@ -111,7 +111,7 @@ class BulkEditDialog(DataDialog):
         self.editor = Editor(self.keys)
         self.editor.commit.connect(self.update_key)
 
-        self.model = Model(self.node, self.keys, self.font())
+        self.model = Model(self.library, self.node, self.keys, self.font())
         self.table = QTableView()
         self.table.setModel(self.model)
         for i in range(len(self.keys)):
