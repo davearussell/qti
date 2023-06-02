@@ -71,56 +71,6 @@ class Window(QMainWindow):
         self.keybinds = app.keybinds
         self.browser = browser.Browser(app)
         self.setCentralWidget(self.browser)
-        self.snapshots = []
-
-    def save_snapshot(self):
-        snapshot = (self.browser.node, self.browser.target, self.browser.mode,
-                    copy.deepcopy(self.app.filter_config))
-        self.snapshots.append(snapshot)
-
-    def restore_snapshot(self):
-        if self.snapshots:
-            node, target, mode, self.app.filter_config = self.snapshots.pop()
-            self.browser.load_node(node, target=target, mode=mode)
-
-    def apply_quick_filter(self, name):
-        qf = self.app.library.quick_filters.get(name)
-        if qf is None:
-            return
-
-        target = self.browser.target
-        keys = self.app.library.groupable_keys()
-        key_values = {key: set() for key in keys}
-
-        for leaf in target.leaves():
-            for key in keys:
-                if leaf.spec.get(key):
-                    value = leaf.spec[key]
-                    if isinstance(value, str):
-                        value = [value]
-                    key_values[key] |= set(value)
-        spec = {key: ','.join(values) for key, values in key_values.items()}
-        spec['name'] = target.name
-
-        self.save_snapshot()
-        self.app.filter_config.clear_filters()
-        skip_root = False
-        if qf.get('group'):
-            group_by = []
-            for i, word in enumerate(qf['group']):
-                if i == 0 and ':' in word:
-                    skip_root = True
-                group_by.append(template.apply(spec, word))
-            self.app.filter_config.group_by = group_by
-        if qf.get('order'):
-            self.app.filter_config.order_by = qf['order'].copy()
-        if qf.get('expr'):
-            self.app.filter_config.custom_expr = qf['expr']
-
-        root = self.app.library.make_tree(self.app.filter_config)
-        node = root.children[0] if root.children and skip_root else root
-        mode = 'grid' if node.type != 'image' else self.browser.mode
-        self.browser.load_node(node, mode=mode)
 
     def keyPressEvent(self, event):
         action = self.keybinds.get_action(event)
@@ -144,11 +94,11 @@ class Window(QMainWindow):
         elif action == 'edit_keybinds':
             KeybindDialog(self.app).exec()
         elif action == 'save_snapshot':
-            self.save_snapshot()
+            self.app.save_snapshot()
         elif action == 'restore_snapshot':
-            self.restore_snapshot()
+            self.app.restore_snapshot()
         elif action and action.startswith('quick_filter_'):
-            self.apply_quick_filter(action[len('quick_filter_'):])
+            self.app.apply_quick_filter(action[len('quick_filter_'):])
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
@@ -174,14 +124,16 @@ class Application(QApplication):
         self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
         set_root_dir(self.library.root_dir)
+        self.browser = self.window.browser
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
+        self.snapshots = []
 
     @property
     def viewer(self):
-        if self.window.browser.mode != 'viewer':
+        if self.browser.mode != 'viewer':
             return None
-        return self.window.browser.viewer
+        return self.browser.viewer
 
     def exec(self):
         self.reload_tree()
@@ -195,6 +147,55 @@ class Application(QApplication):
         self.setStyleSheet(stylesheet)
         self.reload_tree()
         self.cacher.cache_all_images()
+
+    def save_snapshot(self):
+        snapshot = (self.browser.node, self.browser.target, self.browser.mode,
+                    copy.deepcopy(self.filter_config))
+        self.snapshots.append(snapshot)
+
+    def restore_snapshot(self):
+        if self.snapshots:
+            node, target, mode, self.filter_config = self.snapshots.pop()
+            self.browser.load_node(node, target=target, mode=mode)
+
+    def apply_quick_filter(self, name):
+        qf = self.library.quick_filters.get(name)
+        if qf is None:
+            return
+
+        target = self.browser.target
+        keys = self.library.groupable_keys()
+        key_values = {key: set() for key in keys}
+
+        for leaf in target.leaves():
+            for key in keys:
+                if leaf.spec.get(key):
+                    value = leaf.spec[key]
+                    if isinstance(value, str):
+                        value = [value]
+                    key_values[key] |= set(value)
+        spec = {key: ','.join(values) for key, values in key_values.items()}
+        spec['name'] = target.name
+
+        self.save_snapshot()
+        self.filter_config.clear_filters()
+        skip_root = False
+        if qf.get('group'):
+            group_by = []
+            for i, word in enumerate(qf['group']):
+                if i == 0 and ':' in word:
+                    skip_root = True
+                group_by.append(template.apply(spec, word))
+            self.filter_config.group_by = group_by
+        if qf.get('order'):
+            self.filter_config.order_by = qf['order'].copy()
+        if qf.get('expr'):
+            self.filter_config.custom_expr = qf['expr']
+
+        root = self.library.make_tree(self.filter_config)
+        node = root.children[0] if root.children and skip_root else root
+        mode = 'grid' if node.type != 'image' else self.browser.mode
+        self.browser.load_node(node, mode=mode)
 
     def reload_tree(self):
         target = self.window.browser.target
