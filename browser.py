@@ -189,7 +189,6 @@ class Browser(QWidget):
         else:
             return # Cannot swap verticaly when in viewer mode
         cells[i1], cells[i2] = cells[i2], cells[i1]
-        self.library.refresh_images()
         self.load_node(self.node, self.target)
 
     def set_bar_visibility(self, hidden):

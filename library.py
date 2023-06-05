@@ -201,14 +201,6 @@ class Library:
                 name = key['name']
                 self.sets[name] = self.sets.get(name, set()) | set(image_spec[name])
 
-    def refresh_images(self):
-        # If the current tree has some reordered nodes, then regenerate our
-        # image list to match the new ordering. The exception is if the tree
-        # has a non-default filter config, since we don't want to generate an
-        # incomplete or misordered image list.
-        if self.tree and self.tree.filter_config.is_default():
-            self.images = [image.spec for image in self.tree.leaves()]
-
     def save(self):
         images = [{k: v for k, v in spec.items() if not k.startswith('_')}
                   for spec in self.images]
