@@ -2,6 +2,9 @@ import json
 import os
 import random
 
+import cache
+
+
 class Node:
     def __init__(self, name):
         self.name = name
@@ -72,9 +75,14 @@ class Image(Node):
     def __init__(self, spec, root_dir):
         super().__init__(spec['name'])
         self.spec = spec
-        self.root_dir = root_dir
-        self.relpath = spec['path']
-        self.abspath = os.path.join(self.root_dir, self.relpath)
+        self.abspath = os.path.join(root_dir, spec['path'])
+        self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
+
+    def cache_path(self, size):
+        return self._cache_tmpl % size.toTuple()
+
+    def load_pixmap(self, size):
+        return cache.load_pixmap(self.abspath, self.cache_path(size), size)
 
 
 class Library:

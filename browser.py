@@ -24,7 +24,7 @@ class Thumbnail(Cell):
 
     def load_pixmap(self):
         pixmap = super().load_pixmap()
-        image = cache.load_pixmap(self.image.root_dir, self.image.relpath, self.size)
+        image = self.image.load_pixmap(self.size)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.setPen(self.settings.get('text_color'))

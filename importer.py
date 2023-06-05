@@ -3,14 +3,13 @@ import os
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPainter
+from PySide6.QtGui import QPainter, QPixmap
 
 from PIL import Image
 
 import template
 from keys import KeyMap
 from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
-import cache
 from grid import Grid, Cell
 from fields import FieldList, TextField,  ReadOnlyField
 
@@ -38,9 +37,8 @@ class NewImage(Cell):
     def __init__(self, settings, library, image_path, spec, size):
         super().__init__(size)
         self.settings = settings
-        self.root_dir = library.root_dir
         self.abspath = image_path
-        self.relpath = os.path.relpath(self.abspath, self.root_dir)
+        self.relpath = os.path.relpath(self.abspath, library.root_dir)
         self.name = template.f_title(os.path.splitext(os.path.basename(self.relpath))[0])
         self.spec = spec
         self.fill_in_spec()
@@ -58,7 +56,9 @@ class NewImage(Cell):
     def load_pixmap(self):
         # TODO: refactor away duplication with browser.Thumbnail
         pixmap = super().load_pixmap()
-        image = cache.load_pixmap(self.root_dir, self.relpath, self.size)
+        image = QPixmap(self.abspath).scaled(self.size,
+                                             aspectMode=Qt.KeepAspectRatio,
+                                             mode=Qt.FastTransformation)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))

@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QPixmap, QPainter
-import cache
 
 
 class Viewer(QLabel):
@@ -29,7 +28,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.base_pixmap = cache.load_pixmap(self.target.root_dir, self.target.relpath, self.size())
+        self.base_pixmap = self.target.load_pixmap(self.size())
         self.raw_pixmap = None
         self.base_zoom = None
         self.zoom_level = 0

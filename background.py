@@ -92,7 +92,6 @@ class BackgroundCacher(QObject):
         self.timer.start(self.poll_interval_ms)
 
     def cache_all_images(self):
-        root_dir = self.app.library.root_dir
         sizes = [self.app.primaryScreen().size(),
                  self.app.settings.thumbnail_size]
         jobs = []
@@ -100,7 +99,7 @@ class BackgroundCacher(QObject):
         for image in self.app.library.all_images():
             image_path = image.abspath
             for size in sizes:
-                cache_path = cache.get_cached_path(root_dir, image.relpath, size)
+                cache_path = image.cache_path(size)
                 if os.path.exists(cache_path):
                     skipped += 1
                     continue
