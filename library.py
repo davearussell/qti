@@ -51,7 +51,6 @@ class Root(Node):
     def __init__(self, library, filter_config):
         super().__init__(library, 'root')
         self.filter_config = filter_config
-        self.dirty = False
 
 
 class Container(Node):
@@ -204,12 +203,10 @@ class Library:
         # image list to match the new ordering. The exception is if the tree
         # has a non-default filter config, since we don't want to generate an
         # incomplete or misordered image list.
-        if self.tree and self.tree.dirty and self.tree.filter_config.is_default():
+        if self.tree and self.tree.filter_config.is_default():
             self.images = [image.spec for image in self.tree.leaves()]
-            self.tree.dirty = False
 
     def save(self):
-        self.refresh_images()
         spec = {
             'images': self.images,
             'keys': self._custom_keys,
@@ -219,7 +216,6 @@ class Library:
             json.dump(spec, f, indent=4)
 
     def make_tree(self, filter_config):
-        self.refresh_images()
         filter_expr = filter_config.filter
         self.tree = Root(self, filter_config)
         child_map = {} # parent -> child_name -> child

@@ -146,7 +146,6 @@ class MetadataEditorDialog(DataDialog):
 
     def __init__(self, app):
         super().__init__(app)
-        self.app.library.refresh_images()
         self.grid = MetadataGrid(self.app.library.metadata_keys())
         self.grid.data_updated.connect(self.data_updated)
         self.layout().addWidget(self.grid)

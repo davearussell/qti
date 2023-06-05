@@ -148,5 +148,4 @@ class BulkEditDialog(DataDialog):
 
     def commit(self):
         self.model.commit()
-        self.node.library.refresh_images()
         self.app.reload_tree()

@@ -126,7 +126,6 @@ class EditorDialog(FieldDialog):
         self.init_fields(choose_fields(self.node, self.app.viewer))
 
     def commit(self):
-        self.library.refresh_images()
         super().commit()
         self.app.reload_tree()
         self.library.scan_keys()

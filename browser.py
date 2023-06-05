@@ -59,6 +59,7 @@ class Browser(QWidget):
     def __init__(self, app):
         super().__init__()
         self.app = app
+        self.library = self.app.library
         self.keybinds = app.keybinds
         self.mode = None
         self.grid = None
@@ -188,7 +189,7 @@ class Browser(QWidget):
         else:
             return # Cannot swap verticaly when in viewer mode
         cells[i1], cells[i2] = cells[i2], cells[i1]
-        self.node.root.dirty = True
+        self.library.refresh_images()
         self.load_node(self.node, self.target)
 
     def set_bar_visibility(self, hidden):
