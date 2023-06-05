@@ -97,10 +97,10 @@ class BackgroundCacher(QObject):
                  self.app.settings.thumbnail_size]
         jobs = []
         skipped = 0
-        for image in self.app.library.images:
-            image_path = os.path.join(root_dir, image['path'])
+        for image in self.app.library.all_images():
+            image_path = image.abspath
             for size in sizes:
-                cache_path = cache.get_cached_path(root_dir, image['path'], size)
+                cache_path = cache.get_cached_path(root_dir, image.relpath, size)
                 if os.path.exists(cache_path):
                     skipped += 1
                     continue

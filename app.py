@@ -135,7 +135,7 @@ class Application(QApplication):
         return self.browser.viewer
 
     def exec(self):
-        self.reload_tree()
+        self.window.browser.load_node(self.library.tree, mode='grid')
         self.window.showFullScreen()
         super().exec()
         self.quitting.emit()
@@ -144,7 +144,7 @@ class Application(QApplication):
         env = jinja2.Environment().from_string(STYLESHEET_TMPL)
         stylesheet = env.render(self.settings.to_dict())
         self.setStyleSheet(stylesheet)
-        self.reload_tree()
+        self.browser.reload_node()
         self.cacher.cache_all_images()
 
     def save_snapshot(self):

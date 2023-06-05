@@ -69,10 +69,10 @@ class Image(Node):
     type_label = 'image'
     is_set = False
 
-    def __init__(self, spec):
+    def __init__(self, spec, root_dir):
         super().__init__(spec['name'])
         self.spec = spec
-        self.root_dir = spec['_root_dir']
+        self.root_dir = root_dir
         self.relpath = spec['path']
         self.abspath = os.path.join(self.root_dir, self.relpath)
 
@@ -100,10 +100,12 @@ class Library:
             spec = json.load(f)
         self._custom_keys = spec['keys']
         self.quick_filters = spec.get('quick_filters', {})
-        self.images = []
-        for image_spec in spec['images']:
-            self.add_image(image_spec)
+        self.sanitise_images(spec['images'])
+        self.tree = self.make_base_tree(self.hierarchy, spec['images'])
         self.scan_keys()
+
+    def all_images(self):
+        return self.tree.leaves()
 
     @property
     def hierarchy(self):
@@ -127,8 +129,8 @@ class Library:
         print("rename_key", old_name, new_name)
         key = self.find_key(old_name)
         key['name'] = new_name
-        for image_spec in self.images:
-            image_spec[new_name] = image_spec.pop(old_name)
+        for image in self.all_images():
+            image.spec[new_name] = image.spec.pop(old_name)
         if old_name in self.sets:
             self.sets[new_name] = self.sets.pop(old_name)
 
@@ -142,8 +144,8 @@ class Library:
     def new_key(self, name):
         print("new_key", name)
         self._custom_keys.append({'name': name})
-        for image_spec in self.images:
-            image_spec[name] = ''
+        for image in self.all_images():
+            image.spec[name] = ''
 
     def reorder_keys(self, order):
         print("reorder_keys", order)
@@ -155,57 +157,74 @@ class Library:
         key = self.find_key(name)
         assert multi != bool(key.get('multi')), key
         key['multi'] = multi
-        for image_spec in self.images:
+        for image in self.all_images():
             if multi:
-                image_spec[name] = image_spec[name].split()
+                image.spec[name] = image.spec[name].split()
             else:
-                image_spec[name] = ' '.join(image_spec[name])
+                image.spec[name] = ' '.join(image.spec[name])
 
     def set_key_in_hierarchy(self, name, value):
         print("set_key_in_hierarchy", name, value)
         key = self.find_key(name)
         key['in_hierarchy'] = value
 
-    def add_image(self, spec):
+    def sanitise_images(self, images):
         all_keys = [key['name'] for key in self.metadata_keys()]
-        spec = {key: spec[key] for key in spec if key in all_keys}
-        spec['_root_dir'] = self.root_dir
-        for key in self._builtin_keys:
-            if key['name'] not in spec and not key['optional']:
-                raise Exception("Missing required key '%s'" % (key,))
-        for key in self._custom_keys:
-            name, multi = key['name'], key.get('multi')
-            default = [] if multi else ''
-            if name not in spec:
-                spec[name] = default
-            elif type(spec[name]) != type(default):
-                raise Exception("Bad value for key %r in %r" % (key, spec))
-        self.images.append(spec)
+        for spec in images:
+            for key in list(spec.keys()):
+                if key not in all_keys:
+                    del spec[key]
+            for key in self._builtin_keys:
+                if key['name'] not in spec and not key['optional']:
+                    raise Exception("Missing required key '%s'" % (key,))
+            for key in self._custom_keys:
+                name, multi = key['name'], key.get('multi')
+                default = [] if multi else ''
+                if name not in spec:
+                    spec[name] = default
+                elif type(spec[name]) != type(default):
+                    raise Exception("Bad value for key %r in %r" % (key, spec))
 
     def delete_image(self, image):
+        assert 0, "rewrite me"
         self.images.remove(image.spec)
 
     def scan_keys(self):
         self.sets = {}
-        for image_spec in self.images:
+        for image in self.tree.leaves():
             for key in self._custom_keys:
                 if not key.get('multi'):
                     continue
                 name = key['name']
-                self.sets[name] = self.sets.get(name, set()) | set(image_spec[name])
+                self.sets[name] = self.sets.get(name, set()) | set(image.spec[name])
 
     def save(self):
-        images = [{k: v for k, v in spec.items() if not k.startswith('_')}
-                  for spec in self.images]
         spec = {
-            'images': images,
+            'images': [image.spec for image in self.all_images()],
             'keys': self._custom_keys,
             'quick_filters': self.quick_filters,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)
 
+    def make_base_tree(self, hierarchy, images):
+        tree = Root()
+        lut = {}
+        for image_spec in images:
+            parent = tree
+            for key in hierarchy:
+                value = image_spec.get(key) or ''
+                node = lut.get((parent, value))
+                if node is None:
+                    node = Container(value, key, is_set=False)
+                    lut[(parent, value)] = node
+                    parent.add_child(node)
+                parent = node
+            parent.add_child(Image(image_spec, self.root_dir))
+        return tree
+
     def make_tree(self, filter_config):
+        assert 0, "rewrite me"
         filter_expr = filter_config.filter
         tree = Root()
         child_map = {} # parent -> child_name -> child

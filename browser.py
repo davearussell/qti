@@ -150,6 +150,10 @@ class Browser(QWidget):
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
 
+    def reload_node(self):
+        if self.node:
+            self.load_node(self.node, self.target, self.mode)
+
     def select(self, widget):
         assert isinstance(widget, Thumbnail), widget
         target = widget.node
