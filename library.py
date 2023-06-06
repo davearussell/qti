@@ -102,10 +102,6 @@ class Library:
                 elif type(spec[name]) != type(default):
                     raise Exception("Bad value for key %r in %r" % (key, spec))
 
-    def delete_image(self, image):
-        assert 0, "rewrite me"
-        self.images.remove(image.spec)
-
     def scan_keys(self):
         self.sets = {}
         for image in self.base_tree.leaves():

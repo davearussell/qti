@@ -65,6 +65,13 @@ class Node:
     def leaves(self):
         return self.descendants(lambda node: not node.children)
 
+    def delete(self):
+        parent = self.parent
+        parent.children.remove(self)
+        while parent.parent and not parent.children:
+            parent.parent.children.remove(parent)
+            parent = parent.parent
+
 
 class Root(Node):
     type = 'root'
@@ -77,6 +84,12 @@ class Container(Node):
         super().__init__(name)
         self.type = _type
         self.type_label = _type
+
+    def delete(self, from_disk=False):
+        if from_disk:
+            for image in self.leaves():
+                image.delete_file()
+        super().delete()
 
 
 class Image(Node):
@@ -97,6 +110,16 @@ class Image(Node):
 
     def load_pixmap(self, size):
         return cache.load_pixmap(self.abspath, self.cache_path(size), size)
+
+    def delete_file(self):
+        if os.path.exists(self.abspath):
+            print("Deleting", self.abspath)
+            os.unlink(self.abspath)
+
+    def delete(self, from_disk=False):
+        if from_disk:
+            self.delete_file()
+        super().delete()
 
 
 class BaseTree(Root):
@@ -133,6 +156,12 @@ class FilteredContainer(Container):
         bs.swap_with(bo)
         super().swap_with(other)
 
+    def delete(self, from_disk=False, preserve_base=False):
+        if not preserve_base:
+            for leaf in self.leaves():
+                leaf.base_node.delete(from_disk=from_disk)
+        super().delete()
+
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -143,6 +172,15 @@ class FilteredSet(FilteredContainer):
         if text.endswith('s'):
             return text[:-1]
         return text
+
+    def delete(self, from_disk=False, preserve_images=False):
+        if preserve_images:
+            assert not from_disk
+            for node in self.leaves():
+                node.spec[self.type].remove(self.name)
+            super().delete(preserve_base=True)
+        else:
+            super().delete(from_disk=from_disk)
 
 
 class FilteredImage(Image):
@@ -156,6 +194,10 @@ class FilteredImage(Image):
             raise TreeError("Nodes do not map onto base tree")
         bs.swap_with(bo)
         super().swap_with(other)
+
+    def delete(self, from_disk=False):
+        self.base_node.delete(from_disk=from_disk)
+        super().delete()
 
 
 class FilteredTree(Root):

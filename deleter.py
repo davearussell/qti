@@ -22,7 +22,7 @@ class DeleterDialog(QDialog):
         return set_mode
 
     def setup_radio_buttons(self):
-        if self.node.is_set:
+        if self.node.type in self.library.sets:
             labels = [
                 ('set', 'D&elete %s %r' % (self.node.type_label, self.node.name)),
                 ('library', 'De&lete images with %s %r' % (self.node.type_label, self.node.name)),
@@ -54,17 +54,22 @@ class DeleterDialog(QDialog):
                 button.setDefault(True)
 
     def accept(self):
-        for image in self.node.leaves():
-            if self.delete_mode == 'set':
-                image.spec[self.node.type].remove(self.node.name)
-            else:
-                assert self.delete_mode in ['disk', 'library']
-                self.library.delete_image(image)
-                if self.delete_mode == 'disk':
-                    if os.path.exists(image.abspath):
-                        print("Deleting", image.abspath)
-                        os.unlink(image.abspath)
-                    else:
-                        print("Would delete", image.abspath, "but it is not there")
-        self.app.reload_tree()
+        parent = self.node.parent
+        mode = self.app.browser.mode
+        if len(parent.children) > 1:
+            index = self.node.index + 1
+            if index == len(parent.children):
+                index -= 2
+            target = parent.children[index]
+        else:
+            target = None
+            mode = 'grid'
+            while parent.parent and len(parent.children) == 1:
+                parent = parent.parent
+
+        if self.delete_mode == 'set':
+            self.node.delete(preserve_images=True)
+        else:
+            self.node.delete(from_disk=(self.delete_mode == 'disk'))
+        self.app.browser.load_node(parent, target=target, mode=mode)
         super().accept()
