@@ -93,6 +93,7 @@ class Library:
             for key in self._builtin_keys:
                 if key['name'] not in spec and not key['optional']:
                     raise Exception("Missing required key '%s'" % (key,))
+            spec['resolution'] = tuple(spec['resolution'])
             for key in self._custom_keys:
                 name, multi = key['name'], key.get('multi')
                 default = [] if multi else ''
@@ -124,62 +125,4 @@ class Library:
             json.dump(spec, f, indent=4)
 
     def make_tree(self, filter_config):
-        assert 0, "rewrite me"
-        filter_expr = filter_config.filter
-        tree = Root()
-        child_map = {} # parent -> child_name -> child
-
-        group_by = []
-        for word in filter_config.group_by:
-            if ':' in word:
-                key, values_ = word.split(':')
-                include_values = values_.split(',')
-            else:
-                key, include_values = word, None
-            group_by.append((key, include_values))
-
-        for image_spec in self.images:
-            if filter_expr:
-                tags = set()
-                for key in self.sets:
-                    if key in image_spec:
-                        tags |= set(image_spec[key])
-                if not filter_expr.matches(tags):
-                    continue
-
-            parents = [tree]
-            for key, include_values in group_by:
-                values = image_spec.get(key)
-                if not isinstance(values, list):
-                    values = [values]
-                if include_values:
-                    values = [value for value in values if value in include_values]
-
-                new_parents = []
-                for value in values:
-                    if value is None:
-                        value = ''
-                    map_value = value
-                    if key in self.hierarchy:
-                        i = self.hierarchy.index(key) + 1
-                        map_value = tuple(image_spec.get(k) for k in self.hierarchy[:i])
-                    for parent in parents:
-                        node = child_map.setdefault(parent, {}).get(map_value)
-                        if node is None:
-                            node = Container(value, key, key in self.sets)
-                            parent.add_child(node)
-                            child_map[parent][map_value] = node
-                        new_parents.append(node)
-                parents = new_parents
-            for parent in parents:
-                parent.add_child(Image(image_spec))
-
-        sort_keys = [self._sort_types.get(k) for k in filter_config.order_by]
-        nodes = [tree]
-        for sort_key in sort_keys:
-            if sort_key:
-                for node in nodes:
-                    node.children.sort(key=sort_key)
-            nodes = [child for node in nodes for child in node.children]
-
-        return tree
+        return tree.FilteredTree(self.base_tree, filter_config)
