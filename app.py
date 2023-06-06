@@ -135,7 +135,7 @@ class Application(QApplication):
         return self.browser.viewer
 
     def exec(self):
-        self.window.browser.load_node(self.library.tree, mode='grid')
+        self.window.browser.load_node(self.library.base_tree, mode='grid')
         self.window.showFullScreen()
         super().exec()
         self.quitting.emit()

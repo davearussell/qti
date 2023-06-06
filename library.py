@@ -1,98 +1,9 @@
 import json
 import os
-import random
 
-import cache
-
-
-class Node:
-    def __init__(self, name):
-        self.name = name
-        self.parent = None
-        self.children = []
-
-    def add_child(self, child, index=None):
-        child.parent = self
-        if index is None:
-            self.children.append(child)
-        else:
-            self.children.insert(index, child)
-        return child
-
-    @property
-    def root(self):
-        node = self
-        while node.parent:
-            node = node.parent
-        return node
-
-    @property
-    def index(self):
-        if self.parent:
-            return self.parent.children.index(self)
-
-    def ancestors(self, predicate=None):
-        node = self
-        while node:
-            if predicate is None or predicate(node):
-                yield node
-            node = node.parent
-
-    def descendants(self, predicate=None):
-        if predicate is None or predicate(self):
-            yield self
-        for child in self.children:
-            yield from child.descendants(predicate=predicate)
-
-    def leaves(self):
-        return self.descendants(lambda node: not node.children)
-
-
-class Root(Node):
-    type = 'root'
-    def __init__(self):
-        super().__init__('root')
-
-
-class Container(Node):
-    def __init__(self, name, _type, is_set):
-        super().__init__(name)
-        self.type = _type
-        self.is_set = is_set
-
-    @property
-    def type_label(self):
-        if self.is_set and self.type.endswith('s'):
-            return self.type[:-1]
-        return self.type
-
-
-class Image(Node):
-    type = 'image'
-    type_label = 'image'
-    is_set = False
-
-    def __init__(self, spec, root_dir):
-        super().__init__(spec['name'])
-        self.spec = spec
-        self.abspath = os.path.join(root_dir, spec['path'])
-        self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
-
-    def cache_path(self, size):
-        return self._cache_tmpl % size.toTuple()
-
-    def load_pixmap(self, size):
-        return cache.load_pixmap(self.abspath, self.cache_path(size), size)
-
+import tree
 
 class Library:
-    _sort_types = {
-        'default': None,
-        'count': lambda c: -len(c.children),
-        'alpha': lambda c: c.name,
-        'random': lambda c: random.random(),
-    }
-
     _builtin_keys = [
         {'name': 'name', 'builtin': True},
         {'name': 'path', 'builtin': True},
@@ -109,11 +20,11 @@ class Library:
         self._custom_keys = spec['keys']
         self.quick_filters = spec.get('quick_filters', {})
         self.sanitise_images(spec['images'])
-        self.tree = self.make_base_tree(self.hierarchy, spec['images'])
+        self.base_tree = tree.BaseTree(self.root_dir, self.hierarchy, spec['images'])
         self.scan_keys()
 
     def all_images(self):
-        return self.tree.leaves()
+        return self.base_tree.leaves()
 
     @property
     def hierarchy(self):
@@ -121,9 +32,6 @@ class Library:
 
     def groupable_keys(self):
         return [key['name'] for key in self._custom_keys]
-
-    def sort_types(self):
-        return [k for k in self._sort_types.keys()]
 
     def metadata_keys(self):
         return self._builtin_keys + self._custom_keys
@@ -199,7 +107,7 @@ class Library:
 
     def scan_keys(self):
         self.sets = {}
-        for image in self.tree.leaves():
+        for image in self.base_tree.leaves():
             for key in self._custom_keys:
                 if not key.get('multi'):
                     continue
@@ -214,22 +122,6 @@ class Library:
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)
-
-    def make_base_tree(self, hierarchy, images):
-        tree = Root()
-        lut = {}
-        for image_spec in images:
-            parent = tree
-            for key in hierarchy:
-                value = image_spec.get(key) or ''
-                node = lut.get((parent, value))
-                if node is None:
-                    node = Container(value, key, is_set=False)
-                    lut[(parent, value)] = node
-                    parent.add_child(node)
-                parent = node
-            parent.add_child(Image(image_spec, self.root_dir))
-        return tree
 
     def make_tree(self, filter_config):
         assert 0, "rewrite me"

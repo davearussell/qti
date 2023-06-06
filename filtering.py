@@ -4,6 +4,7 @@ from dialog import FieldDialog
 from line_edit import ValidatedLineEdit
 from fields import SetField, ValidatedTextField
 import expr
+from tree import SORT_TYPES
 
 
 class FilterConfig:
@@ -79,11 +80,10 @@ class FilterConfigDialog(FieldDialog):
         all_tags = set()
         for _set in self.library.sets.values():
             all_tags |= _set
-        sort_types = self.library.sort_types()
         config = self.config.copy()
         return [
             SetField("group_by", config.group_by, self.library.groupable_keys(), keybind='G'),
-            SetField("order_by", config.order_by, sort_types, keybind='O'),
+            SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='O'),
             SetField('include_tags', config.include_tags, all_tags, keybind='I'),
             SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),
             ExprField('custom_expr', config.custom_expr, keybind='U'),
