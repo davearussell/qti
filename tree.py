@@ -4,6 +4,9 @@ import random
 import cache
 
 
+class TreeError(Exception): pass
+
+
 SORT_TYPES = {
     'default': None,
     'count': lambda c: -len(c.children),
@@ -25,6 +28,14 @@ class Node:
         else:
             self.children.insert(index, child)
         return child
+
+    def swap_with(self, other):
+        if self.parent != other.parent:
+            raise TreeError("Nodes do not share a parent")
+        siblings = self.parent.children
+        ia = self.index
+        ib = other.index
+        siblings[ia], siblings[ib] = siblings[ib], siblings[ia]
 
     @property
     def root(self):
@@ -115,6 +126,13 @@ class FilteredContainer(Container):
         super().__init__(name, _type)
         self.base_node = base_node
 
+    def swap_with(self, other):
+        bs, bo = self.base_node, other.base_node
+        if bs is None or bo is None:
+            raise TreeError("Nodes do not map onto base tree")
+        bs.swap_with(bo)
+        super().swap_with(other)
+
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -131,6 +149,13 @@ class FilteredImage(Image):
     def __init__(self, image):
         super().__init__(image.spec, image.root_dir)
         self.base_node = image
+
+    def swap_with(self, other):
+        bs, bo = self.base_node, other.base_node
+        if bs is None or bo is None:
+            raise TreeError("Nodes do not map onto base tree")
+        bs.swap_with(bo)
+        super().swap_with(other)
 
 
 class FilteredTree(Root):

@@ -6,6 +6,7 @@ from grid import Grid, Cell
 from viewer import Viewer
 from pathbar import Pathbar
 import cache
+from tree import TreeError
 
 
 class Thumbnail(Cell):
@@ -185,15 +186,19 @@ class Browser(QWidget):
 
     def swap_cells(self, direction):
         cells = self.node.children
-        i1 = cells.index(self.target)
         if direction in ['left', 'right']:
-            i2 = (i1 + (1 if direction == 'right' else -1)) % len(cells)
+            i = (self.target.index + (1 if direction == 'right' else -1)) % len(cells)
+            other = cells[i]
         elif self.mode == 'grid':
-            i2 = cells.index(self.grid.neighbour(self.grid.target, direction).node)
+            other = self.grid.neighbour(self.grid.target, direction).node
         else:
             return # Cannot swap verticaly when in viewer mode
-        cells[i1], cells[i2] = cells[i2], cells[i1]
-        self.load_node(self.node, self.target)
+
+        try:
+            self.target.swap_with(other)
+            self.load_node(self.node, self.target)
+        except TreeError as e:
+            self.app.status_bar.set_text("Cannot swap (%s)" % e, duration_s=5)
 
     def set_bar_visibility(self, hidden):
         self.hide_bars = hidden
