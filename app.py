@@ -163,7 +163,7 @@ class Application(QApplication):
             return
 
         target = self.browser.target
-        keys = self.library.groupable_keys()
+        keys = self.library.metadata.groupable_keys()
         key_values = {key: set() for key in keys}
 
         for leaf in target.leaves():

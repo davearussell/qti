@@ -99,11 +99,13 @@ class Image(Node):
     def __init__(self, spec, root_dir):
         super().__init__(spec['name'])
         self.spec = spec
-        self.all_tags = {value for key, values in spec.items() if isinstance(values, list)
-                         for value in values}
         self.root_dir = root_dir
         self.abspath = os.path.join(root_dir, spec['path'])
         self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
+
+    def all_tags(self):
+        keys = self.root.metadata.multi_value_keys()
+        return {value for key in keys for value in self.spec[key]}
 
     def cache_path(self, size):
         return self._cache_tmpl % size.toTuple()
@@ -123,17 +125,18 @@ class Image(Node):
 
 
 class BaseTree(Root):
-    def __init__(self, root_dir, hierarchy, images):
+    def __init__(self, root_dir, metadata, images):
         super().__init__()
         self.root_dir = root_dir
-        self.hierarchy = hierarchy
+        self.metadata = metadata
         self.populate(images)
 
     def populate(self, images):
+        hierarchy = self.metadata.hierarchy()
         lut = {}
         for image_spec in images:
             parent = self
-            for key in self.hierarchy:
+            for key in hierarchy:
                 value = image_spec.get(key) or ''
                 node = lut.get((parent, value))
                 if node is None:
@@ -204,7 +207,6 @@ class FilteredTree(Root):
     def __init__(self, base_tree, filter_config):
         super().__init__()
         self.base_tree = base_tree
-        self.hierarchy = base_tree.hierarchy
         self.filter_config = filter_config
         self.group_by = []
         for word in filter_config.group_by:
@@ -218,9 +220,10 @@ class FilteredTree(Root):
 
     def populate(self):
         lut = {}
+        hierarchy = self.base_tree.metadata.hierarchy()
         filter_expr = self.filter_config.filter
         for image in self.base_tree.leaves():
-            if filter_expr and not filter_expr.matches(image.all_tags):
+            if filter_expr and not filter_expr.matches(image.all_tags()):
                 continue
 
             parents = [self]
@@ -236,7 +239,7 @@ class FilteredTree(Root):
                 for value in values:
                     if value is None:
                         value = ''
-                    if key in self.hierarchy:
+                    if key in hierarchy:
                         base_node = image.parent
                         while base_node.type != key:
                             base_node = base_node.parent

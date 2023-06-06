@@ -1,40 +1,24 @@
 import json
 import os
 
+import metadata
 import tree
 
 class Library:
-    _builtin_keys = [
-        {'name': 'name', 'builtin': True},
-        {'name': 'path', 'builtin': True},
-        {'name': 'resolution', 'builtin': True},
-        {'name': 'zoom', 'builtin': True, 'optional': True},
-        {'name': 'pan', 'builtin': True, 'optional': True},
-    ]
-
     def __init__(self, json_path):
         self.json_path = json_path
         self.root_dir = os.path.dirname(os.path.abspath(self.json_path))
         with open(self.json_path, 'r', encoding='UTF-8') as f:
             spec = json.load(f)
-        self._custom_keys = spec['keys']
+        self.metadata = metadata.Metadata()
+        for key in spec['keys']:
+            self.metadata.add_key(**key)
         self.quick_filters = spec.get('quick_filters', {})
-        self.sanitise_images(spec['images'])
-        self.base_tree = tree.BaseTree(self.root_dir, self.hierarchy, spec['images'])
-        self.scan_keys()
+        self.normalise_images(spec['images'])
+        self.base_tree = tree.BaseTree(self.root_dir, self.metadata, spec['images'])
 
     def all_images(self):
         return self.base_tree.leaves()
-
-    @property
-    def hierarchy(self):
-        return [ck['name'] for ck in self._custom_keys if ck.get('in_hierarchy')]
-
-    def groupable_keys(self):
-        return [key['name'] for key in self._custom_keys]
-
-    def metadata_keys(self):
-        return self._builtin_keys + self._custom_keys
 
     def find_key(self, name):
         matches = [key for key in self.metadata_keys() if key['name'] == name]
@@ -84,37 +68,24 @@ class Library:
         key = self.find_key(name)
         key['in_hierarchy'] = value
 
-    def sanitise_images(self, images):
-        all_keys = [key['name'] for key in self.metadata_keys()]
+    def normalise_images(self, images):
         for spec in images:
-            for key in list(spec.keys()):
-                if key not in all_keys:
-                    del spec[key]
-            for key in self._builtin_keys:
-                if key['name'] not in spec and not key['optional']:
-                    raise Exception("Missing required key '%s'" % (key,))
-            spec['resolution'] = tuple(spec['resolution'])
-            for key in self._custom_keys:
-                name, multi = key['name'], key.get('multi')
-                default = [] if multi else ''
-                if name not in spec:
-                    spec[name] = default
-                elif type(spec[name]) != type(default):
-                    raise Exception("Bad value for key %r in %r" % (key, spec))
+            self.metadata.normalise_image_spec(spec)
 
-    def scan_keys(self):
-        self.sets = {}
+    def scan_sets(self):
+        sets = {}
         for image in self.base_tree.leaves():
-            for key in self._custom_keys:
-                if not key.get('multi'):
+            for key in self.metadata.keys:
+                if not key.multi:
                     continue
-                name = key['name']
-                self.sets[name] = self.sets.get(name, set()) | set(image.spec[name])
+                name = key.name
+                sets[name] = sets.get(name, set()) | set(image.spec[name])
+        return sets
 
     def save(self):
         spec = {
             'images': [image.spec for image in self.all_images()],
-            'keys': self._custom_keys,
+            'keys': self.metadata.json(),
             'quick_filters': self.quick_filters,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:

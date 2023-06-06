@@ -24,7 +24,7 @@ class Model(QAbstractTableModel):
     def get_value(self, node, key):
         if key == 'name':
             return node.name
-        elif key in self.library.hierarchy:
+        elif key in self.library.metadata.hierarchy():
             return next(node.leaves()).spec[key]
         else:
             values = {leaf.spec[key] for leaf in node.leaves()}
@@ -123,20 +123,21 @@ class BulkEditDialog(DataDialog):
         self.add_buttons()
 
     def choose_keys(self):
+        hierarchy = self.library.metadata.hierarchy()
         if self.edit_type == 'image':
-            parents = self.library.hierarchy
-        elif self.edit_type in self.library.hierarchy:
-            i = self.library.hierarchy.index(self.edit_type)
-            parents = self.library.hierarchy[:i]
+            parents = hierarchy
+        elif self.edit_type in hierarchy:
+            i = hierarchy.index(self.edit_type)
+            parents = hierarchy[:i]
         else:
             parents = []
         keys = ['name']
-        for key in self.library.metadata_keys():
-            if key.get('builtin') or key.get('multi'):
+        for key in self.library.metadata.keys:
+            if key.builtin or key.multi:
                 continue
-            if key.get('in_hierarchy') and key['name'] not in parents:
+            if key.in_hierarchy and key.name not in parents:
                 continue
-            keys.append(key['name'])
+            keys.append(key.name)
         return keys
 
     def update_key(self, key, value):

@@ -43,7 +43,6 @@ class EditorSetField(SetField):
     def __init__(self, library, node, key, **kwargs):
         self.library = library
         self.node = node
-        completions = self.library.sets[key]
         values = None
         varying = False
         for leaf in node.leaves():
@@ -54,7 +53,7 @@ class EditorSetField(SetField):
                 values = [value for value in values if value in leaf.spec[key]]
         if varying:
             values.insert(0, '...')
-        super().__init__(key, values, completions=completions, **kwargs)
+        super().__init__(key, values, **kwargs)
 
     def update_node(self, new_value):
         if '...' in new_value:
@@ -84,6 +83,9 @@ class EditorTextField(TextField):
 
 def choose_fields(library, node, viewer):
     keymap = KeyMap()
+    hierarchy = library.metadata.hierarchy()
+
+    sets = library.scan_sets()
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
@@ -92,9 +94,9 @@ def choose_fields(library, node, viewer):
     if node.type == 'image':
         fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
         fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
-    if node.type in library.hierarchy + ['image']:
+    if node.type in hierarchy + ['image']:
         ancestors = {ancestor.type: ancestor for ancestor in node.ancestors()}
-        for ancestor_type in library.hierarchy:
+        for ancestor_type in hierarchy:
             if ancestor_type == node.type:
                 break
             if ancestor_type in ancestors:
@@ -103,10 +105,14 @@ def choose_fields(library, node, viewer):
                 value = next(node.leaves()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
-        for key in library.metadata_keys():
-            if key['name'] not in library.hierarchy and not key.get('builtin'):
-                cls = EditorSetField if key.get('multi') else EditorTextField
-                fields.append(cls(library, node, key['name'], keymap=keymap))
+        for key in library.metadata.keys:
+            if key.name not in hierarchy and not key.builtin:
+                if key.multi:
+                    fields.append(EditorSetField(library, node, key.name, keymap=keymap,
+                                                 completions=sets[key.name]))
+                else:
+                    fields.append(EditorTextField(library, node, key.name, keymap=keymap))
+                
     if viewer:
         fields.append(ZoomField(viewer, node))
     return fields
@@ -132,7 +138,6 @@ class EditorDialog(FieldDialog):
     def commit(self):
         super().commit()
         self.app.reload_tree()
-        self.library.scan_keys()
 
     def apply_field_update(self, field, value):
         field.update_node(value)

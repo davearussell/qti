@@ -55,9 +55,10 @@ class FilterConfig:
 
 
 def default_filter_config(library):
-    c = FilterConfig(group_by=list(library.hierarchy))
+    hierarchy = library.metadata.hierarchy()
+    c = FilterConfig(group_by=hierarchy)
     c.defaults = copy.deepcopy(c.defaults)
-    c.defaults['group_by'] = copy.deepcopy(library.hierarchy)
+    c.defaults['group_by'] = hierarchy.copy()
     return c
 
 
@@ -77,12 +78,13 @@ class FilterConfigDialog(FieldDialog):
         self.init_fields(self.choose_fields())
 
     def choose_fields(self):
+        can_group_by = self.library.metadata.groupable_keys()
         all_tags = set()
-        for _set in self.library.sets.values():
+        for _set in self.library.scan_sets().values():
             all_tags |= _set
         config = self.config.copy()
         return [
-            SetField("group_by", config.group_by, self.library.groupable_keys(), keybind='G'),
+            SetField("group_by", config.group_by, can_group_by, keybind='G'),
             SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='O'),
             SetField('include_tags', config.include_tags, all_tags, keybind='I'),
             SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),

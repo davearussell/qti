@@ -22,7 +22,7 @@ class DeleterDialog(QDialog):
         return set_mode
 
     def setup_radio_buttons(self):
-        if self.node.type in self.library.sets:
+        if self.node.type in self.library.metadata.multi_value_keys():
             labels = [
                 ('set', 'D&elete %s %r' % (self.node.type_label, self.node.name)),
                 ('library', 'De&lete images with %s %r' % (self.node.type_label, self.node.name)),
