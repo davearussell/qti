@@ -20,54 +20,6 @@ class Library:
     def all_images(self):
         return self.base_tree.leaves()
 
-    def find_key(self, name):
-        matches = [key for key in self.metadata_keys() if key['name'] == name]
-        assert len(matches) == 1, (name, self.metadata_keys())
-        return matches[0]
-
-    def rename_key(self, old_name, new_name):
-        print("rename_key", old_name, new_name)
-        key = self.find_key(old_name)
-        key['name'] = new_name
-        for image in self.all_images():
-            image.spec[new_name] = image.spec.pop(old_name)
-        if old_name in self.sets:
-            self.sets[new_name] = self.sets.pop(old_name)
-
-    def delete_key(self, name):
-        print("delete_key", name)
-        key = self.find_key(name)
-        self._custom_keys.remove(key)
-        # For simplicity, we don't bother to delete the key from every image
-        # at this point. It will get deleted automatically on next app restart
-
-    def new_key(self, name):
-        print("new_key", name)
-        self._custom_keys.append({'name': name})
-        for image in self.all_images():
-            image.spec[name] = ''
-
-    def reorder_keys(self, order):
-        print("reorder_keys", order)
-        keys = [self.find_key(name) for name in order]
-        self._custom_keys = [key for key in keys if not key.get('builtin')]
-
-    def set_key_multi(self, name, multi):
-        print("set_key_multi", name, multi)
-        key = self.find_key(name)
-        assert multi != bool(key.get('multi')), key
-        key['multi'] = multi
-        for image in self.all_images():
-            if multi:
-                image.spec[name] = image.spec[name].split()
-            else:
-                image.spec[name] = ' '.join(image.spec[name])
-
-    def set_key_in_hierarchy(self, name, value):
-        print("set_key_in_hierarchy", name, value)
-        key = self.find_key(name)
-        key['in_hierarchy'] = value
-
     def normalise_images(self, images):
         for spec in images:
             self.metadata.normalise_image_spec(spec)

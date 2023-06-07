@@ -83,7 +83,10 @@ class Container(Node):
     def __init__(self, name, _type):
         super().__init__(name)
         self.type = _type
-        self.type_label = _type
+
+    @property
+    def type_label(self):
+        return self.type
 
     def delete(self, from_disk=False):
         if from_disk:
@@ -146,6 +149,25 @@ class BaseTree(Root):
                 parent = node
             parent.add_child(Image(image_spec, self.root_dir))
 
+    def add_key(self, key, value):
+        for image in self.leaves():
+            image.spec[key] = value
+
+    def rename_key(self, old_name, new_name):
+        for node in self.descendants():
+            if node.children:
+                if node.type == old_name:
+                    node.type = new_name
+            else:
+                node.spec[new_name] = node.spec.pop(old_name)
+
+    def set_key_multi(self, key, is_multi):
+        for image in self.leaves():
+            if is_multi:
+                image.spec[key] = image.spec[key].split()
+            else:
+                image.spec[key] = ' '.join(image.spec[key])
+
 
 class FilteredContainer(Container):
     def __init__(self, name, _type, base_node):
@@ -169,12 +191,12 @@ class FilteredContainer(Container):
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
         super().__init__(name, _type, None)
-        self.type_label = self.singularise(self.type_label)
 
-    def singularise(self, text):
-        if text.endswith('s'):
-            return text[:-1]
-        return text
+    @property
+    def type_label(self):
+        if self.type.endswith('s'):
+            return self.type[:-1]
+        return self.type
 
     def delete(self, from_disk=False, preserve_images=False):
         if preserve_images:
@@ -268,3 +290,14 @@ class FilteredTree(Root):
                 for node in nodes:
                     node.children.sort(key=sort_key)
             nodes = [child for node in nodes for child in node.children]
+
+    def add_key(self, key, value):
+        self.base_tree.add_key(key, value)
+        super().add_key(key, value)
+
+    def rename_key(self, old_name, new_name):
+        self.base_tree.rename_key(old_name, new_name)
+        super().rename_key(old_name, new_name)
+
+    def set_key_multi(self, key, is_multi):
+        self.base_tree.set_key_multi(key, is_multi)

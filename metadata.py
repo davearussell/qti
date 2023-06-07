@@ -24,6 +24,11 @@ class MetadataKey:
         self.in_hierarchy = in_hierarchy
         self.multi = multi
 
+    def copy(self):
+        return type(self)(name=self.name, builtin=self.builtin, required=self.required,
+                          default=copy.deepcopy(self.default), _type=self.type,
+                          in_hierarchy=self.in_hierarchy, multi=self.multi)
+
     def json(self):
         return {k: getattr(self, k) for k in ['name', 'in_hierarchy', 'multi']}
 
@@ -43,11 +48,26 @@ class Metadata:
         for key in BUILTIN_KEYS:
             self.add_key(builtin=True, **key)
 
+    def copy(self):
+        new = type(self)()
+        new.keys = [key.copy() for key in self.keys]
+        new.lut = {key.name: key for key in new.keys}
+        return new
+
     def add_key(self, name, **kwargs):
         assert name not in self.lut
         key = MetadataKey(name, **kwargs)
         self.keys.append(key)
         self.lut[name] = key
+
+    def delete_key(self, name):
+        assert name in self.lut
+        self.keys.remove(self.lut.pop(name))
+
+    def rename_key(self, old_name, new_name):
+        assert old_name in self.lut and new_name not in self.lut
+        key = self.lut[new_name] = self.lut.pop(old_name)
+        key.name = new_name
 
     def hierarchy(self):
         return [key.name for key in self.keys if key.in_hierarchy]
@@ -116,16 +136,16 @@ class ActionButton(QPushButton):
 class MetadataGrid(QWidget):
     data_updated = Signal()
 
-    def __init__(self, metadata_keys):
+    def __init__(self, metadata):
         super().__init__()
-        self.metadata_keys = copy.deepcopy(metadata_keys)
+        self.metadata = metadata.copy()
         self.do_layout()
         self.actions = []
 
     def do_layout(self):
         QWidget().setLayout(self.layout()) # clears any existing layout
         self.setLayout(QGridLayout())
-        for i, row in enumerate(self.make_grid(self.metadata_keys)):
+        for i, row in enumerate(self.make_grid()):
             for j, cell in enumerate(row):
                 if cell:
                     self.layout().addWidget(cell, i, j)
@@ -137,19 +157,19 @@ class MetadataGrid(QWidget):
 
     def button_cb(self, action, i):
         if action == 'delete':
-            mk = self.metadata_keys.pop(i)
-            self.action('delete', mk['name'])
+            mk = self.metadata.keys.pop(i)
+            self.action('delete', mk.name)
         else:
             j = i + (1 if action == 'down' else -1)
-            m = self.metadata_keys
+            m = self.metadata.keys
             m[i], m[j] = m[j], m[i]
-            self.action('reorder', [key['name'] for key in m])
+            self.action('reorder', [key.name for key in m])
         self.do_layout()
 
     def new_row(self, name):
-        is_valid = name and name not in [key['name'] for key in self.metadata_keys]
+        is_valid = name and name not in self.metadata.lut
         if is_valid:
-            self.metadata_keys.append({'name': name})
+            self.metadata.add_key(name)
             self.action('append', name)
         self.setFocus()
         # This function is called from the context of a QLineEdit event callback.
@@ -158,40 +178,40 @@ class MetadataGrid(QWidget):
         QTimer.singleShot(0, self.do_layout)
 
     def update_name(self, name, i):
-        is_valid = name and name not in [key['name'] for key in self.metadata_keys]
+        is_valid = name and name not in self.metadata.lut
         if is_valid:
-            old_name = self.metadata_keys[i]['name']
+            old_name = self.metadata.keys[i].name
             if self.actions: # Merge consecutive renames of the same key
                 action, args = self.actions[-1]
                 if action == 'rename' and args[1] == old_name:
                     old_name = args[0]
                     self.actions.pop()
             self.action('rename', old_name, name)
-            self.metadata_keys[i]['name'] = name
+            self.metadata.keys[i].name = name
 
     def update_multi(self, value, i):
         assert isinstance(value, bool), (value, i)
-        self.metadata_keys[i]['multi'] = value
-        self.action('multi', self.metadata_keys[i]['name'], value)
+        self.metadata.keys[i].multi = value
+        self.action('multi', self.metadata.keys[i].name, value)
 
     def update_hierarchy(self, value, i):
         assert isinstance(value, bool), (value, i)
-        self.metadata_keys[i]['in_hierarchy'] = value
-        self.action('hierarchy', self.metadata_keys[i]['name'], value)
+        self.metadata.keys[i].in_hierarchy = value
+        self.action('hierarchy', self.metadata.keys[i].name, value)
 
-    def make_grid(self, metadata_keys):
+    def make_grid(self):
         grid = []
         is_first = True
-        for i, key in enumerate(metadata_keys):
-            is_last = i == len(metadata_keys) - 1
+        for i, key in enumerate(self.metadata.keys):
+            is_last = i == len(self.metadata.keys) - 1
 
-            edit = LineEdit(key['name'], read_only=key.get('builtin'), ctx=i)
+            edit = LineEdit(key.name, read_only=key.builtin, ctx=i)
             edit.updated.connect(self.update_name)
             row = [edit, None, None, None, None, None]
-            if not key.get('builtin'):
-                row[1] = CheckBox('Multi-value', bool(key.get('multi')),
+            if not key.builtin:
+                row[1] = CheckBox('Multi-value', key.multi,
                                   ctx=i, cb=self.update_multi)
-                row[2] = CheckBox('In hierarchy', bool(key.get('in_hierarchy')),
+                row[2] = CheckBox('In hierarchy', key.in_hierarchy,
                                   ctx=i, cb=self.update_hierarchy)
                 row[5] = ActionButton('delete', i, self.button_cb)
                 if not is_first:
@@ -211,7 +231,9 @@ class MetadataEditorDialog(DataDialog):
 
     def __init__(self, app):
         super().__init__(app)
-        self.grid = MetadataGrid(self.app.library.metadata_keys())
+        self.metadata = self.app.library.metadata
+        self.tree = self.app.browser.node.root
+        self.grid = MetadataGrid(self.metadata)
         self.grid.data_updated.connect(self.data_updated)
         self.layout().addWidget(self.grid)
         self.add_buttons()
@@ -222,19 +244,43 @@ class MetadataEditorDialog(DataDialog):
     def commit(self):
         handlers = {
             'rename': self.rename_key,
-            'delete': self.app.library.delete_key,
-            'append': self.app.library.new_key,
-            'reorder': self.app.library.reorder_keys,
-            'multi': self.app.library.set_key_multi,
-            'hierarchy': self.app.library.set_key_in_hierarchy,
+            'delete': self.delete_key,
+            'append': self.new_key,
+            'reorder': self.reorder_keys,
+            'multi': self.set_key_multi,
+            'hierarchy': self.set_key_in_hierarchy,
         }
+        hierarchy = self.metadata.hierarchy()
         for action, args in self.grid.actions:
             handlers[action](*args)
+        if self.metadata.hierarchy() != hierarchy:
+            self.app.status_bar.set_text("WARNING: default grouping updated, app restart"
+                                         " required to take effect",
+                                         duration_s=10, priority=100)
         self.grid.actions = []
 
     def rename_key(self, old_name, new_name):
-        self.app.library.rename_key(old_name, new_name)
+        self.metadata.rename_key(old_name, new_name)
         self.app.filter_config.rename_key(old_name, new_name)
-        for node in self.app.browser.node.root.descendants():
-            if node.type == old_name:
-                node.type = new_name
+        self.tree.rename_key(old_name, new_name)
+
+    def delete_key(self, name):
+        self.metadata.delete_key(name)
+        # No need to delete the key from every image at this point. It
+        # will be ignored for now, and deleted for good when we normalise
+        # it on the next app restart.
+
+    def new_key(self, name):
+        self.metadata.add_key(name)
+        self.tree.add_key(name, '')
+
+    def reorder_keys(self, order):
+        assert set(order) == {key.name for key in self.metadata.keys}
+        self.metadata.keys = [self.metadata.lut[name] for name in order]
+
+    def set_key_multi(self, name, multi):
+        self.metadata.lut[name].multi = multi
+        self.tree.set_key_multi(name, multi)
+
+    def set_key_in_hierarchy(self, name, value):
+        self.metadata.lut[name].in_hierarchy = value
