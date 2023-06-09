@@ -14,15 +14,10 @@ class Library:
         for key in spec['keys']:
             self.metadata.add_key(**key)
         self.quick_filters = spec.get('quick_filters', {})
-        self.normalise_images(spec['images'])
         self.base_tree = tree.BaseTree(self.root_dir, self.metadata, spec['images'])
 
     def all_images(self):
         return self.base_tree.leaves()
-
-    def normalise_images(self, images):
-        for spec in images:
-            self.metadata.normalise_image_spec(spec)
 
     def scan_sets(self):
         sets = {}

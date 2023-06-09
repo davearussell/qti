@@ -45,13 +45,13 @@ class NewImage(Cell):
 
     def format_value(self, key):
         if key == 'resolution':
-            return '%d x %d' % self.spec['resolution']
+            return '%d x %d' % tuple(self.spec['resolution'])
         return self.spec[key]
 
     def fill_in_spec(self):
         self.spec['name'] = self.name
         self.spec['path'] = self.relpath
-        self.spec['resolution'] = Image.open(self.abspath).size
+        self.spec['resolution'] = list(Image.open(self.abspath).size)
 
     def load_pixmap(self):
         # TODO: refactor away duplication with browser.Thumbnail
@@ -198,8 +198,7 @@ class ImporterDialog(DataDialog):
                               "These will not be added. Proceed anyway?").exec():
                 raise AbortCommit()
 
-        for image in ready:
-            self.library.add_image(image.spec)
+        self.library.base_tree.populate([image.spec for image in ready])
         self.app.reload_tree()
         self.drop_images(ready)
 

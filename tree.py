@@ -132,19 +132,20 @@ class BaseTree(Root):
         super().__init__()
         self.root_dir = root_dir
         self.metadata = metadata
+        self.lut = {}
         self.populate(images)
 
     def populate(self, images):
         hierarchy = self.metadata.hierarchy()
-        lut = {}
         for image_spec in images:
+            self.metadata.normalise_image_spec(image_spec)
             parent = self
             for key in hierarchy:
                 value = image_spec.get(key) or ''
-                node = lut.get((parent, value))
+                node = self.lut.get((parent, value))
                 if node is None:
                     node = Container(value, key)
-                    lut[(parent, value)] = node
+                    self.lut[(parent, value)] = node
                     parent.add_child(node)
                 parent = node
             parent.add_child(Image(image_spec, self.root_dir))
