@@ -44,6 +44,7 @@ class Model(QAbstractTableModel):
     def commit(self):
         for node, row in zip(self.parent_node.children, self.table):
             for key, value in zip(self.keys, row):
+                assert 0, "use new update api here"
                 if node.type == 'image':
                     assert key in node.spec
                     node.spec[key] = value
