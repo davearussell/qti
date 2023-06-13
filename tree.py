@@ -229,7 +229,7 @@ class FilteredImage(Image):
 class FilteredTree(Root):
     def __init__(self, base_tree, filter_config):
         super().__init__()
-        self.base_tree = base_tree
+        self.base_node = base_tree
         self.filter_config = filter_config
         self.group_by = []
         for word in filter_config.group_by:
@@ -243,9 +243,9 @@ class FilteredTree(Root):
 
     def populate(self):
         lut = {}
-        hierarchy = self.base_tree.metadata.hierarchy()
+        hierarchy = self.base_node.metadata.hierarchy()
         filter_expr = self.filter_config.filter
-        for image in self.base_tree.leaves():
+        for image in self.base_node.leaves():
             if filter_expr and not filter_expr.matches(image.all_tags()):
                 continue
 
@@ -293,12 +293,12 @@ class FilteredTree(Root):
             nodes = [child for node in nodes for child in node.children]
 
     def add_key(self, key, value):
-        self.base_tree.add_key(key, value)
+        self.base_node.add_key(key, value)
         super().add_key(key, value)
 
     def rename_key(self, old_name, new_name):
-        self.base_tree.rename_key(old_name, new_name)
+        self.base_node.rename_key(old_name, new_name)
         super().rename_key(old_name, new_name)
 
     def set_key_multi(self, key, is_multi):
-        self.base_tree.set_key_multi(key, is_multi)
+        self.base_node.set_key_multi(key, is_multi)
