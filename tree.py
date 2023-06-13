@@ -105,6 +105,7 @@ class Image(Node):
         self.root_dir = root_dir
         self.abspath = os.path.join(root_dir, spec['path'])
         self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
+        self.base_node = self
 
     def all_tags(self):
         keys = self.root.metadata.multi_value_keys()

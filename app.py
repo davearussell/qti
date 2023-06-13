@@ -196,34 +196,53 @@ class Application(QApplication):
         mode = 'grid' if node.type != 'image' else self.browser.mode
         self.browser.load_node(node, mode=mode)
 
+    def select_target(self, new_tree, old_target):
+        # If either the old or current tree was empty, return the root of the new tree
+        if not(old_target and new_tree.children):
+            return new_tree, None, 'grid'
+
+        # Search for leaves that are present in both old and new trees. Initially we only
+        # look for leaves that are descendants of the old target, but widen the search if
+        # none exist
+        old_node = old_target
+        leaf = None
+        while old_node and not leaf:
+            old_leaves = {leaf.base_node for leaf in old_node.leaves()}
+            for leaf in new_tree.leaves():
+                if leaf.base_node in old_leaves:
+                    break
+            else:
+                leaf = None
+                old_target = old_node
+                old_node = old_node.parent
+
+        # If we found a common leaf, we will point at one of its ancenstors.
+        # The logic is a bit fiddly, but aims for the principle of least surprise
+        # 1. If the leaf belongs to the old target,
+        #    a. If we're still grouping the old target's type, choose the ancestor
+        #       of the same type
+        #    b. Otherwise, if we're grouping by the old target's *parent's* type,
+        #       choose said type's child that contains our leaf
+        # 2. Otherwise, choose the closest-to-leaf ancestor which is a parent of
+        #    the common leaf
+        if leaf:
+            ancestors = {node.type: node for node in leaf.ancestors()}
+            if old_target.type in ancestors:
+                target = ancestors[old_target.type]
+            elif old_target.parent and old_target.parent.type in ancestors:
+                parent = ancestors[old_target.parent.type]
+                target = [node for node in ancestors.values() if node.parent == parent][0]
+            else:
+                target = leaf # XXX or is root better?
+            mode = None if target.type == 'image' else 'grid'
+            return target.parent, target, mode
+
+        # If we get here, then there are no images in common between the old and new views.
+        # Just point at the root of the tree.
+        return new_tree, None, 'grid'
+
     def reload_tree(self):
-        target = self.window.browser.target
+        old_target = self.window.browser.target
         tree = self.library.make_tree(self.filter_config)
-
-        if not (target and tree.children):
-            self.window.browser.load_node(tree, mode='grid')
-            return
-
-        path_from_root = []
-        node = target
-        while node.parent:
-            path_elem = (node.type, node.name, node.parent.children.index(node))
-            path_from_root.insert(0, path_elem)
-            node = node.parent
-
-        browser_mode = None
-        node = None
-        target = tree
-        for node_type, name, idx in path_from_root:
-            node = target
-            targets = [child for child in node.children if child.name == name]
-            if not targets:
-                if idx >= len(node.children):
-                    idx = len(node.children) - 1
-                target = node.children[idx]
-                if target.type != 'image':
-                    browser_mode = 'grid'
-                break
-            target = targets[0]
-
-        self.window.browser.load_node(node, target=target, mode=browser_mode)
+        node, target, mode = self.select_target(tree, old_target)
+        self.window.browser.load_node(node, target=target, mode=mode)
