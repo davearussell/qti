@@ -15,6 +15,19 @@ SORT_TYPES = {
 }
 
 
+def only(seq):
+    l = list(seq)
+    if len(l) != 1:
+        raise Exception("Expected 1 match, found %d" % (len(l),))
+    return l[0]
+
+def maybe(seq):
+    l = list(seq)
+    if len(l) > 1:
+        raise Exception("Expected 0-1 matches, found %d" % (len(l),))
+    return l[0] if l else None
+
+
 class Node:
     def __init__(self, name):
         self.name = name
@@ -125,6 +138,10 @@ class Image(Node):
             self.delete_file()
         self.delete()
 
+    def update_set(self, key, add, remove):
+        old = self.spec[key]
+        self.spec[key] = [x for x in old if x not in remove] + [x for x in add if x not in old]
+
 
 class BaseTree(Root):
     def __init__(self, root_dir, metadata, images):
@@ -134,20 +151,38 @@ class BaseTree(Root):
         self.lut = {}
         self.populate(images)
 
-    def populate(self, images):
+    def insert_images(self, images):
         hierarchy = self.metadata.hierarchy()
-        for image_spec in images:
-            self.metadata.normalise_image_spec(image_spec)
+        for image in images:
             parent = self
             for key in hierarchy:
-                value = image_spec.get(key) or ''
+                value = image.spec.get(key) or ''
                 node = self.lut.get((parent, value))
                 if node is None:
                     node = Container(value, key)
                     self.lut[(parent, value)] = node
                     parent.add_child(node)
                 parent = node
-            parent.add_child(Image(image_spec, self.root_dir))
+            parent.add_child(image)
+
+    def populate(self, image_specs):
+        images = []
+        for image_spec in image_specs:
+            self.metadata.normalise_image_spec(image_spec)
+            images.append(Image(image_spec, self.root_dir))
+        self.insert_images(images)
+
+    def move_images(self, images, key, value):
+        ancestor = only(images[0].ancestors(lambda n: n.type == key))
+        parent = ancestor.parent
+        new_ancestor = maybe(node for node in parent.children if node.name == value)
+        if new_ancestor is None:
+            new_ancestor = Container(value, key)
+            parent.add_child(new_ancestor, index=parent.children.index(ancestor) + 1)
+            self.lut[(parent, value)] = new_ancestor
+        for image in images:
+            image.delete()
+        self.insert_images(images)
 
     def add_key(self, key, value):
         for image in self.leaves():
@@ -181,6 +216,20 @@ class FilteredContainer(Container):
         bs.swap_with(bo)
         super().swap_with(other)
 
+    def update(self, key, value):
+        if key == 'name':
+            key = self.type
+        images = [leaf.base_node for leaf in self.leaves()]
+        for image in images:
+            image.spec[key] = value
+        base_tree = self.root.base_node
+        if key in base_tree.metadata.hierarchy():
+            base_tree.move_images(images, key, value)
+
+    def update_set(self, key, add, remove):
+        for leaf in self.leaves():
+            leaf.base_node.update_set(key, add, remove)
+
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -201,6 +250,12 @@ class FilteredSet(FilteredContainer):
         else:
             super().delete_images(from_disk)
 
+    def update(self, key, value):
+        assert key == 'name', key
+        for image in self.leaves():
+            values = image.base_node.spec[self.type]
+            values[values.index(self.name)] = value
+
 
 class FilteredImage(Image):
     def __init__(self, image):
@@ -217,6 +272,15 @@ class FilteredImage(Image):
     def delete_images(self, from_disk=False):
         self.base_node.delete_images(from_disk)
         self.delete()
+
+    def update(self, key, value):
+        self.base_node.spec[key] = value
+        base_tree = self.base_node.root
+        if key in base_tree.metadata.hierarchy():
+            base_tree.move_images([self.base_node], key, value)
+
+    def update_set(self, key, add, remove):
+        self.base_node.update_set(key, add, remove)
 
 
 class FilteredTree(Root):

@@ -14,16 +14,7 @@ class NameField(TextField):
         super().__init__('name', node.name, **kwargs)
 
     def update_node(self, new_value):
-        if self.node.children:
-            for leaf in self.node.leaves():
-                value = leaf.spec[self.node.type]
-                if isinstance(value, list):
-                    # We hit this when node is representing an element in a set
-                    value[value.index(self.original_value)] = new_value
-                else:
-                    leaf.spec[self.node.type] = new_value
-        else:
-            self.node.spec['name'] = new_value
+        self.node.update('name', new_value)
 
 
 class AncestorField(TextField):
@@ -35,8 +26,7 @@ class AncestorField(TextField):
         super().__init__(ancestor.type, ancestor.name, **kwargs)
 
     def update_node(self, new_value):
-        for leaf in self.node.leaves():
-            leaf.spec[self.ancestor.type] = new_value
+        self.node.update(self.ancestor.type, new_value)
 
 
 class EditorSetField(SetField):
@@ -60,12 +50,9 @@ class EditorSetField(SetField):
             new_value.remove('...')
             to_add = [key for key in new_value if key not in self.original_value]
             to_remove = [key for key in self.original_value if key not in new_value]
-            for leaf in self.node.leaves():
-                old_value = leaf.spec[self.key]
-                leaf.spec[self.key] = [x for x in old_value if x not in to_remove + to_add] + to_add
+            self.node.update_set(self.key, to_add, to_remove)
         else:
-            for leaf in self.node.leaves():
-                leaf.spec[self.key] = new_value
+            self.node.update(self.key, new_value)
 
 
 class EditorTextField(TextField):
@@ -77,8 +64,7 @@ class EditorTextField(TextField):
         super().__init__(key, value, **kwargs)
 
     def update_node(self, new_value):
-        for leaf in self.node.leaves():
-            leaf.spec[self.key] = new_value
+        self.node.update(self.key, new_value)
 
 
 def choose_fields(library, node, viewer):
@@ -112,7 +98,7 @@ def choose_fields(library, node, viewer):
                                                  completions=sets[key.name]))
                 else:
                     fields.append(EditorTextField(library, node, key.name, keymap=keymap))
-                
+
     if viewer:
         fields.append(ZoomField(viewer, node))
     return fields
