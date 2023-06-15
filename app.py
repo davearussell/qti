@@ -69,6 +69,7 @@ class Window(QMainWindow):
         super().__init__()
         self.app = app
         self.keybinds = app.keybinds
+        self.setFixedSize(size)
         self.browser = browser.Browser(app)
         self.setCentralWidget(self.browser)
 
