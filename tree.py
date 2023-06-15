@@ -67,10 +67,10 @@ class Node:
 
     def delete(self):
         parent = self.parent
+        self.parent = None
         parent.children.remove(self)
-        while parent.parent and not parent.children:
-            parent.parent.children.remove(parent)
-            parent = parent.parent
+        if not parent.children:
+            parent.delete()
 
 
 class Root(Node):
@@ -88,11 +88,9 @@ class Container(Node):
     def type_label(self):
         return self.type
 
-    def delete(self, from_disk=False):
-        if from_disk:
-            for image in self.leaves():
-                image.delete_file()
-        super().delete()
+    def delete_images(self, from_disk=True):
+        for leaf in list(self.leaves()):
+            leaf.delete_images(from_disk)
 
 
 class Image(Node):
@@ -122,10 +120,10 @@ class Image(Node):
             print("Deleting", self.abspath)
             os.unlink(self.abspath)
 
-    def delete(self, from_disk=False):
+    def delete_images(self, from_disk=False):
         if from_disk:
             self.delete_file()
-        super().delete()
+        self.delete()
 
 
 class BaseTree(Root):
@@ -183,12 +181,6 @@ class FilteredContainer(Container):
         bs.swap_with(bo)
         super().swap_with(other)
 
-    def delete(self, from_disk=False, preserve_base=False):
-        if not preserve_base:
-            for leaf in self.leaves():
-                leaf.base_node.delete(from_disk=from_disk)
-        super().delete()
-
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -200,14 +192,14 @@ class FilteredSet(FilteredContainer):
             return self.type[:-1]
         return self.type
 
-    def delete(self, from_disk=False, preserve_images=False):
+    def delete_images(self, from_disk=False, preserve_images=False):
         if preserve_images:
             assert not from_disk
             for node in self.leaves():
                 node.spec[self.type].remove(self.name)
-            super().delete(preserve_base=True)
+            self.delete()
         else:
-            super().delete(from_disk=from_disk)
+            super().delete_images(from_disk)
 
 
 class FilteredImage(Image):
@@ -222,9 +214,9 @@ class FilteredImage(Image):
         bs.swap_with(bo)
         super().swap_with(other)
 
-    def delete(self, from_disk=False):
-        self.base_node.delete(from_disk=from_disk)
-        super().delete()
+    def delete_images(self, from_disk=False):
+        self.base_node.delete_images(from_disk)
+        self.delete()
 
 
 class FilteredTree(Root):

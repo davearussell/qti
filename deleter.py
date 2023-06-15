@@ -68,8 +68,8 @@ class DeleterDialog(QDialog):
                 parent = parent.parent
 
         if self.delete_mode == 'set':
-            self.node.delete(preserve_images=True)
+            self.node.delete_images(preserve_images=True)
         else:
-            self.node.delete(from_disk=(self.delete_mode == 'disk'))
+            self.node.delete_images(from_disk=(self.delete_mode == 'disk'))
         self.app.browser.load_node(parent, target=target, mode=mode)
         super().accept()
