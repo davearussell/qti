@@ -36,6 +36,7 @@ DEFAULT_KEYBINDS = {
     'app_settings':  [Qt.Key_A],
     'edit_keybinds': [Qt.Key_K],
     'edit_quick_filters': [Qt.Key_F],
+    'edit_quick_actions': [Qt.Key_G],
 
     'reset_zoom':    [(Qt.Key_R, Qt.ControlModifier)],
 

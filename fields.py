@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QComboBox
 from PySide6.QtCore import Qt, Signal
 
 from sets import SetPicker
@@ -95,6 +95,26 @@ class Field(QWidget):
 
     def set_value(self, value):
         raise NotImplementedError()
+
+
+class EnumField(Field):
+    def __init__(self, key, value, values, **kwargs):
+        self.values = values
+        super().__init__(key, value, **kwargs)
+
+    def make_body(self):
+        box = QComboBox()
+        box.setFocusPolicy(Qt.NoFocus)
+        for value in self.values:
+            box.addItem(value)
+        return box
+
+    def get_value(self):
+        return self.body.currentText()
+
+    def set_value(self, value):
+        assert value in self.values, value
+        self.body.setCurrentText(value)
 
 
 class TextField(Field):

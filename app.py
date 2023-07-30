@@ -17,6 +17,7 @@ from deleter import DeleterDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
+from quick_actions import QuickActionDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
 from background import BackgroundCacher
@@ -91,6 +92,8 @@ class Window(QMainWindow):
             MetadataEditorDialog(self.app).exec()
         elif action == 'edit_quick_filters':
             QuickFilterDialog(self.app).exec()
+        elif action == 'edit_quick_actions':
+            QuickActionDialog(self.app).exec()
         elif action == 'edit_keybinds':
             KeybindDialog(self.app).exec()
         elif action == 'save_snapshot':
@@ -99,6 +102,8 @@ class Window(QMainWindow):
             self.app.restore_snapshot()
         elif action and action.startswith('quick_filter_'):
             self.app.apply_quick_filter(action[len('quick_filter_'):])
+        elif action and action.startswith('quick_action_'):
+            self.app.apply_quick_action(action[len('quick_action_'):])
         elif action == 'add_new_images':
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
@@ -119,6 +124,8 @@ class Application(QApplication):
         self.library = library.Library(json_file)
         for qf in self.library.quick_filters:
             self.keybinds.add_action('quick_filter_' + qf)
+        for qf in self.library.quick_actions:
+            self.keybinds.add_action('quick_action_' + qf)
         self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
@@ -195,6 +202,32 @@ class Application(QApplication):
         node = root.children[0] if root.children and skip_root else root
         mode = 'grid' if node.type != 'image' else self.browser.mode
         self.browser.load_node(node, mode=mode)
+
+    def apply_quick_action(self, name):
+        qa = self.library.quick_actions.get(name)
+        if qa is None:
+            return
+        md = self.library.metadata.lut.get(qa['key'])
+        if md is None:
+            return
+
+        target = self.browser.target
+        if not md.multi:
+            if qa['operation'] != 'add':
+                return
+            target.update(qa['key'], qa['value'])
+        else:
+            if qa['operation'] == 'add':
+                target.update_set(qa['key'], add={qa['value']}, remove=set())
+                self.status_bar.set_text("Added %(key)s %(value)r" % qa, duration_s=5)
+            elif qa['operation'] == 'remove':
+                target.update_set(qa['key'], remove={qa['value']}, add=set())
+                self.status_bar.set_text("Removed %(key)s %(value)r" % qa, duration_s=5)
+            elif qa['operation'] == 'toggle':
+                assert 0, "write me"
+                self.status_bar.set_text("Toggled %(key)s %(value)r" % qa, duration_s=5)
+            else:
+                assert 0, qa
 
     def select_target(self, new_tree, old_target):
         # If either the old or current tree was empty, return the root of the new tree
