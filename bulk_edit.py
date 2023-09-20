@@ -44,15 +44,7 @@ class Model(QAbstractTableModel):
     def commit(self):
         for node, row in zip(self.parent_node.children, self.table):
             for key, value in zip(self.keys, row):
-                assert 0, "use new update api here"
-                if node.type == 'image':
-                    assert key in node.spec
-                    node.spec[key] = value
-                else:
-                    if key == 'name':
-                        key = node.type
-                    for leaf in node.leaves():
-                        leaf.spec[key] = value
+                node.update(key, value)
 
     def headerData(self, idx, orientation, role):
         if orientation == Qt.Horizontal:
