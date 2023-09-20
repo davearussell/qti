@@ -44,6 +44,16 @@ def f_dirat(path, i):
     return path.split(os.path.sep)[int(i)]
 
 
+def uncamel(word):
+    """Converts 'WordInCamelCase' -> 'Word In Camel Case' """
+    new_word = ''
+    for char in word:
+        if new_word and not new_word[-1].isspace() and char.isupper():
+            new_word += ' '
+        new_word += char
+    return new_word
+
+
 def evaluate(node, template_string):
     filters = {
         'title': f_title,
@@ -53,6 +63,7 @@ def evaluate(node, template_string):
         'strip_from': f_strip_from,
         'strip_digits': f_strip_digits,
         'dirat': f_dirat,
+        'uncamel': uncamel,
     }
 
     spec = {
@@ -64,6 +75,10 @@ def evaluate(node, template_string):
             'dir': os.path.basename(os.path.dirname(node.abspath)),
             'file': os.path.splitext(os.path.basename(node.abspath))[0],
         })
+
+    for key in node.base_node.root.metadata.keys:
+        if not key.builtin:
+            spec[key.name] = node.get_key(key.name)
 
     return apply(spec, template_string, filters)
 
