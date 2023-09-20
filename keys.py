@@ -37,6 +37,7 @@ DEFAULT_KEYBINDS = {
     'edit_keybinds': [Qt.Key_K],
     'edit_quick_filters': [Qt.Key_F],
     'edit_quick_actions': [Qt.Key_G],
+    'auto_scroll': [(Qt.Key_A, Qt.ControlModifier)],
 
     'reset_zoom':    [(Qt.Key_R, Qt.ControlModifier)],
 

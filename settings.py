@@ -16,6 +16,7 @@ DEFAULT_APP_SETTINGS = [
     ('thumbnail_name_font_size',   int,     14),
     ('thumbnail_count_font_size',  int,     30),
     ('key_picker_font_size',       int,     20),
+    ('auto_scroll_period',         int,     5),
 ]
 
 

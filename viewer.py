@@ -1,5 +1,7 @@
+import time
+
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, Signal, QEvent, QSize
+from PySide6.QtCore import Qt, Signal, QEvent, QSize, QTimer
 from PySide6.QtGui import QPixmap, QPainter
 
 
@@ -15,6 +17,10 @@ class Viewer(QLabel):
         self.keybinds = app.keybinds
         self.node = None
         self.target = None
+        self.auto_scroll_enabled = False
+        self.auto_scroll_at = None
+        self.auto_scroll_timer = QTimer()
+        self.auto_scroll_timer.timeout.connect(self.auto_scroll_tick)
         self.action_map = {
             'left': self.scroll,
             'right': self.scroll,
@@ -23,6 +29,7 @@ class Viewer(QLabel):
             'select': self.select,
             'unselect': self.unselect,
             'reset_zoom': self.reset_zoom,
+            'auto_scroll': self.toggle_auto_scroll,
         }
 
     def load(self, node, target):
@@ -54,8 +61,33 @@ class Viewer(QLabel):
     def unselect(self, _action=None):
         self.unselected.emit(self.target)
 
+    def toggle_auto_scroll(self, _action=None):
+        if self.auto_scroll_enabled:
+            self.stop_auto_scroll()
+        else:
+            self.start_auto_scroll()
+
+    def start_auto_scroll(self):
+        self.auto_scroll_enabled = True
+        self.auto_scroll_at = time.time() + self.app.settings.get('auto_scroll_period')
+        self.auto_scroll_timer.start(100)
+
+    def stop_auto_scroll(self):
+        self.auto_scroll_enabled = False
+        self.auto_scroll_timer.stop()
+
+    def auto_scroll_tick(self):
+        remaining = self.auto_scroll_at - time.time()
+        if remaining < 0 :
+            self.scroll('right')
+            self.auto_scroll_at += self.app.settings.get('auto_scroll_period')
+        else:
+            self.app.status_bar.set_text('Auto scroll [%d]' % remaining, duration_s=0.11)
+
     def keyPressEvent(self, event):
         action = self.keybinds.get_action(event)
+        if action != 'auto_scroll':
+            self.stop_auto_scroll()
         if action in self.action_map:
             self.action_map[action](action)
         else:
