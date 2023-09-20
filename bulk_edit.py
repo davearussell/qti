@@ -14,24 +14,12 @@ class Model(QAbstractTableModel):
         self.parent_node = node
         self.keys = keys
         self.table = [
-            [self.get_value(node, key) for key in self.keys]
+            [node.get_key(key) for key in self.keys]
             for node in self.parent_node.children
         ]
         self.dirty = False
         self.header_font = font
         self.header_font.setBold(True)
-
-    def get_value(self, node, key):
-        if key == 'name':
-            return node.name
-        elif key in self.library.metadata.hierarchy():
-            return next(node.leaves()).spec[key]
-        else:
-            values = {leaf.spec[key] for leaf in node.leaves()}
-            if len(values) == 1:
-                return values.pop()
-            else:
-                return '...'
 
     def set_value(self, key, value):
         col = self.keys.index(key)

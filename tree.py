@@ -230,6 +230,27 @@ class FilteredContainer(Container):
         for leaf in self.leaves():
             leaf.base_node.update_set(key, add, remove)
 
+    def get_key(self, key):
+        if key == 'name':
+            return self.name
+
+        multi = key in self.root.base_node.metadata.multi_value_keys()
+        if multi:
+            values = None
+            varying = False
+            for leaf in self.leaves():
+                if values is None:
+                    values = leaf.spec[key].copy()
+                elif sorted(values) != sorted(leaf.spec[key]):
+                    varying = True
+                    values = [value for value in values if value in leaf.spec[key]]
+            if varying:
+                values.insert(0, '...')
+            return values
+        else:
+            values = {leaf.get_key(key) for leaf in self.leaves()}
+            return values.pop() if len(values) == 1 else '...'
+
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -281,6 +302,9 @@ class FilteredImage(Image):
 
     def update_set(self, key, add, remove):
         self.base_node.update_set(key, add, remove)
+
+    def get_key(self, key):
+        return self.spec[key]
 
 
 class FilteredTree(Root):

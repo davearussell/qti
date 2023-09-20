@@ -33,16 +33,7 @@ class EditorSetField(SetField):
     def __init__(self, library, node, key, **kwargs):
         self.library = library
         self.node = node
-        values = None
-        varying = False
-        for leaf in node.leaves():
-            if values is None:
-                values = leaf.spec[key].copy()
-            elif sorted(values) != sorted(leaf.spec[key]):
-                varying = True
-                values = [value for value in values if value in leaf.spec[key]]
-        if varying:
-            values.insert(0, '...')
+        values = node.get_key(key)
         super().__init__(key, values, **kwargs)
 
     def update_node(self, new_value):
@@ -59,8 +50,7 @@ class EditorTextField(TextField):
     def __init__(self, library, node, key, **kwargs):
         self.library = library
         self.node = node
-        values = {leaf.spec[key] for leaf in node.leaves()}
-        value = values.pop() if len(values) == 1 else '...'
+        value = node.get_key(key)
         super().__init__(key, value, **kwargs)
 
     def update_node(self, new_value):
