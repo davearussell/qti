@@ -375,11 +375,13 @@ class FilteredTree(Root):
 
     def add_key(self, key, value):
         self.base_node.add_key(key, value)
-        super().add_key(key, value)
 
     def rename_key(self, old_name, new_name):
         self.base_node.rename_key(old_name, new_name)
-        super().rename_key(old_name, new_name)
+        for node in self.descendants():
+            if node.children:
+                if node.type == old_name:
+                    node.type = new_name
 
     def set_key_multi(self, key, is_multi):
         self.base_node.set_key_multi(key, is_multi)

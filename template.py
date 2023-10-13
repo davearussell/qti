@@ -54,7 +54,7 @@ def uncamel(word):
     return new_word
 
 
-def evaluate(node, template_string):
+def evaluate(node, template_string, metadata):
     filters = {
         'title': f_title,
         'lstrip': f_lstrip,
@@ -76,7 +76,7 @@ def evaluate(node, template_string):
             'file': os.path.splitext(os.path.basename(node.abspath))[0],
         })
 
-    for key in node.base_node.root.metadata.keys:
+    for key in metadata.keys:
         if not key.builtin:
             spec[key.name] = node.get_key(key.name)
 

@@ -24,7 +24,7 @@ class Model(QAbstractTableModel):
     def set_value(self, key, value):
         col = self.keys.index(key)
         for row, node in zip(self.table, self.parent_node.children):
-            row[col] = template.evaluate(node, value)
+            row[col] = template.evaluate(node, value, self.library.metadata)
         self.dirty = True
         self.dataChanged.emit(self.createIndex(0, col),
                               self.createIndex(len(self.table) - 1, col))

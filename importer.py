@@ -43,6 +43,9 @@ class NewImage(Cell):
         self.spec = spec
         self.fill_in_spec()
 
+    def get_key(self, key):
+        return self.spec.get(key, '')
+
     def format_value(self, key):
         if key == 'resolution':
             return '%d x %d' % tuple(self.spec['resolution'])
@@ -181,7 +184,7 @@ class ImporterDialog(DataDialog):
             images = [target]
         for j, image in enumerate(images):
             image.index = i + j
-            image.spec[field.key] = template.evaluate(image, value)
+            image.spec[field.key] = template.evaluate(image, value, self.library.metadata)
         field.set_value(target.format_value(field.key))
         field.mark_clean()
         self.data_updated()
