@@ -122,7 +122,7 @@ class EditorDialog(FieldDialog):
         action = self.keybinds.get_action(event)
         if self.keybinds.is_scroll(action):
             self.browser.scroll(action)
-            if self.dirty:
+            if self.dirty():
                 self.commit()
             self.setup_fields()
         else:
