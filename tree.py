@@ -79,11 +79,13 @@ class Node:
         return self.descendants(lambda node: not node.children)
 
     def delete(self):
-        parent = self.parent
+        if self.parent is None:
+            return
+
+        self.parent.children.remove(self)
+        if not self.parent.children:
+            self.parent.delete()
         self.parent = None
-        parent.children.remove(self)
-        if not parent.children:
-            parent.delete()
 
 
 class Root(Node):
@@ -100,10 +102,6 @@ class Container(Node):
     @property
     def type_label(self):
         return self.type
-
-    def delete_images(self, from_disk=True):
-        for leaf in list(self.leaves()):
-            leaf.delete_images(from_disk)
 
 
 class Image(Node):
@@ -132,11 +130,6 @@ class Image(Node):
         if os.path.exists(self.abspath):
             print("Deleting", self.abspath)
             os.unlink(self.abspath)
-
-    def delete_images(self, from_disk=False):
-        if from_disk:
-            self.delete_file()
-        self.delete()
 
     def update_set(self, key, add, remove):
         old = self.spec[key]
@@ -262,15 +255,6 @@ class FilteredSet(FilteredContainer):
             return self.type[:-1]
         return self.type
 
-    def delete_images(self, from_disk=False, preserve_images=False):
-        if preserve_images:
-            assert not from_disk
-            for node in self.leaves():
-                node.spec[self.type].remove(self.name)
-            self.delete()
-        else:
-            super().delete_images(from_disk)
-
     def update(self, key, value):
         assert key == 'name', key
         for image in self.leaves():
@@ -289,10 +273,6 @@ class FilteredImage(Image):
             raise TreeError("Nodes do not map onto base tree")
         bs.swap_with(bo)
         super().swap_with(other)
-
-    def delete_images(self, from_disk=False):
-        self.base_node.delete_images(from_disk)
-        self.delete()
 
     def update(self, key, value):
         self.base_node.spec[key] = value
@@ -362,8 +342,11 @@ class FilteredTree(Root):
                             lut[(parent, lut_key)] = node
                         new_parents.append(node)
                 parents = new_parents
-            for parent in parents:
-                parent.add_child(FilteredImage(image))
+
+            copies = {FilteredImage(image) for _ in parents}
+            for parent, child in zip(parents, copies):
+                child.aliases = copies - {child}
+                parent.add_child(child)
 
         sort_keys = [SORT_TYPES.get(k) for k in self.filter_config.order_by]
         nodes = [self]

@@ -54,22 +54,37 @@ class DeleterDialog(QDialog):
                 button.setDefault(True)
 
     def accept(self):
-        parent = self.node.parent
-        mode = self.app.browser.mode
-        if len(parent.children) > 1:
-            index = self.node.index + 1
-            if index == len(parent.children):
-                index -= 2
-            target = parent.children[index]
-        else:
-            target = None
-            mode = 'grid'
-            while parent.parent and len(parent.children) == 1:
-                parent = parent.parent
+        index = self.node.index
+        ancestors = list(self.node.ancestors())
+        parent = ancestors[1]
+        grandparent = parent.parent
+        root = ancestors[-1]
 
-        if self.delete_mode == 'set':
-            self.node.delete_images(preserve_images=True)
+        for leaf in list(self.node.leaves()):
+            if self.delete_mode == 'set':
+                leaf.spec[self.node.type].remove(self.node.name)
+            else:
+                if self.delete_mode == 'disk':
+                    leaf.base_node.delete_file()
+                leaf.base_node.delete()
+                for alias in leaf.aliases:
+                    alias.delete()
+            leaf.delete()
+
+        # NOTE: here we rely on the fact that deleting a node from the tree
+        # clears its parent attribute, so a null parent indicates that either
+        # the node was deleted, or it is the root.
+        parent_was_deleted = parent.parent != grandparent
+        if parent_was_deleted:
+            target_node = root
+            for ancestor in ancestors:
+                if ancestor.parent:
+                    target_node = ancestor
+                    break
+            self.app.browser.load_node(target_node, mode='grid')
         else:
-            self.node.delete_images(from_disk=(self.delete_mode == 'disk'))
-        self.app.browser.load_node(parent, target=target, mode=mode)
+            index = min(index, len(parent.children) - 1)
+            target = None if index == -1 else parent.children[index]
+            self.app.browser.load_node(parent, target=target)
+
         super().accept()
