@@ -29,6 +29,8 @@ def maybe(seq):
 
 
 class Node:
+    type = None
+
     def __init__(self, name):
         self.name = name
         self.parent = None
@@ -75,8 +77,8 @@ class Node:
         for child in self.children:
             yield from child.descendants(predicate=predicate)
 
-    def leaves(self):
-        return self.descendants(lambda node: not node.children)
+    def images(self):
+        return self.descendants(lambda node: node.type == 'image')
 
     def delete(self):
         if self.parent is None:
@@ -158,6 +160,9 @@ class BaseTree(Root):
                 parent = node
             parent.add_child(image)
 
+    def images(self):
+        return self.descendants(lambda node: node.type == 'image')
+
     def populate(self, image_specs):
         images = []
         for image_spec in image_specs:
@@ -178,19 +183,18 @@ class BaseTree(Root):
         self.insert_images(images)
 
     def add_key(self, key, value):
-        for image in self.leaves():
+        for image in self.images():
             image.spec[key] = value
 
     def rename_key(self, old_name, new_name):
         for node in self.descendants():
-            if node.children:
-                if node.type == old_name:
-                    node.type = new_name
-            else:
+            if node.type == 'image':
                 node.spec[new_name] = node.spec.pop(old_name)
+            elif node.type == old_name:
+                node.type = new_name
 
     def set_key_multi(self, key, is_multi):
-        for image in self.leaves():
+        for image in self.images():
             if is_multi:
                 image.spec[key] = image.spec[key].split()
             else:
@@ -212,7 +216,7 @@ class FilteredContainer(Container):
     def update(self, key, value):
         if key == 'name':
             key = self.type
-        images = [leaf.base_node for leaf in self.leaves()]
+        images = [image.base_node for image in self.images()]
         for image in images:
             image.spec[key] = value
         base_tree = self.root.base_node
@@ -220,8 +224,8 @@ class FilteredContainer(Container):
             base_tree.move_images(images, key, value)
 
     def update_set(self, key, add, remove):
-        for leaf in self.leaves():
-            leaf.base_node.update_set(key, add, remove)
+        for image in self.images():
+            image.base_node.update_set(key, add, remove)
 
     def get_key(self, key):
         if key == 'name':
@@ -231,17 +235,17 @@ class FilteredContainer(Container):
         if multi:
             values = None
             varying = False
-            for leaf in self.leaves():
+            for image in self.images():
                 if values is None:
-                    values = leaf.spec[key].copy()
-                elif sorted(values) != sorted(leaf.spec[key]):
+                    values = image.spec[key].copy()
+                elif sorted(values) != sorted(image.spec[key]):
                     varying = True
-                    values = [value for value in values if value in leaf.spec[key]]
+                    values = [value for value in values if value in image.spec[key]]
             if varying:
                 values.insert(0, '...')
             return values
         else:
-            values = {leaf.get_key(key) for leaf in self.leaves()}
+            values = {image.get_key(key) for image in self.images()}
             return values.pop() if len(values) == 1 else '...'
 
 
@@ -257,7 +261,7 @@ class FilteredSet(FilteredContainer):
 
     def update(self, key, value):
         assert key == 'name', key
-        for image in self.leaves():
+        for image in self.images():
             values = image.base_node.spec[self.type]
             values[values.index(self.name)] = value
 
@@ -306,7 +310,7 @@ class FilteredTree(Root):
         lut = {}
         hierarchy = self.base_node.metadata.hierarchy()
         filter_expr = self.filter_config.filter
-        for image in self.base_node.leaves():
+        for image in self.base_node.images():
             if filter_expr and not filter_expr.matches(image.all_tags()):
                 continue
 
@@ -362,9 +366,8 @@ class FilteredTree(Root):
     def rename_key(self, old_name, new_name):
         self.base_node.rename_key(old_name, new_name)
         for node in self.descendants():
-            if node.children:
-                if node.type == old_name:
-                    node.type = new_name
+            if node.type == old_name:
+                node.type = new_name
 
     def set_key_multi(self, key, is_multi):
         self.base_node.set_key_multi(key, is_multi)

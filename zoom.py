@@ -102,10 +102,10 @@ class ZoomField(Field):
         node = self.node
         while node.type != scope:
             node = node.parent
-        for child in node.leaves():
+        for image in node.images():
             if pan:
-                child.spec['zoom'] = zoom
-                child.spec['pan'] = pan
+                image.spec['zoom'] = zoom
+                image.spec['pan'] = pan
             else:
-                child.spec.pop('zoom', None)
-                child.spec.pop('pan', None)
+                image.spec.pop('zoom', None)
+                image.spec.pop('pan', None)

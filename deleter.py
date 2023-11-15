@@ -60,16 +60,16 @@ class DeleterDialog(QDialog):
         grandparent = parent.parent
         root = ancestors[-1]
 
-        for leaf in list(self.node.leaves()):
+        for image in list(self.node.images()):
             if self.delete_mode == 'set':
-                leaf.spec[self.node.type].remove(self.node.name)
+                image.spec[self.node.type].remove(self.node.name)
             else:
                 if self.delete_mode == 'disk':
-                    leaf.base_node.delete_file()
-                leaf.base_node.delete()
-                for alias in leaf.aliases:
+                    image.base_node.delete_file()
+                image.base_node.delete()
+                for alias in image.aliases:
                     alias.delete()
-            leaf.delete()
+            image.delete()
 
         # NOTE: here we rely on the fact that deleting a node from the tree
         # clears its parent attribute, so a null parent indicates that either

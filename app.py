@@ -173,10 +173,10 @@ class Application(QApplication):
         keys = self.library.metadata.groupable_keys()
         key_values = {key: set() for key in keys}
 
-        for leaf in target.leaves():
+        for image in target.images():
             for key in keys:
-                if leaf.spec.get(key):
-                    value = leaf.spec[key]
+                if image.spec.get(key):
+                    value = image.spec[key]
                     if isinstance(value, str):
                         value = [value]
                     key_values[key] |= set(value)
@@ -234,39 +234,39 @@ class Application(QApplication):
         if not(old_target and new_tree.children):
             return new_tree, None, 'grid'
 
-        # Search for leaves that are present in both old and new trees. Initially we only
-        # look for leaves that are descendants of the old target, but widen the search if
+        # Search for images that are present in both old and new trees. Initially we only
+        # look for images that are descendants of the old target, but widen the search if
         # none exist
         old_node = old_target
-        leaf = None
-        while old_node and not leaf:
-            old_leaves = {leaf.base_node for leaf in old_node.leaves()}
-            for leaf in new_tree.leaves():
-                if leaf.base_node in old_leaves:
+        image = None
+        while old_node and not image:
+            old_images = {image.base_node for image in old_node.images()}
+            for image in new_tree.images():
+                if image.base_node in old_images:
                     break
             else:
-                leaf = None
+                image = None
                 old_target = old_node
                 old_node = old_node.parent
 
-        # If we found a common leaf, we will point at one of its ancenstors.
+        # If we found a common image, we will point at one of its ancenstors.
         # The logic is a bit fiddly, but aims for the principle of least surprise
-        # 1. If the leaf belongs to the old target,
+        # 1. If the image belongs to the old target,
         #    a. If we're still grouping the old target's type, choose the ancestor
         #       of the same type
         #    b. Otherwise, if we're grouping by the old target's *parent's* type,
-        #       choose said type's child that contains our leaf
+        #       choose said type's child that contains our image
         # 2. Otherwise, choose the closest-to-leaf ancestor which is a parent of
-        #    the common leaf
-        if leaf:
-            ancestors = {node.type: node for node in leaf.ancestors()}
+        #    the common image
+        if image:
+            ancestors = {node.type: node for node in image.ancestors()}
             if old_target.type in ancestors:
                 target = ancestors[old_target.type]
             elif old_target.parent and old_target.parent.type in ancestors:
                 parent = ancestors[old_target.parent.type]
                 target = [node for node in ancestors.values() if node.parent == parent][0]
             else:
-                target = leaf # XXX or is root better?
+                target = image # XXX or is root better?
             mode = None if target.type == 'image' else 'grid'
             return target.parent, target, mode
 

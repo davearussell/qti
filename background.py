@@ -96,7 +96,7 @@ class BackgroundCacher(QObject):
                  self.app.settings.thumbnail_size]
         jobs = []
         skipped = 0
-        for image in self.app.library.all_images():
+        for image in self.app.library.images():
             image_path = image.abspath
             for size in sizes:
                 cache_path = image.cache_path(size)

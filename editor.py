@@ -78,7 +78,7 @@ def choose_fields(library, node, viewer):
             if ancestor_type in ancestors:
                 field = AncestorField(library, node, ancestors[ancestor_type], keymap=keymap)
             else:
-                value = next(node.leaves()).spec[ancestor_type]
+                value = next(node.images()).spec[ancestor_type]
                 field = ReadOnlyField(ancestor_type, value)
             fields.append(field)
         for key in library.metadata.keys:

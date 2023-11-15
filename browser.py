@@ -15,7 +15,7 @@ class Thumbnail(Cell):
         self.settings = settings
         self.node = node
         if node.children:
-            self.image = next(node.leaves())
+            self.image = next(node.images())
             self.count = str(len(node.children))
             self.name = node.name
         else:

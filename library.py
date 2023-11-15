@@ -17,12 +17,12 @@ class Library:
         self.quick_actions = spec.get('quick_actions', {})
         self.base_tree = tree.BaseTree(self.root_dir, self.metadata, spec['images'])
 
-    def all_images(self):
-        return self.base_tree.leaves()
+    def images(self):
+        return self.base_tree.images()
 
     def scan_sets(self):
         sets = {}
-        for image in self.base_tree.leaves():
+        for image in self.images():
             for key in self.metadata.keys:
                 if not key.multi:
                     continue
@@ -32,7 +32,7 @@ class Library:
 
     def save(self):
         spec = {
-            'images': [image.spec for image in self.all_images()],
+            'images': [image.spec for image in self.images()],
             'keys': self.metadata.json(),
             'quick_filters': self.quick_filters,
             'quick_actions': self.quick_actions,

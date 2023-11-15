@@ -24,8 +24,8 @@ def find_all_images(path):
 
 
 def find_new_images_for(node):
-    existing_images = {image.abspath for image in node.root.leaves()}
-    search_dir = os.path.commonpath({image.abspath for image in node.leaves()})
+    existing_images = {image.abspath for image in node.root.images()}
+    search_dir = os.path.commonpath({image.abspath for image in node.images()})
     if os.path.isfile(search_dir):
         search_dir = os.path.dirname(search_dir)
     return sorted(image for image in find_all_images(search_dir) if image not in existing_images)
@@ -100,10 +100,10 @@ class ImporterDialog(DataDialog):
 
     def get_default_values(self):
         default_values = {}
-        leaf = next(self.node.leaves())
+        image = next(self.node.images())
         seen_our_node = not self.node.parent
         for key in self.library.metadata.hierarchy():
-            default_values[key] = '' if seen_our_node else leaf.spec.get(key)
+            default_values[key] = '' if seen_our_node else image.spec.get(key)
             if key == self.node.type:
                 seen_our_node = True
         return default_values
