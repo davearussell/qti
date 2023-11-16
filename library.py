@@ -23,15 +23,18 @@ class Library:
     def images(self):
         return self.base_tree.images()
 
-    def scan_sets(self):
-        sets = {}
+    def values_by_key(self):
+        all_values = {}
         for image in self.images():
             for key in self.metadata.keys:
-                if not key.multi:
+                if key.builtin:
                     continue
-                name = key.name
-                sets[name] = sets.get(name, set()) | set(image.spec[name])
-        return sets
+                key_values = all_values.setdefault(key.name, set())
+                if key.multi:
+                    key_values |= set(image.spec[key.name])
+                else:
+                    key_values.add(image.spec[key.name])
+        return all_values
 
     def save(self):
         spec = {

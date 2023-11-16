@@ -61,7 +61,7 @@ def choose_fields(library, node, viewer):
     keymap = KeyMap()
     hierarchy = library.metadata.hierarchy()
 
-    sets = library.scan_sets()
+    key_values = library.values_by_key()
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
@@ -85,7 +85,7 @@ def choose_fields(library, node, viewer):
             if key.name not in hierarchy and not key.builtin:
                 if key.multi:
                     fields.append(EditorSetField(library, node, key.name, keymap=keymap,
-                                                 completions=sets[key.name]))
+                                                 completions=key_values[key.name]))
                 else:
                     fields.append(EditorTextField(library, node, key.name, keymap=keymap))
 
