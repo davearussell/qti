@@ -33,8 +33,10 @@ class Node:
 
     def __init__(self, name):
         self.name = name
+        self.key = name
         self.parent = None
         self.children = []
+        self.lut = {} # child.key -> child
 
     def add_child(self, child, index=None):
         child.parent = self
@@ -42,7 +44,14 @@ class Node:
             self.children.append(child)
         else:
             self.children.insert(index, child)
+        assert child.key not in self.lut
+        self.lut[child.key] = child
         return child
+
+    def remove_child(self, child):
+        assert self.lut.get(child.key) is child
+        self.children.remove(child)
+        del self.lut[child.key]
 
     def swap_with(self, other):
         if self.parent != other.parent:
@@ -84,7 +93,7 @@ class Node:
         if self.parent is None:
             return
 
-        self.parent.children.remove(self)
+        self.parent.remove_child(self)
         if not self.parent.children:
             self.parent.delete()
         self.parent = None
@@ -117,6 +126,7 @@ class Image(Node):
         self.abspath = os.path.join(root_dir, spec['path'])
         self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
         self.base_node = self
+        self.key = self.abspath
 
     def all_tags(self):
         keys = self.root.metadata.multi_value_keys()
@@ -143,7 +153,6 @@ class BaseTree(Root):
         super().__init__()
         self.root_dir = root_dir
         self.metadata = metadata
-        self.lut = {}
         self.populate(images)
 
     def insert_images(self, images):
@@ -152,10 +161,9 @@ class BaseTree(Root):
             parent = self
             for key in hierarchy:
                 value = image.spec.get(key) or ''
-                node = self.lut.get((parent, value))
+                node = parent.lut.get(value)
                 if node is None:
                     node = Container(value, key)
-                    self.lut[(parent, value)] = node
                     parent.add_child(node)
                 parent = node
             parent.add_child(image)
@@ -177,7 +185,6 @@ class BaseTree(Root):
         if new_ancestor is None:
             new_ancestor = Container(value, key)
             parent.add_child(new_ancestor, index=parent.children.index(ancestor) + 1)
-            self.lut[(parent, value)] = new_ancestor
         for image in images:
             image.delete()
         self.insert_images(images)
@@ -307,7 +314,6 @@ class FilteredTree(Root):
         self.populate()
 
     def populate(self):
-        lut = {}
         hierarchy = self.base_node.metadata.hierarchy()
         filter_expr = self.filter_config.filter
         for image in self.base_node.images():
@@ -336,14 +342,14 @@ class FilteredTree(Root):
                         base_node = None
                         lut_key = value
                     for parent in parents:
-                        node = lut.get((parent, lut_key))
+                        node = parent.lut.get(lut_key)
                         if node is None:
                             if is_set:
                                 node = FilteredSet(value, key)
                             else:
                                 node = FilteredContainer(value, key, base_node)
+                            node.key = lut_key
                             parent.add_child(node)
-                            lut[(parent, lut_key)] = node
                         new_parents.append(node)
                 parents = new_parents
 
