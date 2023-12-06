@@ -315,6 +315,7 @@ class FilteredTree(Root):
 
     def populate(self):
         hierarchy = self.base_node.metadata.hierarchy()
+        lut_key_fields = {hierarchy[i]: hierarchy[:i+1] for i in range(len(hierarchy))}
         filter_expr = self.filter_config.filter
         for image in self.base_node.images():
             if filter_expr and not filter_expr.matches(image.all_tags()):
@@ -337,7 +338,7 @@ class FilteredTree(Root):
                         base_node = image.parent
                         while base_node.type != key:
                             base_node = base_node.parent
-                        lut_key = (base_node, value)
+                        lut_key = tuple(image.spec.get(k) for k in lut_key_fields[key])
                     else:
                         base_node = None
                         lut_key = value
