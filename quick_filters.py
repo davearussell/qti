@@ -19,8 +19,9 @@ class FilterEditor(FieldDialog):
         self.other_names = [name for name, other_qf in filters.items() if other_qf != qf]
         self.filters = filters
         km = KeyMap()
+        self.name_field = TextField("name", self.qf['name'], keymap=km)
         self.init_fields([
-            TextField("name", self.qf['name'], keymap=km),
+            self.name_field,
             SetField("group", self.qf['group'], keymap=km),
             SetField("order", self.qf['order'], keymap=km),
             TextField("expr", self.qf['expr'], keymap=km),
@@ -31,7 +32,7 @@ class FilterEditor(FieldDialog):
         super().add_buttons(apply=(self.mode == 'edit'))
 
     def name_valid(self):
-        name = self.field_list.fields['name'].get_value()
+        name = self.name_field.get_value()
         return bool(name.strip() and name not in self.other_names)
 
     def data_updated(self):

@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QDialogButtonBox, QLineEdit
 from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtCore import Qt, Signal
 
-from fields import FieldList
+from fields import FieldGroup
 
 
 class AbortCommit(Exception):
@@ -115,20 +115,24 @@ class DataDialog(QDialog):
 class FieldDialog(DataDialog):
     def __init__(self, app):
         super().__init__(app)
-        self.field_list = FieldList()
-        self.field_list.field_updated.connect(self.data_updated)
-        self.layout().addWidget(self.field_list)
+        self._group = FieldGroup()
+        self._group.field_updated.connect(self.data_updated)
+        self.layout().addWidget(self._group)
         self.add_buttons()
 
+    @property
+    def fields(self):
+        return self._group.fields
+
     def init_fields(self, fields):
-        self.field_list.init_fields(fields)
-        self.field_list.setFocus()
+        self._group.init_fields(fields)
+        self._group.setFocus()
 
     def dirty(self):
-        return any(field.dirty() for field in self.field_list.fields.values())
+        return any(field.dirty() for field in self.fields)
 
     def commit(self):
-        for field in self.field_list.fields.values():
+        for field in self.fields:
             if field.dirty():
                 self.apply_field_update(field, field.get_value())
                 field.mark_clean()

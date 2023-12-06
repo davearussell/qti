@@ -156,6 +156,6 @@ class AppSettingsDialog(FieldDialog):
         super().commit()
         self.app.apply_settings()
         # The above call discards the custom palette on our ColorFields
-        for field in self.field_list.fields.values():
+        for field in self.fields:
             if isinstance(field, ColorField):
                 field.picker.apply_palette()

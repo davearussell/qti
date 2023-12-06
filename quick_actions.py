@@ -21,8 +21,9 @@ class ActionEditor(FieldDialog):
         self.other_names = [name for name, other_qa in actions.items() if other_qa != qa]
         self.actions = actions
         km = KeyMap()
+        self.name_field = TextField("name", self.qa['name'], keymap=km)
         self.init_fields([
-            TextField("name", self.qa['name'], keymap=km),
+            self.name_field,
             TextField("key", self.qa['key'], keymap=km),
             EnumField("operation", self.qa['operation'], OPS, keymap=km),
             TextField("value", self.qa['value'], keymap=km),
@@ -33,7 +34,7 @@ class ActionEditor(FieldDialog):
         super().add_buttons(apply=(self.mode == 'edit'))
 
     def name_valid(self):
-        name = self.field_list.fields['name'].get_value()
+        name = self.name_field.get_value()
         return bool(name.strip() and name not in self.other_names)
 
     def data_updated(self):

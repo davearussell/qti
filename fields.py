@@ -6,25 +6,25 @@ from sets import SetPicker
 from line_edit import TabCompleteLineEdit, ValidatedLineEdit
 
 
-class FieldList(QWidget):
+class FieldGroup(QWidget):
     field_updated = Signal()
     field_unfocused = Signal(object)
 
     def __init__(self):
         super().__init__()
-        self.fields = {}
+        self.fields = []
         self.keybinds = {}
 
     def init_fields(self, fields):
         if self.layout():
             QWidget().setLayout(self.layout()) # purge existing layout and fields
         self.setLayout(QVBoxLayout())
-        self.fields = {}
+        self.fields = []
         self.keybinds = {}
         width = max(field.label.sizeHint().width() for field in fields)
         for row_i, field in enumerate(fields):
             field.label.setFixedWidth(width)
-            self.fields[field.key] = field
+            self.fields.append(field)
             if field.keybind:
                 self.keybinds[getattr(Qt.Key, 'Key_' + field.keybind)] = field
             self.layout().addWidget(field)

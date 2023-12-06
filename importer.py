@@ -11,7 +11,7 @@ import template
 from keys import KeyMap
 from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
 from grid import Grid, Cell
-from fields import FieldList, TextField,  ReadOnlyField
+from fields import FieldGroup, TextField,  ReadOnlyField
 
 
 def find_all_images(path):
@@ -118,7 +118,7 @@ class ImporterDialog(DataDialog):
         self.setup_fields(default_values)
         self.load_grid(new_images, default_values)
         self.setFixedSize(self.app.window.size() - QSize(200, 200))
-        self.field_list.setFixedWidth(self.width() // 3)
+        self.field_group.setFixedWidth(self.width() // 3)
 
     def setup_fields(self, default_values):
         km = KeyMap()
@@ -130,11 +130,11 @@ class ImporterDialog(DataDialog):
         ]
         fields += [TextField(key, default_values.get(key, ''), keymap=km)
                   for key in self.library.metadata.hierarchy()]
-        self.field_list = FieldList()
-        self.field_list.init_fields(fields)
-        self.body.layout().addWidget(self.field_list)
-        self.field_list.setFocus()
-        self.field_list.field_unfocused.connect(self.field_updated)
+        self.field_group = FieldGroup()
+        self.field_group.init_fields(fields)
+        self.body.layout().addWidget(self.field_group)
+        self.field_group.setFocus()
+        self.field_group.field_unfocused.connect(self.field_updated)
 
     def load_grid(self, new_images, default_values):
         self.grid = Grid(self.app.settings, self.keybinds)
@@ -163,14 +163,12 @@ class ImporterDialog(DataDialog):
             self.drop_images([self.grid.target])
 
     def grid_target_updated(self, image):
-        field_keys = self.field_list.fields.keys()
-        if image:
-            values = {key: image.format_value(key) for key in image.spec if key in field_keys}
-        else:
-            values = {key: '' for key in field_keys}
-        for key in values:
-            self.field_list.fields[key].set_value(values[key])
-            self.field_list.fields[key].mark_clean()
+        for field in self.field_group.fields:
+            if image and field.key in image.spec:
+                field.set_value(image.format_value(field.key))
+            else:
+                field.set_value('')
+            field.mark_clean()
 
     def field_updated(self, field):
         if not field.dirty():
