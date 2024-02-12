@@ -25,9 +25,11 @@ def find_all_images(path):
 
 def find_new_images_for(node):
     existing_images = {image.abspath for image in node.root.images()}
-    search_dir = os.path.commonpath({image.abspath for image in node.images()})
-    if os.path.isfile(search_dir):
-        search_dir = os.path.dirname(search_dir)
+    search_dir = node.root.base_node.root_dir
+    if existing_images and node.parent:
+        search_dir = os.path.commonpath({image.abspath for image in node.images()})
+        if os.path.isfile(search_dir):
+            search_dir = os.path.dirname(search_dir)
     return sorted(image for image in find_all_images(search_dir) if image not in existing_images)
 
 
@@ -100,7 +102,10 @@ class ImporterDialog(DataDialog):
 
     def get_default_values(self):
         default_values = {}
-        image = next(self.node.images())
+        try:
+            image = next(self.node.images())
+        except StopIteration:
+            return {}
         seen_our_node = not self.node.parent
         for key in self.library.metadata.hierarchy():
             default_values[key] = '' if seen_our_node else image.spec.get(key)
@@ -123,7 +128,7 @@ class ImporterDialog(DataDialog):
             ReadOnlyField('resolution', ''),
             TextField('name', '', keymap=km),
         ]
-        fields += [TextField(key, default_values[key], keymap=km)
+        fields += [TextField(key, default_values.get(key, ''), keymap=km)
                   for key in self.library.metadata.hierarchy()]
         self.field_list = FieldList()
         self.field_list.init_fields(fields)

@@ -46,6 +46,8 @@ class GridBody(QWidget):
         self.mark_i = None
         self.cell_width = None
         self.cell_height = None
+        self.row_height = 0
+        self.col_width = 0
 
     def set_pos(self, pos):
         if pos != self.pos:
