@@ -24,6 +24,7 @@ DEFAULT_KEYBINDS = {
 
     'select':   [Qt.Key_Return,    (Qt.Key_Enter, Qt.KeypadModifier)],
     'unselect': [Qt.Key_Backspace, (Qt.Key_0, Qt.KeypadModifier)],
+    'mark':     [Qt.Key_Space],
     'cancel':   [Qt.Key_Escape],
 
     'toggle_hide':   [Qt.Key_H],

@@ -7,6 +7,7 @@ DEFAULT_APP_SETTINGS = [
     ('background_color',           QColor,  QColor(Qt.black)),
     ('text_color',                 QColor,  QColor(Qt.white)),
     ('selection_color',            QColor,  QColor(Qt.yellow)),
+    ('mark_color',                 QColor,  QColor(Qt.gray)),
     ('pathbar_separator',          QColor,  QColor(Qt.cyan)),
     ('thumbnail_size',             QSize,   QSize(250, 200)),
     ('font',                       str,     'Liberation mono'),

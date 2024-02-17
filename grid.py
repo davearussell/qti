@@ -43,6 +43,7 @@ class GridBody(QWidget):
         self.grid_height = None
         self.grid = None
         self.target = None
+        self.mark_i = None
         self.cell_width = None
         self.cell_height = None
 
@@ -52,6 +53,26 @@ class GridBody(QWidget):
             self.pos_updated.emit(pos)
             self.repaint()
 
+    def set_mark(self, _action=None):
+        self.mark_i = self.cells.index(self.target)
+        self.repaint()
+
+    def clear_mark(self, _action=None):
+        self.mark_i = None
+        self.repaint()
+
+    def marked_range(self):
+        try:
+            target_i = self.cells.index(self.target)
+            if self.mark_i is None:
+                mark_lo = mark_hi = target_i
+            else:
+                mark_lo = min(target_i, self.mark_i)
+                mark_hi = max(target_i, self.mark_i)
+        except ValueError:
+            mark_lo = mark_hi = target_i = None
+        return mark_lo, mark_hi, target_i
+
     @property
     def viewport(self):
         return QRect(0, self.pos, *self.size().toTuple())
@@ -59,6 +80,7 @@ class GridBody(QWidget):
     def load(self, cells):
         self.cells = cells
         self.pos = 0
+        self.mark_i = None
         self.pos_updated.emit(0)
         if cells:
             self.cell_width = cells[0].width
@@ -129,11 +151,14 @@ class GridBody(QWidget):
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
+
+        mark_lo, mark_hi, target_i = self.marked_range()
         for i, cell in enumerate(self.cells):
             if cell.border_rect.intersects(self.viewport):
                 painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), cell.get_pixmap())
-                if cell is self.target:
-                    pen = QPen(self.settings.get('selection_color'))
+                if mark_lo <= i <= mark_hi:
+                    color = 'selection_color' if i == target_i else 'mark_color'
+                    pen = QPen(self.settings.get(color))
                     pen.setWidth(self.border_width)
                     pen.setJoinStyle(Qt.MiterJoin)
                     painter.setPen(pen)
@@ -149,16 +174,6 @@ class Grid(QFrame):
         super().__init__()
         self.keybinds = keybinds
         self.setObjectName("Grid")
-        self.action_map = {
-            'up': self.scroll,
-            'down': self.scroll,
-            'left': self.scroll,
-            'right': self.scroll,
-            'top': self.scroll,
-            'bottom': self.scroll,
-            'select': self.select_current_target,
-            'unselect': self.unselect,
-        }
 
         self.body = GridBody(settings)
         self.body.mouse_click.connect(self.handle_click)
@@ -172,6 +187,19 @@ class Grid(QFrame):
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(self.body)
         self.layout().addWidget(self.scroll_bar)
+
+        self.action_map = {
+            'up': self.scroll,
+            'down': self.scroll,
+            'left': self.scroll,
+            'right': self.scroll,
+            'top': self.scroll,
+            'bottom': self.scroll,
+            'select': self.select_current_target,
+            'unselect': self.unselect,
+            'mark': self.body.set_mark,
+            'cancel': self.body.clear_mark,
+        }
 
     @property
     def target(self):
