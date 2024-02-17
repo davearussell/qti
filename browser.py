@@ -200,6 +200,11 @@ class Browser(QWidget):
         except TreeError as e:
             self.app.status_bar.set_text("Cannot swap (%s)" % e, duration_s=5)
 
+    def marked_nodes(self):
+        if self.mode == 'grid':
+            return [cell.node for cell in self.grid.marked_cells()]
+        return [self.target]
+
     def set_bar_visibility(self, hidden):
         self.hide_bars = hidden
         for bar in [self.pathbar, self.status_bar]:

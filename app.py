@@ -87,7 +87,7 @@ class Window(QMainWindow):
         elif action == 'filter_config':
             FilterConfigDialog(self.app, self.app.library, self.app.filter_config).exec()
         elif action == 'delete':
-            DeleterDialog(self.app, self.browser.target).exec()
+            DeleterDialog(self.app, self.browser.marked_nodes()).exec()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self.app).exec()
         elif action == 'edit_quick_filters':

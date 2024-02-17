@@ -6,9 +6,9 @@ from PySide6.QtCore import Qt
 
 
 class DeleterDialog(QDialog):
-    def __init__(self, app, node):
+    def __init__(self, app, nodes):
         super().__init__(app.window)
-        self.node = node
+        self.nodes = nodes
         self.app = app
         self.library = app.library
         self.setWindowTitle("Confirm delete")
@@ -22,15 +22,20 @@ class DeleterDialog(QDialog):
         return set_mode
 
     def setup_radio_buttons(self):
-        if self.node.type in self.library.metadata.multi_value_keys():
+        if len(self.nodes) == 1:
+            desc = '%s %r' % (self.nodes[0].type_label, self.nodes[0].name)
+        else:
+            desc = 'these %ss (%d)' % (self.nodes[0].type_label, len(self.nodes))
+
+        if self.nodes[0].type in self.library.metadata.multi_value_keys():
             labels = [
-                ('set', 'D&elete %s %r' % (self.node.type_label, self.node.name)),
-                ('library', 'De&lete images with %s %r' % (self.node.type_label, self.node.name)),
+                ('set', 'D&elete %s' % (desc,)),
+                ('library', 'De&lete images with %s' % (desc,)),
                 ('disk', 'Also delete images from &disk'),
             ]
         else:
             labels = [
-                ('library', 'De&lete %s %r' % (self.node.type_label, self.node.name)),
+                ('library', 'De&lete %s' % (desc,)),
                 ('disk', 'Also delete images from &disk'),
             ]
 
@@ -53,16 +58,10 @@ class DeleterDialog(QDialog):
             if buttons.buttonRole(button) == QDialogButtonBox.NoRole:
                 button.setDefault(True)
 
-    def accept(self):
-        index = self.node.index
-        ancestors = list(self.node.ancestors())
-        parent = ancestors[1]
-        grandparent = parent.parent
-        root = ancestors[-1]
-
-        for image in list(self.node.images()):
+    def delete_node(self, node):
+        for image in list(node.images()):
             if self.delete_mode == 'set':
-                image.spec[self.node.type].remove(self.node.name)
+                image.spec[node.type].remove(node.name)
             else:
                 if self.delete_mode == 'disk':
                     image.base_node.delete_file()
@@ -70,6 +69,16 @@ class DeleterDialog(QDialog):
                 for alias in image.aliases:
                     alias.delete()
             image.delete()
+
+    def accept(self):
+        index = self.nodes[0].index
+        ancestors = list(self.nodes[0].ancestors())
+        parent = ancestors[1]
+        grandparent = parent.parent
+        root = ancestors[-1]
+
+        for node in self.nodes:
+            self.delete_node(node)
 
         # NOTE: here we rely on the fact that deleting a node from the tree
         # clears its parent attribute, so a null parent indicates that either

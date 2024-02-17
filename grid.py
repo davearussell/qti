@@ -205,6 +205,12 @@ class Grid(QFrame):
     def target(self):
         return self.body.target
 
+    def marked_cells(self):
+        lo, hi, _ = self.body.marked_range()
+        if lo is None:
+            return []
+        return self.body.cells[lo : hi + 1]
+
     def load(self, cells, target):
         self.body.load(cells)
         self.scroll_bar.setSingleStep(self.body.row_height)
