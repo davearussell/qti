@@ -97,7 +97,7 @@ class ZoomField(Field):
     def get_value(self):
         return (self.scope, self.zoom, self.pan)
 
-    def update_node(self, new_value):
+    def update_nodes(self, new_value):
         scope, zoom, pan = new_value
         node = self.node
         while node.type != scope:
