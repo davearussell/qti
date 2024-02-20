@@ -329,6 +329,8 @@ class FilteredTree(Root):
                     values = [values]
                 if include_values:
                     values = [value for value in values if value in include_values]
+                if not values:
+                    values = ['(none)']
 
                 new_parents = []
                 for value in values:
