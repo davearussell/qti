@@ -43,11 +43,16 @@ def choose_fields(library, node, viewer):
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
-        EditorTextField(library, node, 'name', keymap=keymap, completions=name_completions),
     ]
     if node.type == 'image':
-        fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
-        fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
+        fields += [
+            ReadOnlyField('filename', os.path.basename(node.spec['path'])),
+            ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])),
+        ]
+
+    fields  += [
+        EditorTextField(library, node, 'name', keymap=keymap, completions=name_completions),
+    ]
 
     if node.base_node: # node is in the hierarchy
         ancestors = {a.type: a for a in node.base_node.ancestors()}
