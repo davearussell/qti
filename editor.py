@@ -64,13 +64,14 @@ def choose_fields(library, node, viewer):
             field = EditorTextField(library, node, ancestor_type, keymap=keymap,
                                     completions=ancestor_completions)
             fields.append(field)
-        for key in library.metadata.keys:
-            if key.name not in hierarchy and not key.builtin:
-                if key.multi:
-                    fields.append(EditorSetField(library, node, key.name, keymap=keymap,
-                                                 completions=key_values[key.name]))
-                else:
-                    fields.append(EditorTextField(library, node, key.name, keymap=keymap))
+
+    for key in library.metadata.keys:
+        if key.name not in hierarchy and not key.builtin:
+            if key.multi:
+                fields.append(EditorSetField(library, node, key.name, keymap=keymap,
+                                             completions=key_values[key.name]))
+            else:
+                fields.append(EditorTextField(library, node, key.name, keymap=keymap))
 
     if viewer:
         fields.append(ZoomField(viewer, node))
