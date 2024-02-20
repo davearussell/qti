@@ -6,29 +6,6 @@ from zoom import ZoomField
 from keys import KeyMap
 
 
-class NameField(TextField):
-    def __init__(self, library, node, **kwargs):
-        self.library = library
-        self.node = node
-        kwargs.setdefault('completions', [sibling.name for sibling in node.parent.children])
-        super().__init__('name', node.name, **kwargs)
-
-    def update_node(self, new_value):
-        self.node.update('name', new_value)
-
-
-class AncestorField(TextField):
-    def __init__(self, library, node, ancestor, **kwargs):
-        self.library = library
-        self.node = node
-        self.ancestor = ancestor
-        kwargs.setdefault('completions', [sibling.name for sibling in ancestor.parent.children])
-        super().__init__(ancestor.type, ancestor.name, **kwargs)
-
-    def update_node(self, new_value):
-        self.node.update(self.ancestor.type, new_value)
-
-
 class EditorSetField(SetField):
     def __init__(self, library, node, key, **kwargs):
         self.library = library
@@ -62,24 +39,25 @@ def choose_fields(library, node, viewer):
     hierarchy = library.metadata.hierarchy()
 
     key_values = library.values_by_key()
+    name_completions = [sibling.name for sibling in node.parent.children]
 
     fields = [
         ReadOnlyField('type', node.type_label.title()),
-        NameField(library, node, keymap=keymap)
+        EditorTextField(library, node, 'name', keymap=keymap, completions=name_completions),
     ]
     if node.type == 'image':
         fields.append(ReadOnlyField('filename', os.path.basename(node.spec['path'])))
         fields.append(ReadOnlyField('resolution', '%d x %d' % tuple(node.spec['resolution'])))
-    if node.type in hierarchy + ['image']:
-        ancestors = {ancestor.type: ancestor for ancestor in node.ancestors()}
+
+    if node.base_node: # node is in the hierarchy
+        ancestors = {a.type: a for a in node.base_node.ancestors()}
         for ancestor_type in hierarchy:
             if ancestor_type == node.type:
                 break
-            if ancestor_type in ancestors:
-                field = AncestorField(library, node, ancestors[ancestor_type], keymap=keymap)
-            else:
-                value = next(node.images()).spec[ancestor_type]
-                field = ReadOnlyField(ancestor_type, value)
+            ancestor = ancestors[ancestor_type]
+            ancestor_completions = [sibling.name for sibling in ancestor.parent.children]
+            field = EditorTextField(library, node, ancestor_type, keymap=keymap,
+                                    completions=ancestor_completions)
             fields.append(field)
         for key in library.metadata.keys:
             if key.name not in hierarchy and not key.builtin:
