@@ -1,3 +1,4 @@
+import copy
 import os
 from PySide6.QtCore import Signal
 from fields import TextField, ReadOnlyField, SetField
@@ -120,9 +121,50 @@ class EditorDialog(FieldDialog):
         nodes = self.browser.marked_nodes()
         self.init_fields(choose_fields(self.library, nodes, self.app.viewer))
 
+    def new_target_path(self):
+        target = self.browser.target
+        expr = target.root.filter_config.filter
+        old_path = {node.type: node.key for node in target.ancestors()}
+
+        if expr and not any(expr.matches(image.base_node.all_tags()) for image in target.images()):
+            # This edit has caused our target to be removed from the current view.
+            parent = target.parent
+            n = len(parent.children)
+            if n == 1: # No siblings, reload_tree will select closest surviving ancestor
+                return old_path
+            i = parent.children.index(target)
+            is_last = (i == n - 1)
+            # Prefer the sibling that will occupy the same grid slot that target previously
+            # sat in. If this was the final child we can't, so select the new final child.
+            target = parent.children[i + (-1 if is_last else 1)]
+
+        # We need an image to construct lut keys. All of our images are guaranteed to
+        # have the same value for any field we're grouped by, so any image will do.
+        representative_image = next(target.images()).base_node
+        hierarchy = representative_image.root.metadata.hierarchy()
+
+        new_path = copy.deepcopy(old_path)
+        for field in self.fields:
+            key = field.key
+            if field.key == 'name' and target.type != 'image':
+                key = target.type
+            if key in new_path:
+                value = field.get_value()
+                if isinstance(value, list):
+                    # Multi-value keys need special treatment: a copy of the node exists for
+                    # each value the key has. Removing the value corresponding to this node
+                    # is equivalent to deleting the node, so we treat it the same as the
+                    # no-longer-in-view case above
+                    if new_path[key] not in value:
+                        return old_path
+                else:
+                    new_path[key] = representative_image.make_lut_key(key)
+
+        return new_path
+
     def commit(self):
         super().commit()
-        self.app.reload_tree()
+        self.app.reload_tree(target_path=self.new_target_path())
 
     def apply_field_update(self, field, value):
         field.update_nodes(value)

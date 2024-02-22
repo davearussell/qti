@@ -274,8 +274,30 @@ class Application(QApplication):
         # Just point at the root of the tree.
         return new_tree, None, 'grid'
 
-    def reload_tree(self):
+    def select_target_by_path(self, tree, target_path):
+        if not tree.children: # tree is empty
+            return Tree, None, None
+
+        target = tree
+
+        while target.children:
+            child_type = target.children[0].type
+            if child_type not in target_path:
+                break # we've reached our target node
+
+            child_key = target_path.get(child_type)
+            child = target.lut.get(child_key)
+            if child is None: # target is no longer in view, select a sibling instead
+                return target, target.children[0], None
+            target = child
+
+        return target.parent, target, None
+
+    def reload_tree(self, target_path=None):
         old_target = self.window.browser.target
         tree = self.library.make_tree(self.filter_config)
-        node, target, mode = self.select_target(tree, old_target)
+        if target_path:
+            node, target, mode = self.select_target_by_path(tree, target_path)
+        else:
+            node, target, mode = self.select_target(tree, old_target)
         self.window.browser.load_node(node, target=target, mode=mode)

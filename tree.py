@@ -128,6 +128,14 @@ class Image(Node):
         self.base_node = self
         self.key = self.abspath
 
+    def make_lut_key(self, key):
+        hierarchy = self.root.metadata.hierarchy()
+        try:
+            j = hierarchy.index(key)
+        except ValueError:
+            return self.spec[key]
+        return tuple(self.spec.get(k) for i, k in enumerate(hierarchy) if i <= j)
+
     def all_tags(self):
         keys = self.root.metadata.multi_value_keys()
         return {value for key in keys for value in self.spec[key]}
@@ -315,7 +323,6 @@ class FilteredTree(Root):
 
     def populate(self):
         hierarchy = self.base_node.metadata.hierarchy()
-        lut_key_fields = {hierarchy[i]: hierarchy[:i+1] for i in range(len(hierarchy))}
         filter_expr = self.filter_config.filter
         for image in self.base_node.images():
             if filter_expr and not filter_expr.matches(image.all_tags()):
@@ -340,7 +347,7 @@ class FilteredTree(Root):
                         base_node = image.parent
                         while base_node.type != key:
                             base_node = base_node.parent
-                        lut_key = tuple(image.spec.get(k) for k in lut_key_fields[key])
+                        lut_key = image.make_lut_key(key)
                     else:
                         base_node = None
                         lut_key = value
