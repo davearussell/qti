@@ -28,8 +28,9 @@ class StatusBar(QObject):
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
+        self.perm_msg = None # (msg, priority)
 
-    def set_text(self, msg, duration_s, priority=0):
+    def set_text(self, msg, duration_s=None, priority=0):
         """
         Registers the specified message with the specified priority.
         If duration_s is specified, the message will expire after this duration.
@@ -40,8 +41,14 @@ class StatusBar(QObject):
         In the case of a tie, timed messages take priority over permanent ones, and
         then more recently registered messages take priority over older ones.
         """
-        msg_key = ((msg, priority, time.time() + duration_s))
-        self.timed_msgs.append(msg_key)
+        if duration_s is not None:
+            msg_key = ((msg, priority, time.time() + duration_s))
+            self.timed_msgs.append(msg_key)
+        else:
+            if self.perm_msg is not None and self.perm_msg[1] > priority:
+                return None
+            msg_key = (msg, priority)
+            self.perm_msg = msg_key
         self.refresh_msg()
         return msg_key
 
@@ -49,10 +56,12 @@ class StatusBar(QObject):
         if msg_key in self.timed_msgs:
             self.timed_msgs.remove(msg_key)
             self.refresh_msg()
+        elif msg_key == self.perm_msg:
+            self.perm_msg = None
+            self.refresh_msg()
 
     def refresh_msg(self):
-        msg = ''
-        prio = None
+        msg, prio = ('', None) if self.perm_msg is None else self.perm_msg
         now = time.time()
         first_expiry = None
         for item in list(self.timed_msgs):
