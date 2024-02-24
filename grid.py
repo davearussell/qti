@@ -4,10 +4,11 @@ from PySide6.QtGui import QPainter, QPen, QPixmap
 
 
 class Cell:
-    def __init__(self, size):
+    def __init__(self, size, label=None):
         self.size = size
         self.width = size.width()
         self.height = size.height()
+        self.label = label
         self.pixmap = None
         self.row = None
         self.col = None

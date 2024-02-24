@@ -11,17 +11,17 @@ from tree import TreeError
 
 class Thumbnail(Cell):
     def __init__(self, settings, node):
-        super().__init__(settings.thumbnail_size)
         self.settings = settings
         self.node = node
         if node.children:
             self.image = next(node.images())
             self.count = str(len(node.children))
-            self.name = node.name
+            label = node.name
         else:
             self.image = node
             self.count = None
-            self.name = None
+            label = None
+        super().__init__(settings.thumbnail_size, label=label)
 
     def load_pixmap(self):
         pixmap = super().load_pixmap()
@@ -32,14 +32,14 @@ class Thumbnail(Cell):
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
         p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
 
-        if self.name:
+        if self.label:
             p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
-            r = p.fontMetrics().tightBoundingRect(self.name)
+            r = p.fontMetrics().tightBoundingRect(self.label)
             r.adjust(0, 0, 10, 10)
             r.moveTop(0)
             r.moveLeft(pixmap.width() / 2 - r.width() / 2)
             p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, self.name)
+            p.drawText(r, Qt.AlignCenter, self.label)
 
         if self.count:
             p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
