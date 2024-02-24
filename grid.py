@@ -44,6 +44,7 @@ class GridBody(QWidget):
         self.grid_height = None
         self.grid = None
         self.target = None
+        self.target_i = None
         self.mark_i = None
         self.cell_width = None
         self.cell_height = None
@@ -57,7 +58,7 @@ class GridBody(QWidget):
             self.repaint()
 
     def set_mark(self, _action=None):
-        self.mark_i = self.cells.index(self.target)
+        self.mark_i = self.target_i
         self.repaint()
 
     def clear_mark(self, _action=None):
@@ -66,15 +67,14 @@ class GridBody(QWidget):
 
     def marked_range(self):
         try:
-            target_i = self.cells.index(self.target)
             if self.mark_i is None:
-                mark_lo = mark_hi = target_i
+                mark_lo = mark_hi = self.target_i
             else:
-                mark_lo = min(target_i, self.mark_i)
-                mark_hi = max(target_i, self.mark_i)
+                mark_lo = min(self.target_i, self.mark_i)
+                mark_hi = max(self.target_i, self.mark_i)
         except ValueError:
-            mark_lo = mark_hi = target_i = None
-        return mark_lo, mark_hi, target_i
+            mark_lo = mark_hi = None
+        return mark_lo, mark_hi
 
     @property
     def viewport(self):
@@ -155,12 +155,12 @@ class GridBody(QWidget):
         super().paintEvent(event)
         painter = QPainter(self)
 
-        mark_lo, mark_hi, target_i = self.marked_range()
+        mark_lo, mark_hi = self.marked_range()
         for i, cell in enumerate(self.cells):
             if cell.border_rect.intersects(self.viewport):
                 painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), cell.get_pixmap())
                 if mark_lo <= i <= mark_hi:
-                    color = 'selection_color' if i == target_i else 'mark_color'
+                    color = 'selection_color' if i == self.target_i else 'mark_color'
                     pen = QPen(self.settings.get(color))
                     pen.setWidth(self.border_width)
                     pen.setJoinStyle(Qt.MiterJoin)
@@ -209,7 +209,7 @@ class Grid(QFrame):
         return self.body.target
 
     def marked_cells(self):
-        lo, hi, _ = self.body.marked_range()
+        lo, hi = self.body.marked_range()
         if lo is None:
             return []
         return self.body.cells[lo : hi + 1]
@@ -221,6 +221,7 @@ class Grid(QFrame):
 
     def set_target(self, cell, ensure_visible=True):
         self.body.target = cell
+        self.body.target_i = self.body.cells.index(cell) if cell else None
         redrawn = cell and ensure_visible and self.body.ensure_visible(cell)
         if not redrawn:
             self.body.repaint()
