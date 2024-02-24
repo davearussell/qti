@@ -334,10 +334,10 @@ class FilteredTree(Root):
                 is_set = isinstance(values, list)
                 if not is_set:
                     values = [values]
-                if include_values:
-                    values = [value for value in values if value in include_values]
                 if not values:
                     values = ['(none)']
+                if include_values:
+                    values = [value for value in values if value in include_values]
 
                 new_parents = []
                 for value in values:
