@@ -275,10 +275,12 @@ class FilteredSet(FilteredContainer):
         return self.type
 
     def update(self, key, value):
-        assert key == 'name', key
         for image in self.images():
-            values = image.base_node.spec[self.type]
-            values[values.index(self.name)] = value
+            if key == 'name':
+                values = image.base_node.spec[self.type]
+                values[values.index(self.name)] = value
+            else:
+                image.spec[key] = value
 
 
 class FilteredImage(Image):
