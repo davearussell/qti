@@ -51,6 +51,7 @@ class NewImage(Cell):
     def fill_in_spec(self):
         self.spec['name'] = self.name
         self.spec['path'] = self.relpath
+        self.spec['directory'], self.spec['filename'] = os.path.split(self.relpath)
         self.spec['resolution'] = list(Image.open(self.abspath).size)
 
     def load_pixmap(self):
