@@ -23,14 +23,9 @@ def find_all_images(path):
                 yield os.path.join(dirpath, filename)
 
 
-def find_new_images_for(node):
-    existing_images = {image.abspath for image in node.root.images()}
-    search_dir = node.root.base_node.root_dir
-    if existing_images and node.parent:
-        search_dir = os.path.commonpath({image.abspath for image in node.images()})
-        if os.path.isfile(search_dir):
-            search_dir = os.path.dirname(search_dir)
-    return sorted(image for image in find_all_images(search_dir) if image not in existing_images)
+def find_new_images(tree):
+    existing_images = {image.abspath for image in tree.images()}
+    return sorted(image for image in find_all_images(tree.root_dir) if image not in existing_images)
 
 
 class NewImage(Cell):
@@ -83,7 +78,7 @@ class ImporterDialog(DataDialog):
         self.body.setLayout(QHBoxLayout())
         self.layout().addWidget(self.body)
         self.images = []
-        new_images = find_new_images_for(node)
+        new_images = find_new_images(self.library.base_tree)
         if not self.app.filter_config.is_default():
             self.set_label("Cannot import when using custom grouping")
         elif new_images:
