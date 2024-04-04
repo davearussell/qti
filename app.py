@@ -21,6 +21,7 @@ from quick_actions import QuickActionDialog
 from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
 from background import BackgroundCacher
+from search import SearchDialog
 import keys
 import template
 
@@ -108,6 +109,8 @@ class Window(QMainWindow):
             ImporterDialog(self.app, self.browser.node).exec()
         elif action == 'app_settings':
             AppSettingsDialog(self.app).exec()
+        elif action == 'search':
+            SearchDialog(self.app).exec()
         else:
             event.ignore()
 

@@ -64,7 +64,6 @@ class Browser(QWidget):
         self.keybinds = app.keybinds
         self.mode = None
         self.grid = None
-        self.grid_status_key = None
         self.node = None
         self.target = None
         self.pathbar = None
@@ -85,15 +84,7 @@ class Browser(QWidget):
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
-        grid.status_text.connect(self.grid_status_text)
         return grid
-
-    def grid_status_text(self, text):
-        if text:
-            self.grid_status_key = self.app.status_bar.set_text(text, priority=1)
-        elif self.grid_status_key:
-            self.app.status_bar.clear_text(self.grid_status_key)
-            self.grid_status_key = None
 
     def make_viewer(self):
         viewer = Viewer(self.app)

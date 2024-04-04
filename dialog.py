@@ -14,8 +14,9 @@ class VBoxDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setLayout(QVBoxLayout())
-        if label:
-            self.layout().addWidget(QLabel(label))
+        if label is not None:
+            self.label = QLabel(label)
+            self.layout().addWidget(self.label)
 
 
 class YesNoDialog(VBoxDialog):
@@ -43,11 +44,12 @@ class InfoDialog(VBoxDialog):
 
 
 class TextBoxDialog(VBoxDialog):
+    text_box_cls = QLineEdit
     result = Signal(str)
 
     def __init__(self, parent, title, label, value=''):
         super().__init__(parent, title, label)
-        self.edit = QLineEdit(value)
+        self.edit = self.text_box_cls(value)
         self.layout().addWidget(self.edit)
         self.edit.returnPressed.connect(self._result)
         self.edit.returnPressed.connect(self.accept)

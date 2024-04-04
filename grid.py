@@ -172,7 +172,6 @@ class Grid(QFrame):
     target_selected = Signal(object)
     unselected = Signal()
     target_updated = Signal(object)
-    status_text = Signal(str)
 
     def __init__(self, settings, keybinds):
         super().__init__()
@@ -192,10 +191,6 @@ class Grid(QFrame):
         self.layout().addWidget(self.body)
         self.layout().addWidget(self.scroll_bar)
 
-        self.searching = False
-        self.search_text = None
-        self.search_matches = []
-
         self.action_map = {
             'up': self.scroll,
             'down': self.scroll,
@@ -207,12 +202,14 @@ class Grid(QFrame):
             'unselect': self.unselect,
             'mark': self.body.set_mark,
             'cancel': self.body.clear_mark,
-            'search': self.start_search
         }
 
     @property
     def target(self):
         return self.body.target
+
+    def target_index(self):
+        return self.body.target_i
 
     def marked_cells(self):
         lo, hi = self.body.marked_range()
@@ -225,6 +222,9 @@ class Grid(QFrame):
         self.scroll_bar.setSingleStep(self.body.row_height)
         self.set_target(target)
 
+    def cell_labels(self):
+        return [cell.label for cell in self.body.cells]
+
     def set_target(self, cell, ensure_visible=True):
         self.body.target = cell
         self.body.target_i = self.body.cells.index(cell) if cell else None
@@ -232,6 +232,9 @@ class Grid(QFrame):
         if not redrawn:
             self.body.repaint()
         self.target_updated.emit(cell)
+
+    def set_target_index(self, index):
+        self.set_target(self.body.cells[index])
 
     def unselect(self, _action=None):
         self.unselected.emit()
@@ -282,68 +285,7 @@ class Grid(QFrame):
         if self.target:
             self.set_target(self.neighbour(self.target, direction))
 
-    def start_search(self, _action=None):
-        assert not self.searching
-        self.searching = True
-        n = len(str(len(self.body.cells))) # number of digits in cell count
-        self.search_fmt = '(%%0%dd / %%0%dd) Search: ' % (n, n)
-        self.search_matches = []
-        self.search_match_i = -1
-        self.search_text = ''
-        self.update_search_text()
-
-    def stop_search(self):
-        assert self.searching
-        self.searching = False
-        self.update_search_text()
-
-    def update_search_text(self):
-        if self.searching:
-            prefix = self.search_fmt % (self.search_match_i + 1, len(self.search_matches))
-            self.status_text.emit(prefix + self.search_text)
-        else:
-            self.status_text.emit(None)
-
-    def update_search_target(self):
-        self.search_matches = [i for i,cell in enumerate(self.body.cells)
-                               if self.search_text and cell.label
-                               and self.search_text in cell.label]
-        if not self.search_matches:
-            self.search_match_i = -1
-            return
-
-        self.search_match_i = 0
-        for mi, ti in enumerate(self.search_matches):
-            if ti >= self.body.target_i:
-                self.search_match_i = mi
-                break
-        self.set_target(self.body.cells[self.search_matches[self.search_match_i]])
-
-    def next_search_target(self):
-        if not self.search_matches:
-            return
-
-        self.search_match_i = (self.search_match_i + 1) % len(self.search_matches)
-        self.set_target(self.body.cells[self.search_matches[self.search_match_i]])
-
-    def search_input(self, event):
-        if self.keybinds.get_action(event) == 'cancel':
-            self.stop_search()
-        elif event.key() == Qt.Key_Return:
-            self.next_search_target()
-        elif event.key() == Qt.Key_Backspace:
-            self.search_text = self.search_text[:-1]
-        elif event.text():
-            if not (event.modifiers() & ~Qt.ShiftModifier):
-                self.search_text += event.text()
-        self.update_search_target()
-        self.update_search_text()
-
     def keyPressEvent(self, event):
-        if self.searching:
-            self.search_input(event)
-            return
-
         action = self.keybinds.get_action(event)
         if action in self.action_map:
             self.action_map[action](action)
