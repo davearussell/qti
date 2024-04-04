@@ -9,7 +9,7 @@ from PIL import Image
 
 import template
 from keys import KeyMap
-from dialog import YesNoDialog, TextBoxDialog, InfoDialog, DataDialog, AbortCommit
+from dialog import YesNoDialog, InfoDialog, DataDialog, AbortCommit
 from grid import Grid, Cell
 from fields import FieldGroup, TextField,  ReadOnlyField
 
@@ -154,10 +154,6 @@ class ImporterDialog(DataDialog):
             target = self.grid.target
         self.grid.load(self.images, target=target)
 
-    def delete_target(self):
-        if self.grid.target:
-            self.drop_images([self.grid.target])
-
     def grid_target_updated(self, image):
         for field in self.field_group.fields:
             if image and field.key in image.spec:
@@ -204,23 +200,9 @@ class ImporterDialog(DataDialog):
         self.app.reload_tree()
         self.drop_images(ready)
 
-
-    def exclude_images(self, pattern):
-        matches = [image for image in self.images if pattern.lower() in image.path.lower()]
-        if matches:
-            self.drop_images(matches)
-
     def keyPressEvent(self, event):
         action = self.keybinds.get_action(event)
-        key = event.key()
-        if action == 'delete':
-            self.delete_target()
-        elif action in ['up', 'down', 'left', 'right']:
+        if action in ['up', 'down', 'left', 'right']:
             self.grid.scroll(action)
-        elif event.key() == Qt.Key_X:
-            dialog = TextBoxDialog(self, "Exclude images",
-                                   "Exclude images that match this pattern:")
-            dialog.result.connect(self.exclude_images)
-            dialog.exec()
         else:
             super().keyPressEvent(event)
