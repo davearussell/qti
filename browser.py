@@ -8,6 +8,8 @@ from pathbar import Pathbar
 import cache
 from tree import TreeError
 
+from qt.keys import event_keystroke
+
 
 class Thumbnail(Cell):
     def __init__(self, settings, node):
@@ -214,7 +216,8 @@ class Browser(QWidget):
                 bar.show()
 
     def keyPressEvent(self, event):
-        action = self.keybinds.get_action(event)
+        keystroke = event_keystroke(event)
+        action = self.keybinds.get_action(keystroke)
         if action in ['prev', 'next', 'up', 'down']:
             # NOTE: up/down here is only reachable in viewer mode; in grid
             # mode the grid class consumes them to scroll with in the grid

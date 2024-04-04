@@ -86,11 +86,11 @@ class FilterConfigDialog(FieldDialog):
                 all_tags |= values_by_key[key.name]
         config = self.config.copy()
         return [
-            SetField("group_by", config.group_by, can_group_by, keybind='G'),
-            SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='O'),
-            SetField('include_tags', config.include_tags, all_tags, keybind='I'),
-            SetField('exclude_tags', config.exclude_tags, all_tags, keybind='X'),
-            ExprField('custom_expr', config.custom_expr, keybind='U'),
+            SetField("group_by", config.group_by, can_group_by, keybind='g'),
+            SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='o'),
+            SetField('include_tags', config.include_tags, all_tags, keybind='i'),
+            SetField('exclude_tags', config.exclude_tags, all_tags, keybind='x'),
+            ExprField('custom_expr', config.custom_expr, keybind='u'),
         ]
 
     def commit(self):

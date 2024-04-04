@@ -5,27 +5,7 @@ from PySide6.QtGui import QPalette
 
 from dialog import DataDialog
 
-
-MODIFIERS = [
-    (Qt.ControlModifier, 'CTRL'),
-    (Qt.AltModifier, 'ALT'),
-    (Qt.ShiftModifier, 'SHIFT'),
-    (Qt.KeypadModifier, 'KP'),
-]
-
-MODIFIER_KEYS = [
-    Qt.Key_Control,
-    Qt.Key_Alt,
-    Qt.Key_Shift,
-]
-
-def make_label(keybind):
-    if keybind is None:
-        return '(none)'
-    key, modifier = keybind
-    keyname = key.name[len('Key_'):] if key else ''
-    modifiers = [label for (mod, label) in MODIFIERS if modifier & mod]
-    return '-'.join(modifiers + [keyname])
+from qt.keys import event_keystroke, is_modifier
 
 
 class KeyChooser(QDialog):
@@ -38,12 +18,7 @@ class KeyChooser(QDialog):
         self.keymap = keymap
         self.setLayout(QVBoxLayout())
 
-        if setter.keybind:
-            self.key, self.modifiers = setter.keybind
-        else:
-            self.key = None
-            self.modifiers = Qt.KeyboardModifier(0)
-        self.extra_modifiers = Qt.KeyboardModifier(0)
+        self.keybind = setter.keybind
         self.count = 0
 
         self.header = QLabel("Select keybind for action '%s'" % (setter.action,))
@@ -70,12 +45,6 @@ class KeyChooser(QDialog):
         self.buttons.rejected.connect(self.reject)
         self.layout().addWidget(self.buttons)
 
-    @property
-    def keybind(self):
-        if self.key:
-            return (self.key, self.modifiers | self.extra_modifiers)
-        return None
-
     def update_label(self):
         self.label.set_keybind(self.keybind)
         setter = self.keymap.get(self.keybind)
@@ -86,9 +55,7 @@ class KeyChooser(QDialog):
         self.warning.setText(warning)
 
     def clear(self):
-        self.key = None
-        self.modifiers = Qt.KeyboardModifier(0)
-        self.extra_modifiers = Qt.KeyboardModifier(0)
+        self.keybind = None
         self.update_label()
 
     def accept(self):
@@ -98,11 +65,9 @@ class KeyChooser(QDialog):
     def keyPressEvent(self, event):
         if not self.count:
             self.clear()
-        if event.key() in MODIFIER_KEYS:
-            self.extra_modifiers |= event.modifiers()
-        else:
-            self.key = Qt.Key(event.key())
-            self.modifiers = event.modifiers()
+        keystroke = event_keystroke(event)
+        if self.keybind is None and not is_modifier(keystroke):
+            self.keybind = keystroke
         self.count += 1
         self.update_label()
 
@@ -117,7 +82,6 @@ class KeybindSetter(QLabel):
         super().__init__()
         self.action = action
         self.idx = idx
-        self.keybind = keybind
         self.setAutoFillBackground(True)
         pal = self.palette()
         pal.setColor(QPalette.Window, Qt.white)
@@ -127,7 +91,7 @@ class KeybindSetter(QLabel):
 
     def set_keybind(self, keybind):
         self.keybind = keybind
-        self.setText(make_label(self.keybind))
+        self.setText(keybind)
 
     def mousePressEvent(self, event):
         self.clicked.emit(self)

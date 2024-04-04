@@ -4,6 +4,8 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent, QSize, QTimer
 from PySide6.QtGui import QPixmap, QPainter
 
+from qt.keys import event_keystroke
+
 
 class Viewer(QLabel):
     target_selected = Signal(object)
@@ -85,7 +87,8 @@ class Viewer(QLabel):
             self.app.status_bar.set_text('Auto scroll [%d]' % remaining, duration_s=0.11)
 
     def keyPressEvent(self, event):
-        action = self.keybinds.get_action(event)
+        keystroke = event_keystroke(event)
+        action = self.keybinds.get_action(keystroke)
         if action != 'auto_scroll':
             self.stop_auto_scroll()
         if action in self.action_map:

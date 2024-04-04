@@ -25,6 +25,8 @@ from search import SearchDialog
 import keys
 import template
 
+from qt.keys import event_keystroke
+
 STYLESHEET_TMPL = """
 
 QMainWindow {
@@ -75,7 +77,8 @@ class Window(QMainWindow):
         self.setCentralWidget(self.browser)
 
     def keyPressEvent(self, event):
-        action = self.keybinds.get_action(event)
+        keystroke = event_keystroke(event)
+        action = self.keybinds.get_action(keystroke)
         if action == 'quit':
             self.app.quit()
         elif action == 'edit':

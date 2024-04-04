@@ -13,6 +13,8 @@ from dialog import YesNoDialog, InfoDialog, DataDialog, AbortCommit
 from grid import Grid, Cell
 from fields import FieldGroup, TextField,  ReadOnlyField
 
+from qt.keys import event_keystroke
+
 
 def find_all_images(path):
     for dirpath, _, filenames in os.walk(path):
@@ -201,7 +203,8 @@ class ImporterDialog(DataDialog):
         self.drop_images(ready)
 
     def keyPressEvent(self, event):
-        action = self.keybinds.get_action(event)
+        keystroke = event_keystroke(event)
+        action = self.keybinds.get_action(keystroke)
         if action in ['up', 'down', 'left', 'right']:
             self.grid.scroll(action)
         else:

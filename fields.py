@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt, Signal
 from sets import SetPicker
 from line_edit import TabCompleteLineEdit, ValidatedLineEdit
 
+from qt.keys import event_keystroke
+
 
 class FieldGroup(QWidget):
     field_updated = Signal()
@@ -26,7 +28,7 @@ class FieldGroup(QWidget):
             field.label.setFixedWidth(width)
             self.fields.append(field)
             if field.keybind:
-                self.keybinds[getattr(Qt.Key, 'Key_' + field.keybind)] = field
+                self.keybinds[field.keybind] = field
             self.layout().addWidget(field)
             field.unfocus.connect(self.handle_unfocus)
             field.updated.connect(self.field_updated)
@@ -37,9 +39,9 @@ class FieldGroup(QWidget):
         self.field_unfocused.emit(field)
 
     def keyPressEvent(self, event):
-        key = event.key()
-        if key in self.keybinds:
-            self.keybinds[key].setFocus()
+        field = self.keybinds.get(event_keystroke(event))
+        if field is not None:
+            field.setFocus()
         else:
             event.ignore()
 
@@ -56,7 +58,7 @@ class Field(QWidget):
             assert keybind is None, (keybind, keymap)
             self.keybind = keymap.assign_keybind(self.key)
         else:
-            self.keybind = keybind.upper() if keybind else None
+            self.keybind = keybind.lower() if keybind else None
         self.label = self.make_label()
         self.body = self.make_body()
         self.set_value(value)
@@ -79,7 +81,7 @@ class Field(QWidget):
         label = QLabel()
         text = self.key.replace('_', ' ').title()
         if self.keybind:
-            idx = text.upper().find(self.keybind)
+            idx = text.lower().find(self.keybind)
             text = text[:idx] + '<u>%s</u>' % text[idx] + text[idx+1:]
         label.setText(text)
         return label

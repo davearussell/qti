@@ -7,6 +7,8 @@ from tree import FilteredContainer
 from zoom import ZoomField
 from keys import KeyMap
 
+from qt.keys import event_keystroke
+
 
 # Helper class for querying and updating fields on multiple nodes at once.
 # Note that it overrides just enough from its parent class to let us call .get_key()
@@ -170,7 +172,8 @@ class EditorDialog(FieldDialog):
         field.update_nodes(value)
 
     def keyPressEvent(self, event):
-        action = self.keybinds.get_action(event)
+        keystroke = event_keystroke(event)
+        action = self.keybinds.get_action(keystroke)
         if self.keybinds.is_scroll(action):
             self.browser.scroll(action)
             if self.dirty():
