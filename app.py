@@ -4,7 +4,7 @@ import jinja2
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader
-from PySide6.QtCore import Signal, QSize, QSettings
+from PySide6.QtCore import Signal, QSize
 
 import library
 import browser
@@ -24,6 +24,7 @@ from background import BackgroundCacher
 from search import SearchDialog
 import keys
 import template
+from qt.datastore import Datastore
 
 from qt.keys import event_keystroke
 
@@ -124,9 +125,9 @@ class Application(QApplication):
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
-        self.q = QSettings('davesoft', 'qti')
-        self.settings = settings.Settings(self.q)
-        self.keybinds = keys.Keybinds(self.q)
+        self.store = Datastore()
+        self.settings = settings.Settings(self.store)
+        self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
         for qf in self.library.quick_filters:
             self.keybinds.add_action('quick_filter_' + qf)

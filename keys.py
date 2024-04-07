@@ -51,8 +51,8 @@ DEFAULT_KEYBINDS = {
 class Keybinds:
     binds_per_action = 2
 
-    def __init__(self, qsettings):
-        self.q = qsettings
+    def __init__(self, store):
+        self.store = store
         self.actions = copy.deepcopy(DEFAULT_KEYBINDS)
         for action, bindings in self.actions.items():
             if len(bindings) < self.binds_per_action:
@@ -64,8 +64,8 @@ class Keybinds:
         for action, action_bindings in self.actions.items():
             for idx in range(len(action_bindings)):
                 k = 'keybind_%s_%d' % (action, idx)
-                if self.q.contains(k):
-                    action_bindings[idx] = self.q.value(k)
+                if self.store.contains(k):
+                    action_bindings[idx] = self.store.get(k)
                 bindings[action_bindings[idx]] = action
         return bindings
 
@@ -74,9 +74,9 @@ class Keybinds:
         self.actions[action] = [None] * self.binds_per_action
         for idx in range(self.binds_per_action):
             k = 'keybind_%s_%d' % (action, idx)
-            binding = self.q.value(k)
+            binding = self.store.get(k)
             if binding in self.bindings:
-                self.q.remove(k)
+                self.store.remove(k)
             else:
                 self.actions[action][idx] = binding
                 self.bindings[binding] = action
@@ -102,9 +102,9 @@ class Keybinds:
 
         qk = 'keybind_%s_%d' % (action, idx)
         if binding is None:
-            self.q.remove(qk)
+            self.store.remove(qk)
         else:
-            self.q.setValue(qk, binding)
+            self.store.set(qk, binding)
 
     def get_action(self, keystroke):
         return self.bindings.get(keystroke)

@@ -22,13 +22,13 @@ DEFAULT_APP_SETTINGS = [
 
 
 class Settings:
-    def __init__(self, qsettings):
-        self.q = qsettings
+    def __init__(self, store):
+        self.store = store
         self.data = {}
         self.types = {}
         for k, _type, default in DEFAULT_APP_SETTINGS:
             self.types[k] = _type
-            value = self.q.value(k)
+            value = self.store.get(k)
             if value is None:
                 value = default
             elif _type in(int, float):
@@ -44,7 +44,7 @@ class Settings:
 
     def set(self, key, value):
         self.data[key] = value
-        self.q.setValue(key, value)
+        self.store.set(key, value)
 
     def __getattr__(self, key):
         return self.get(key)
