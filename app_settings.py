@@ -144,12 +144,11 @@ class AppSettingsDialog(FieldDialog):
         }
         keymap = KeyMap()
         return [
-            field_types[_type](key, self.settings.get(key), keymap=keymap)
-            for key, _type in self.settings.types.items()
+            field_types[type(value)](key, value, keymap=keymap)
+            for key, value in self.settings.to_dict().items()
         ]
 
     def apply_field_update(self, field, value):
-        assert field.key in self.settings, (field.key, value)
         self.settings.set(field.key, value)
 
     def commit(self):

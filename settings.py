@@ -2,52 +2,45 @@ from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QColor
 
 
-DEFAULT_APP_SETTINGS = [
-    # Key                          Type     Default value
-    ('background_color',           QColor,  QColor(Qt.black)),
-    ('text_color',                 QColor,  QColor(Qt.white)),
-    ('selection_color',            QColor,  QColor(Qt.yellow)),
-    ('mark_color',                 QColor,  QColor(Qt.gray)),
-    ('pathbar_separator',          QColor,  QColor(Qt.cyan)),
-    ('thumbnail_size',             QSize,   QSize(250, 200)),
-    ('font',                       str,     'Liberation mono'),
-    ('zoom_rate',                  float,   1.2),
-    ('pathbar_font_size',          int,     16),
-    ('statusbar_font_size',        int,     16),
-    ('thumbnail_name_font_size',   int,     14),
-    ('thumbnail_count_font_size',  int,     30),
-    ('key_picker_font_size',       int,     20),
-    ('auto_scroll_period',         int,     5),
-]
+DEFAULT_APP_SETTINGS = {
+    'background_color':          QColor(Qt.black),
+    'text_color':                QColor(Qt.white),
+    'selection_color':           QColor(Qt.yellow),
+    'mark_color':                QColor(Qt.gray),
+    'pathbar_separator':         QColor(Qt.cyan),
+    'thumbnail_size':            QSize(250, 200),
+    'font':                      'Liberation mono',
+    'zoom_rate':                 1.2,
+    'pathbar_font_size':         16,
+    'statusbar_font_size':       16,
+    'thumbnail_name_font_size':  14,
+    'thumbnail_count_font_size': 30,
+    'key_picker_font_size':      20,
+    'auto_scroll_period':        5,
+}
 
 
 class Settings:
     def __init__(self, store):
         self.store = store
-        self.data = {}
-        self.types = {}
-        for k, _type, default in DEFAULT_APP_SETTINGS:
-            self.types[k] = _type
-            value = self.store.get(k)
-            if value is None:
-                value = default
-            elif _type in(int, float):
-                # QSettings returns numeric values as strings by default
-                value = _type(value)
-            self.data[k] = value
+        self.defaults = DEFAULT_APP_SETTINGS
 
     def get(self, key):
-        return self.data.get(key)
+        if key not in self.defaults:
+            raise KeyError(key)
+        default = self.defaults[key]
+        v = self.store.get(key)
+        if v is not None:
+            return type(default)(v)
+        return default
 
     def to_dict(self):
-        return self.data.copy()
+        return {key: self.get(key) for key in self.defaults}
 
     def set(self, key, value):
-        self.data[key] = value
+        if key not in self.defaults:
+            raise KeyError(key)
         self.store.set(key, value)
 
     def __getattr__(self, key):
         return self.get(key)
-
-    def __contains__(self, key):
-        return key in self.data
