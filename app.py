@@ -4,7 +4,6 @@ import jinja2
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtGui import QImageReader
-from PySide6.QtCore import Signal, QSize
 
 import library
 import browser
@@ -120,8 +119,6 @@ class Window(QMainWindow):
 
 
 class Application(QApplication):
-    quitting = Signal()
-
     def __init__(self, json_file):
         super().__init__([])
         QImageReader.setAllocationLimit(0)
@@ -133,7 +130,6 @@ class Application(QApplication):
             self.keybinds.add_action('quick_filter_' + qf)
         for qf in self.library.quick_actions:
             self.keybinds.add_action('quick_action_' + qf)
-        self.quitting.connect(self.library.save)
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
         self.window = Window(self, self.primaryScreen().size())
@@ -152,7 +148,11 @@ class Application(QApplication):
         self.window.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
         self.window.showFullScreen()
         super().exec()
-        self.quitting.emit()
+        self.exit_hook()
+
+    def exit_hook(self):
+        self.library.save()
+        self.cacher.stop()
 
     def apply_settings(self):
         env = jinja2.Environment().from_string(STYLESHEET_TMPL)

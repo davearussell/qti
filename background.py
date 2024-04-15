@@ -71,7 +71,6 @@ class BackgroundCacher(QObject):
         self.app = app
         self.timer = QTimer()
         self.timer.timeout.connect(self.poll)
-        app.quitting.connect(self.stop)
         self.n_workers = multiprocessing.cpu_count() - 1
         self.workers = [Worker() for i in range(self.n_workers)]
         self.draining = []
