@@ -68,54 +68,12 @@ QMainWindow {
 
 
 class Window(QMainWindow):
-    def __init__(self, app, size):
+    def __init__(self, app):
         super().__init__()
         self.app = app
-        self.keybinds = app.keybinds
-        self.setFixedSize(size)
-        self.browser = browser.Browser(app)
-        self.setCentralWidget(self.browser)
 
     def keyPressEvent(self, event):
-        keystroke = event_keystroke(event)
-        action = self.keybinds.get_action(keystroke)
-        if action == 'quit':
-            self.app.quit()
-        elif action == 'edit':
-            if self.browser.target:
-                editor = EditorDialog(self.app, self.browser)
-                editor.exec()
-        elif action == 'bulk_edit':
-            if self.browser.target:
-                BulkEditDialog(self.app, self.browser.node).exec()
-        elif action == 'filter_config':
-            FilterConfigDialog(self.app, self.app.library, self.app.filter_config).exec()
-        elif action == 'delete':
-            DeleterDialog(self.app, self.browser.marked_nodes()).exec()
-        elif action == 'edit_metadata':
-            MetadataEditorDialog(self.app).exec()
-        elif action == 'edit_quick_filters':
-            QuickFilterDialog(self.app).exec()
-        elif action == 'edit_quick_actions':
-            QuickActionDialog(self.app).exec()
-        elif action == 'edit_keybinds':
-            KeybindDialog(self.app).exec()
-        elif action == 'save_snapshot':
-            self.app.save_snapshot()
-        elif action == 'restore_snapshot':
-            self.app.restore_snapshot()
-        elif action and action.startswith('quick_filter_'):
-            self.app.apply_quick_filter(action[len('quick_filter_'):])
-        elif action and action.startswith('quick_action_'):
-            self.app.apply_quick_action(action[len('quick_action_'):])
-        elif action == 'add_new_images':
-            ImporterDialog(self.app, self.browser.node).exec()
-        elif action == 'app_settings':
-            AppSettingsDialog(self.app).exec()
-        elif action == 'search':
-            SearchDialog(self.app).exec()
-        else:
-            event.ignore()
+        self.app.handle_keydown(event_keystroke(event))
 
 
 class Application(QApplication):
@@ -132,11 +90,50 @@ class Application(QApplication):
             self.keybinds.add_action('quick_action_' + qf)
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
-        self.window = Window(self, self.primaryScreen().size())
-        self.browser = self.window.browser
+        self.size = self.primaryScreen().size()
+        self.window = Window(self)
+        self.browser = browser.Browser(self)
+        self.window.setCentralWidget(self.browser)
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
         self.snapshots = []
+
+    def handle_keydown(self, keystroke):
+        action = self.keybinds.get_action(keystroke)
+        if action == 'quit':
+            self.quit()
+        elif action == 'edit':
+            if self.browser.target:
+                EditorDialog(self, self.browser).exec()
+        elif action == 'bulk_edit':
+            if self.browser.target:
+                BulkEditDialog(self, self.browser.node).exec()
+        elif action == 'filter_config':
+            FilterConfigDialog(self, self.library, self.filter_config).exec()
+        elif action == 'delete':
+            DeleterDialog(self, self.browser.marked_nodes()).exec()
+        elif action == 'edit_metadata':
+            MetadataEditorDialog(self).exec()
+        elif action == 'edit_quick_filters':
+            QuickFilterDialog(self).exec()
+        elif action == 'edit_quick_actions':
+            QuickActionDialog(self).exec()
+        elif action == 'edit_keybinds':
+            KeybindDialog(self).exec()
+        elif action == 'save_snapshot':
+            self.save_snapshot()
+        elif action == 'restore_snapshot':
+            self.restore_snapshot()
+        elif action and action.startswith('quick_filter_'):
+            self.apply_quick_filter(action[len('quick_filter_'):])
+        elif action and action.startswith('quick_action_'):
+            self.apply_quick_action(action[len('quick_action_'):])
+        elif action == 'add_new_images':
+            ImporterDialog(self, self.browser.node).exec()
+        elif action == 'app_settings':
+            AppSettingsDialog(self).exec()
+        elif action == 'search':
+            SearchDialog(self).exec()
 
     @property
     def viewer(self):
@@ -145,7 +142,8 @@ class Application(QApplication):
         return self.browser.viewer
 
     def exec(self):
-        self.window.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
+        self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
+        self.window.setFixedSize(self.size)
         self.window.showFullScreen()
         super().exec()
         self.exit_hook()
@@ -301,10 +299,10 @@ class Application(QApplication):
         return target.parent, target, None
 
     def reload_tree(self, target_path=None):
-        old_target = self.window.browser.target
+        old_target = self.browser.target
         tree = self.library.make_tree(self.filter_config)
         if target_path:
             node, target, mode = self.select_target_by_path(tree, target_path)
         else:
             node, target, mode = self.select_target(tree, old_target)
-        self.window.browser.load_node(node, target=target, mode=mode)
+        self.browser.load_node(node, target=target, mode=mode)
