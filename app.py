@@ -2,9 +2,6 @@ import copy
 
 import jinja2
 
-from PySide6.QtWidgets import QMainWindow, QApplication
-from PySide6.QtGui import QImageReader
-
 import library
 import browser
 import settings
@@ -24,6 +21,7 @@ from search import SearchDialog
 import keys
 import template
 from qt.datastore import Datastore
+from qt.app import QTApp
 
 from qt.keys import event_keystroke
 
@@ -67,19 +65,9 @@ QMainWindow {
 """
 
 
-class Window(QMainWindow):
-    def __init__(self, app):
-        super().__init__()
-        self.app = app
-
-    def keyPressEvent(self, event):
-        self.app.handle_keydown(event_keystroke(event))
-
-
-class Application(QApplication):
+class Application:
     def __init__(self, json_file):
-        super().__init__([])
-        QImageReader.setAllocationLimit(0)
+        self.ui = QTApp(self.handle_keydown, self.exit_hook)
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
         self.keybinds = keys.Keybinds(self.store)
@@ -90,10 +78,11 @@ class Application(QApplication):
             self.keybinds.add_action('quick_action_' + qf)
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
-        self.size = self.primaryScreen().size()
-        self.window = Window(self)
         self.browser = browser.Browser(self)
-        self.window.setCentralWidget(self.browser)
+        self.ui.set_main_widget(self.browser)
+        self.size = self.ui.size
+        self.window = self.ui.window
+        self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
         self.snapshots = []
@@ -101,7 +90,7 @@ class Application(QApplication):
     def handle_keydown(self, keystroke):
         action = self.keybinds.get_action(keystroke)
         if action == 'quit':
-            self.quit()
+            self.ui.quit()
         elif action == 'edit':
             if self.browser.target:
                 EditorDialog(self, self.browser).exec()
@@ -141,12 +130,8 @@ class Application(QApplication):
             return None
         return self.browser.viewer
 
-    def exec(self):
-        self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
-        self.window.setFixedSize(self.size)
-        self.window.showFullScreen()
-        super().exec()
-        self.exit_hook()
+    def run(self):
+        self.ui.run()
 
     def exit_hook(self):
         self.library.save()
@@ -155,7 +140,7 @@ class Application(QApplication):
     def apply_settings(self):
         env = jinja2.Environment().from_string(STYLESHEET_TMPL)
         stylesheet = env.render(self.settings.to_dict())
-        self.setStyleSheet(stylesheet)
+        self.ui.setStyleSheet(stylesheet)
         self.browser.reload_node()
         self.cacher.cache_all_images()
 

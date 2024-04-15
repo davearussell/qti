@@ -91,7 +91,7 @@ class BackgroundCacher(QObject):
         self.timer.start(self.poll_interval_ms)
 
     def cache_all_images(self):
-        sizes = [self.app.primaryScreen().size(),
+        sizes = [self.app.size,
                  self.app.settings.thumbnail_size]
         jobs = []
         skipped = 0

@@ -11,7 +11,7 @@ def parse_cmdline():
 
 
 def main(options):
-    Application(options.json_file).exec()
+    Application(options.json_file).run()
 
 
 if __name__ == '__main__':

@@ -115,7 +115,7 @@ class ImporterDialog(DataDialog):
         default_values = self.get_default_values()
         self.setup_fields(default_values)
         self.load_grid(new_images, default_values)
-        self.setFixedSize(self.app.window.size() - QSize(200, 200))
+        self.setFixedSize(self.app.size - QSize(200, 200))
         self.field_group.setFixedWidth(self.width() // 3)
 
     def setup_fields(self, default_values):
