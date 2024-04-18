@@ -73,11 +73,6 @@ class Browser(QWidget):
         self.hide_bars = False
         self.setup_layout()
 
-    def make_pathbar(self):
-        pathbar = Pathbar()
-        pathbar.clicked.connect(self.unselect)
-        return pathbar
-
     def make_grid(self):
         grid = Grid(self.app.settings, self.keybinds)
         grid.target_updated.connect(self._target_updated)
@@ -93,7 +88,7 @@ class Browser(QWidget):
         return viewer
 
     def setup_layout(self):
-        self.pathbar = self.make_pathbar()
+        self.pathbar = Pathbar(click_cb=self.unselect)
         self.grid = self.make_grid()
         self.viewer = self.make_viewer()
 
@@ -102,7 +97,7 @@ class Browser(QWidget):
         top_layout.setSpacing(0)
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_container.setLayout(top_layout)
-        top_layout.addWidget(self.pathbar)
+        top_layout.addWidget(self.pathbar.ui)
         top_layout.addWidget(self.grid)
 
         # When the grid is visible it should take up all available space;
@@ -205,7 +200,7 @@ class Browser(QWidget):
 
     def set_bar_visibility(self, hidden):
         self.hide_bars = hidden
-        for bar in [self.pathbar, self.status_bar]:
+        for bar in [self.pathbar.ui, self.status_bar]:
             if hidden:
                 bar.hide()
             else:
