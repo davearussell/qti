@@ -69,7 +69,7 @@ class Browser(QWidget):
         self.node = None
         self.target = None
         self.pathbar = None
-        self.status_bar = None
+        self.status_bar = app.status_bar.ui
         self.hide_bars = False
         self.setup_layout()
 
@@ -77,9 +77,6 @@ class Browser(QWidget):
         pathbar = Pathbar()
         pathbar.clicked.connect(self.unselect)
         return pathbar
-
-    def make_status_bar(self):
-        return self.app.status_bar.make_widget()
 
     def make_grid(self):
         grid = Grid(self.app.settings, self.keybinds)
@@ -98,7 +95,6 @@ class Browser(QWidget):
     def setup_layout(self):
         self.pathbar = self.make_pathbar()
         self.grid = self.make_grid()
-        self.status_bar = self.make_status_bar()
         self.viewer = self.make_viewer()
 
         top_container = QWidget()
