@@ -1,6 +1,7 @@
 import time
 from PySide6.QtWidgets import QLabel, QFrame, QHBoxLayout
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import QObject, Signal
+from qt.timer import Timer
 
 
 class StatusBarWidget(QFrame):
@@ -24,9 +25,7 @@ class StatusBar(QObject):
     def __init__(self):
         super().__init__()
         self.msg = ''
-        self.timer = QTimer()
-        self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.refresh_msg)
+        self.timer = Timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
 
@@ -78,7 +77,7 @@ class StatusBar(QObject):
             self.msg = msg
             self.text_update.emit(msg)
         if first_expiry is not None:
-            self.timer.start(1000 * (first_expiry - now))
+            self.timer.start(first_expiry - now)
 
     def make_widget(self):
         bar = StatusBarWidget(self.msg)

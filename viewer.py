@@ -1,10 +1,11 @@
 import time
 
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, Signal, QEvent, QSize, QTimer
+from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QPixmap, QPainter
 
 from qt.keys import event_keystroke
+from qt.timer import Timer
 
 
 class Viewer(QLabel):
@@ -21,8 +22,7 @@ class Viewer(QLabel):
         self.target = None
         self.auto_scroll_enabled = False
         self.auto_scroll_at = None
-        self.auto_scroll_timer = QTimer()
-        self.auto_scroll_timer.timeout.connect(self.auto_scroll_tick)
+        self.auto_scroll_timer = Timer(self.auto_scroll_tick, repeat=True)
         self.action_map = {
             'left': self.scroll,
             'right': self.scroll,
@@ -72,7 +72,7 @@ class Viewer(QLabel):
     def start_auto_scroll(self):
         self.auto_scroll_enabled = True
         self.auto_scroll_at = time.time() + self.app.settings.get('auto_scroll_period')
-        self.auto_scroll_timer.start(100)
+        self.auto_scroll_timer.start(0.1)
 
     def stop_auto_scroll(self):
         self.auto_scroll_enabled = False

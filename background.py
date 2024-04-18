@@ -2,8 +2,8 @@ import multiprocessing
 import multiprocessing.connection
 import os
 
-from PySide6.QtCore import QObject, QTimer
 import cache
+from qt.timer import Timer
 
 
 class Worker:
@@ -62,15 +62,14 @@ class Worker:
             pipe.send((job, result))
 
 
-class BackgroundCacher(QObject):
-    poll_interval_ms = 100
+class BackgroundCacher:
+    poll_interval_s = 0.1
     max_job_count = 10
 
     def __init__(self, app):
         super().__init__()
         self.app = app
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.poll)
+        self.timer = Timer(self.poll, repeat=True)
         self.n_workers = multiprocessing.cpu_count() - 1
         self.workers = [Worker() for i in range(self.n_workers)]
         self.draining = []
@@ -88,7 +87,7 @@ class BackgroundCacher(QObject):
         self.dispatched = 0
         self.skipped = skipped
         self.total = len(jobs)
-        self.timer.start(self.poll_interval_ms)
+        self.timer.start(self.poll_interval_s)
 
     def cache_all_images(self):
         sizes = [self.app.size,
@@ -134,7 +133,7 @@ class BackgroundCacher(QObject):
 
         text = "Cached %d / %d images" % (self.done + self.skipped, self.total + self.skipped)
         if self.done < self.total:
-            self.app.status_bar.set_text(text, priority=-10, duration_s=self.poll_interval_ms / 800)
+            self.app.status_bar.set_text(text, priority=-10, duration_s=self.poll_interval_s * 1.25)
         else:
             self.app.status_bar.set_text(text, duration_s=5)
             self.timer.stop()
