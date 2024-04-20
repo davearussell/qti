@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QEvent, QSize
 from PySide6.QtGui import QPainter, QPen, QPixmap
 
-from qt.keys import event_keystroke
-
 
 class Cell:
     def __init__(self, size, label=None):
@@ -175,9 +173,8 @@ class Grid(QFrame):
     unselected = Signal()
     target_updated = Signal(object)
 
-    def __init__(self, settings, keybinds):
+    def __init__(self, settings):
         super().__init__()
-        self.keybinds = keybinds
         self.setObjectName("Grid")
 
         self.body = GridBody(settings)
@@ -287,10 +284,8 @@ class Grid(QFrame):
         if self.target:
             self.set_target(self.neighbour(self.target, direction))
 
-    def keyPressEvent(self, event):
-        keystroke = event_keystroke(event)
-        action = self.keybinds.get_action(keystroke)
+    def handle_action(self, action):
         if action in self.action_map:
             self.action_map[action](action)
-        else:
-            event.ignore()
+            return True
+        return False

@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QPixmap, QPainter
 
-from qt.keys import event_keystroke
 from qt.timer import Timer
 
 
@@ -17,7 +16,6 @@ class Viewer(QLabel):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
         self.app = app
-        self.keybinds = app.keybinds
         self.node = None
         self.target = None
         self.auto_scroll_enabled = False
@@ -86,15 +84,13 @@ class Viewer(QLabel):
         else:
             self.app.status_bar.set_text('Auto scroll [%d]' % remaining, duration_s=0.11)
 
-    def keyPressEvent(self, event):
-        keystroke = event_keystroke(event)
-        action = self.keybinds.get_action(keystroke)
+    def handle_action(self, action):
         if action != 'auto_scroll':
             self.stop_auto_scroll()
         if action in self.action_map:
             self.action_map[action](action)
-        else:
-            event.ignore()
+            return True
+        return False
 
     def redraw_image(self):
         viewport = QPixmap(QSize(self.view_width, self.view_height))

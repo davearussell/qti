@@ -74,7 +74,7 @@ class Browser(QWidget):
         self.setup_layout()
 
     def make_grid(self):
-        grid = Grid(self.app.settings, self.keybinds)
+        grid = Grid(self.app.settings)
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
@@ -209,7 +209,10 @@ class Browser(QWidget):
     def keyPressEvent(self, event):
         keystroke = event_keystroke(event)
         action = self.keybinds.get_action(keystroke)
-        if action in ['prev', 'next', 'up', 'down']:
+        widget = self.viewer if self.mode == 'viewer' else self.grid
+        if widget.handle_action(action):
+            pass
+        elif action in ['prev', 'next', 'up', 'down']:
             # NOTE: up/down here is only reachable in viewer mode; in grid
             # mode the grid class consumes them to scroll with in the grid
             self.scroll_node(action)
