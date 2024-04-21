@@ -34,6 +34,9 @@ QMainWindow {
   background-color: {{ background_color }};
 }
 
+*[selectType="selected"] { color: {{ selection_color }}; }
+*[selectType="marked"]   { color: {{ mark_color }};      }
+
 *[qtiOverlay="true"] {
   background-color: rgba(0, 0, 0, 128);
 }

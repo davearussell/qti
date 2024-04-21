@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QEvent, QSize
-from PySide6.QtGui import QPainter, QPen, QPixmap
+from PySide6.QtGui import QPainter, QPen, QPixmap, QPalette
 
 
 class Cell:
@@ -33,10 +33,9 @@ class GridBody(QWidget):
     spacing = 10
     border_width = 2
 
-    def __init__(self, settings):
+    def __init__(self):
         super().__init__()
         self.setFocusPolicy(Qt.NoFocus)
-        self.settings = settings
         self.pos = None
         self.cells = None
         self.grid_width = None
@@ -49,6 +48,10 @@ class GridBody(QWidget):
         self.cell_height = None
         self.row_height = 0
         self.col_width = 0
+        self.selected = QFrame()
+        self.selected.setProperty('selectType', 'selected')
+        self.marked = QFrame()
+        self.marked.setProperty('selectType', 'marked')
 
     def set_pos(self, pos):
         if pos != self.pos:
@@ -159,8 +162,8 @@ class GridBody(QWidget):
             if cell.border_rect.intersects(self.viewport):
                 painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), cell.get_pixmap())
                 if mark_lo <= i <= mark_hi:
-                    color = 'selection_color' if i == self.target_i else 'mark_color'
-                    pen = QPen(self.settings.get(color))
+                    tmp = (self.selected if i == self.target_i else self.marked)
+                    pen = QPen(tmp.palette().color(QPalette.Text))
                     pen.setWidth(self.border_width)
                     pen.setJoinStyle(Qt.MiterJoin)
                     painter.setPen(pen)
@@ -172,11 +175,11 @@ class Grid(QFrame):
     unselected = Signal()
     target_updated = Signal(object)
 
-    def __init__(self, settings):
+    def __init__(self):
         super().__init__()
         self.setObjectName("Grid")
 
-        self.body = GridBody(settings)
+        self.body = GridBody()
         self.body.mouse_click.connect(self.handle_click)
         self.body.height_updated.connect(self.body_height_update)
         self.body.pos_updated.connect(self.body_pos_update)

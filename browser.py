@@ -73,7 +73,7 @@ class Browser(QWidget):
         self.setup_layout()
 
     def make_grid(self):
-        grid = Grid(self.app.settings)
+        grid = Grid()
         grid.target_updated.connect(self._target_updated)
         grid.target_selected.connect(self.select)
         grid.unselected.connect(self.unselect)
