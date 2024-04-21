@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QColorDialog
-from PySide6.QtCore import QSize, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QPalette, QColor
 
 from dialog import FieldDialog
 from fields import Field, TextField, ValidatedTextField
 from line_edit import ValidatedLineEdit
 from keys import KeyMap
+from settings import Size
 
 
 class ColorPicker(QLabel):
@@ -112,18 +113,7 @@ class SizeField(TypedField):
     class edit_cls(TypedEdit):
         @classmethod
         def from_text(cls, text):
-            values = text.split()
-            if len(values) == 3 and values[1] in [',', 'x']:
-                w, h = values[0], values[2]
-            elif len(values) == 2:
-                w, h = values
-            else:
-                w = h = ''
-            return QSize(int(w), int(h))
-
-        @classmethod
-        def to_text(cls, value):
-            return '%d x %d' % value.toTuple()
+            return Size(text)
 
 
 class AppSettingsDialog(FieldDialog):
@@ -136,7 +126,7 @@ class AppSettingsDialog(FieldDialog):
 
     def choose_fields(self):
         field_types = {
-            QSize: SizeField,
+            Size: SizeField,
             str: TextField,
             int: IntField,
             float: FloatField,

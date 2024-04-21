@@ -1,5 +1,17 @@
-from PySide6.QtCore import Qt, QSize, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
+
+
+class Size(list):
+    def __init__(self, text):
+        values = text.split()
+        if len(values) == 3 and values[1] in [',', 'x']:
+            values = values[::2] # drop middle value
+        self.w, self.h = map(int, values)
+        super().__init__((self.w, self.h))
+
+    def __str__(self):
+        return "%d x %d" % (self.w, self.h)
 
 
 DEFAULT_APP_SETTINGS = {
@@ -8,7 +20,7 @@ DEFAULT_APP_SETTINGS = {
     'selection_color':           QColor(Qt.yellow),
     'mark_color':                QColor(Qt.gray),
     'pathbar_separator':         QColor(Qt.cyan),
-    'thumbnail_size':            QSize(250, 200),
+    'thumbnail_size':            Size("250 x 200"),
     'font':                      'Liberation mono',
     'zoom_rate':                 1.2,
     'pathbar_font_size':         16,

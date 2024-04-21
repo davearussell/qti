@@ -14,7 +14,7 @@ from grid import Grid, Cell
 from fields import FieldGroup, TextField,  ReadOnlyField
 
 from qt.keys import event_keystroke
-from qt.image import load_image, scale_image
+from qt.image import load_image, scale_image, image_size
 
 
 def find_all_images(path):
@@ -61,7 +61,7 @@ class NewImage(Cell):
         # TODO: refactor away duplication with browser.Thumbnail
         pixmap = super().load_pixmap()
         image = scale_image(load_image(self.abspath), self.size, fast=True)
-        iw, ih = image.size().toTuple()
+        iw, ih = image_size(image)
         p = QPainter(pixmap)
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
         p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
@@ -114,7 +114,7 @@ class ImporterDialog(DataDialog):
         default_values = self.get_default_values()
         self.setup_fields(default_values)
         self.load_grid(new_images, default_values)
-        self.setFixedSize(self.app.size - QSize(200, 200))
+        self.setFixedSize(QSize(*self.app.size) - QSize(200, 200))
         self.field_group.setFixedWidth(self.width() // 3)
 
     def setup_fields(self, default_values):

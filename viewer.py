@@ -35,7 +35,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.base_pixmap = self.target.load_pixmap(self.size())
+        self.base_pixmap = self.target.load_pixmap(self.size().toTuple())
         self.raw_pixmap = None
         self.base_zoom = None
         self.zoom_level = 0

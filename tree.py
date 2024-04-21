@@ -141,7 +141,7 @@ class Image(Node):
         return {value for key in keys for value in self.spec[key]}
 
     def cache_path(self, size):
-        return self._cache_tmpl % size.toTuple()
+        return self._cache_tmpl % tuple(size)
 
     def load_pixmap(self, size):
         scaled_path = self.cache_path(size)

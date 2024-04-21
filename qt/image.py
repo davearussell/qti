@@ -1,5 +1,5 @@
 from PySide6.QtGui import QPixmap, QImage
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 
 
 def load_image(image_path, for_display=True):
@@ -13,4 +13,8 @@ def save_image(image, image_path):
 
 def scale_image(image, size, fast=False):
     mode = Qt.FastTransformation if fast else Qt.SmoothTransformation
-    return image.scaled(size, aspectMode=Qt.KeepAspectRatio, mode=mode)
+    return image.scaled(QSize(*size), aspectMode=Qt.KeepAspectRatio, mode=mode)
+
+
+def image_size(image):
+    return image.size().toTuple()

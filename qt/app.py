@@ -19,14 +19,14 @@ class QTApp(QApplication):
         self.exit_hook = exit_hook
         super().__init__([])
         QImageReader.setAllocationLimit(0)
-        self.size = self.primaryScreen().size()
+        self.size = self.primaryScreen().size().toTuple()
         self.window = Window(self)
 
     def set_main_widget(self, widget):
         self.window.setCentralWidget(widget)
 
     def run(self):
-        self.window.setFixedSize(self.size)
+        self.window.setFixedSize(self.primaryScreen().size())
         self.window.showFullScreen()
         self.exec()
         self.exit_hook()
