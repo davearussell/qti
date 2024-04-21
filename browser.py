@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 from grid import Grid, Cell
 from viewer import Viewer
 from pathbar import Pathbar
-import cache
 from tree import TreeError
 
 from qt.keys import event_keystroke

@@ -14,6 +14,7 @@ from grid import Grid, Cell
 from fields import FieldGroup, TextField,  ReadOnlyField
 
 from qt.keys import event_keystroke
+from qt.image import load_image, scale_image
 
 
 def find_all_images(path):
@@ -59,9 +60,7 @@ class NewImage(Cell):
     def load_pixmap(self):
         # TODO: refactor away duplication with browser.Thumbnail
         pixmap = super().load_pixmap()
-        image = QPixmap(self.abspath).scaled(self.size,
-                                             aspectMode=Qt.KeepAspectRatio,
-                                             mode=Qt.FastTransformation)
+        image = scale_image(load_image(self.abspath), self.size, fast=True)
         iw, ih = image.size().toTuple()
         p = QPainter(pixmap)
         p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))

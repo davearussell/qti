@@ -2,7 +2,7 @@ import multiprocessing
 import multiprocessing.connection
 import os
 
-import cache
+from image import copy_and_scale
 from qt.timer import Timer
 
 
@@ -42,7 +42,7 @@ class Worker:
     def run_job(self, job):
         image_path, cache_path, size = job
         if not os.path.exists(cache_path):
-            cache.save_cache(image_path, cache_path, size)
+            copy_and_scale(image_path, cache_path, size)
 
     def main_loop(self, pipe):
         jobs = []

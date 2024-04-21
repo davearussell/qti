@@ -1,7 +1,7 @@
 import os
 import random
 
-import cache
+from image import copy_and_scale, load_image
 
 
 class TreeError(Exception): pass
@@ -144,7 +144,10 @@ class Image(Node):
         return self._cache_tmpl % size.toTuple()
 
     def load_pixmap(self, size):
-        return cache.load_pixmap(self.abspath, self.cache_path(size), size)
+        scaled_path = self.cache_path(size)
+        if not os.path.exists(scaled_path):
+            copy_and_scale(self.abspath, scaled_path, size)
+        return load_image(scaled_path)
 
     def delete_file(self):
         if os.path.exists(self.abspath):
