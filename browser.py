@@ -79,17 +79,10 @@ class Browser(QWidget):
         grid.unselected.connect(self.unselect)
         return grid
 
-    def make_viewer(self):
-        viewer = Viewer(self.app)
-        viewer.target_updated.connect(self._target_updated)
-        viewer.target_selected.connect(self.unselect)
-        viewer.unselected.connect(self.unselect)
-        return viewer
-
     def setup_layout(self):
         self.pathbar = Pathbar(click_cb=self.unselect)
         self.grid = self.make_grid()
-        self.viewer = self.make_viewer()
+        self.viewer = Viewer(self.app, scroll_cb=self._target_updated, close_cb=self.unselect)
 
         top_container = QWidget()
         top_layout = QVBoxLayout()
@@ -110,7 +103,7 @@ class Browser(QWidget):
         base_layout.setStackingMode(QStackedLayout.StackAll)
         self.setLayout(base_layout)
         base_layout.addWidget(top_container)
-        base_layout.addWidget(self.viewer)
+        base_layout.addWidget(self.viewer.ui)
         self.setLayout(base_layout)
 
     def _target_updated(self, target):
@@ -123,8 +116,8 @@ class Browser(QWidget):
         if mode is None:
             mode = self.mode or 'grid'
         if mode != self.mode:
-            active = self.grid if mode == 'grid' else self.viewer
-            inactive = self.viewer if mode == 'grid' else self.grid
+            active = self.grid if mode == 'grid' else self.viewer.ui
+            inactive = self.viewer.ui if mode == 'grid' else self.grid
             inactive.hide()
             active.show()
             active.setFocus()
@@ -226,24 +219,21 @@ class Browser(QWidget):
         # Our stacked layout means the viewer never can never get mouse events
         # directly so we catch them here and pass them on
         if self.mode == 'viewer':
-            self.viewer.handle_mousewheel(event)
+            pos = event.position().toTuple()
+            direction = 1 if event.angleDelta().y() > 0 else -1
+            self.viewer.zoom(pos, direction)
         else:
             super().wheelEvent(event)
 
     def mousePressEvent(self, event):
         if self.mode == 'viewer':
-            self.viewer.handle_mousedown(event)
+            self.viewer.start_panning(event.position().toTuple())
         else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        # NOTE: QT will only call this while a mouse button is pressed
         if self.mode == 'viewer':
-            self.viewer.handle_mousemove(event)
+            self.viewer.pan(event.position().toTuple())
         else:
             super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self.mode == 'viewer':
-            self.viewer.handle_mouseup(event)
-        else:
-            super().mouseReleaseEvent(event)

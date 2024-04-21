@@ -1,4 +1,4 @@
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtGui import QPixmap, QImage, QPainter
 from PySide6.QtCore import Qt, QSize
 
 
@@ -18,3 +18,12 @@ def scale_image(image, size, fast=False):
 
 def image_size(image):
     return image.size().toTuple()
+
+
+def crop_and_pan(image, size, x, y):
+    viewport = QPixmap(QSize(*size))
+    viewport.fill(Qt.black)
+    p = QPainter(viewport)
+    p.drawPixmap(x, y, image)
+    p.end()
+    return viewport

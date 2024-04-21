@@ -1,20 +1,15 @@
 import time
 
-from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, Signal, QEvent, QSize
-from PySide6.QtGui import QPixmap, QPainter
-
 from qt.timer import Timer
+from qt.image import load_image, crop_and_pan, scale_image, image_size
+from qt.viewer import ViewerWidget
 
 
-class Viewer(QLabel):
-    target_selected = Signal(object)
-    unselected = Signal(object)
-    target_updated = Signal(object)
-
-    def __init__(self, app):
-        super().__init__()
-        self.setAlignment(Qt.AlignCenter)
+class Viewer:
+    def __init__(self, app, scroll_cb, close_cb):
+        self.ui = ViewerWidget()
+        self.scroll_cb = scroll_cb
+        self.close_cb = close_cb
         self.app = app
         self.node = None
         self.target = None
@@ -26,8 +21,8 @@ class Viewer(QLabel):
             'right': self.scroll,
             'top': self.scroll,
             'bottom': self.scroll,
-            'select': self.select,
-            'unselect': self.unselect,
+            'select': self.close,
+            'unselect': self.close,
             'reset_zoom': self.reset_zoom,
             'auto_scroll': self.toggle_auto_scroll,
         }
@@ -35,7 +30,7 @@ class Viewer(QLabel):
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.base_pixmap = self.target.load_pixmap(self.size().toTuple())
+        self.base_pixmap = self.target.load_pixmap(self.ui.size)
         self.raw_pixmap = None
         self.base_zoom = None
         self.zoom_level = 0
@@ -44,8 +39,8 @@ class Viewer(QLabel):
             self.load_raw_pixmap(zoom=target.spec['zoom'], pan=target.spec['pan'])
             self.redraw_image()
         else:
-            self.setPixmap(self.base_pixmap)
-        self.target_updated.emit(target)
+            self.ui.load(self.base_pixmap)
+        self.scroll_cb(target)
 
     def scroll(self, action):
         images = self.node.children
@@ -53,13 +48,10 @@ class Viewer(QLabel):
         offset = {'right': 1, 'left': -1, 'top': -index, 'bottom': -index - 1}[action]
         target = images[(index + offset) % (len(images))]
         self.load(self.node, target)
-        self.target_updated.emit(target)
+        self.scroll_cb(target)
 
-    def select(self, _action=None):
-        self.target_selected.emit(self.target)
-
-    def unselect(self, _action=None):
-        self.unselected.emit(self.target)
+    def close(self, _action=None):
+        self.close_cb(self.target)
 
     def toggle_auto_scroll(self, _action=None):
         if self.auto_scroll_enabled:
@@ -93,14 +85,9 @@ class Viewer(QLabel):
         return False
 
     def redraw_image(self):
-        viewport = QPixmap(QSize(self.view_width, self.view_height))
-        viewport.fill(Qt.black)
-        p = QPainter(viewport)
-        p.drawPixmap(-self.xoff, -self.yoff, self.raw_pixmap)
-        p.end()
-        self.scaled = viewport.scaled(self.size(), aspectMode=Qt.KeepAspectRatio,
-                                      mode=Qt.SmoothTransformation)
-        self.setPixmap(self.scaled)
+        viewport = crop_and_pan(self.raw_pixmap, (self.view_width, self.view_height),
+                                -self.xoff, -self.yoff)
+        self.ui.load(scale_image(viewport, self.ui.size))
 
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
@@ -108,8 +95,8 @@ class Viewer(QLabel):
     def _reset_zoom(self, zoom=0, pan=None):
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
         self.zoom_level = zoom
-        iw, ih = self.raw_pixmap.size().toTuple()
-        sw, sh = self.size().toTuple()
+        iw, ih = self.image_size
+        sw, sh = self.ui.size
         self.view_width = int(sw / self.zoom_factor())
         self.view_height = int(sh / self.zoom_factor())
         if pan:
@@ -119,7 +106,8 @@ class Viewer(QLabel):
             self.yoff = (ih - self.view_height) // 2
 
     def load_raw_pixmap(self, **kwargs):
-        self.raw_pixmap = QPixmap(self.target.abspath)
+        self.raw_pixmap = load_image(self.target.abspath)
+        self.image_size = image_size(self.raw_pixmap)
         self._reset_zoom(**kwargs)
 
     def reset_zoom(self, _action=None):
@@ -131,14 +119,14 @@ class Viewer(QLabel):
         if self.zoom_level + direction < 0:
             return
 
-        sx, sy = pos.toTuple()
-        sw, sh = self.size().toTuple()
+        sx, sy = pos
+        sw, sh = self.ui.size
 
         if self.raw_pixmap is None:
             self.load_raw_pixmap()
 
         old_zoom = self.zoom_factor()
-        iw, ih = self.raw_pixmap.size().toTuple()
+        iw, ih = self.image_size
 
         # ix, iy: image pixel we clicked on. Will be centered after zoom
         ix = int(sx / old_zoom) + self.xoff
@@ -151,22 +139,16 @@ class Viewer(QLabel):
         self.xoff, self.yoff = (ix - self.view_width // 2, iy - self.view_height // 2)
         self.redraw_image()
 
-    def handle_mousewheel(self, event):
-        self.zoom(event.position(), 1 if event.angleDelta().y() > 0 else -1)
-
-    def handle_mousedown(self, event):
+    def start_panning(self, pos):
         if self.raw_pixmap is None:
             self.load_raw_pixmap()
-        self.click_pos = event.position().toTuple()
+        self.click_pos = pos
 
-    def handle_mousemove(self, event):
+    def pan(self, pos):
         cx, cy = self.click_pos
-        x, y = event.position().toTuple()
-        self.click_pos = (x, y)
+        self.click_pos = pos
+        x, y = pos
         zoom = self.zoom_factor()
         self.xoff += (cx - x) // zoom
         self.yoff += (cy - y) // zoom
         self.redraw_image()
-
-    def handle_mouseup(self, event):
-        pass
