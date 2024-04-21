@@ -8,30 +8,21 @@ from pathbar import Pathbar
 from tree import TreeError
 
 from qt.keys import event_keystroke
+from qt.grid import ScaledRenderer
 
 
-class Thumbnail(Cell):
-    def __init__(self, settings, node):
+
+class NodeRenderer(ScaledRenderer):
+    def __init__(self, settings, image, label, count):
+        super().__init__(image.abspath, settings.thumbnail_size, settings.background_color)
         self.settings = settings
-        self.node = node
-        if node.children:
-            self.image = next(node.images())
-            self.count = str(len(node.children))
-            label = node.name
-        else:
-            self.image = node
-            self.count = None
-            label = None
-        super().__init__(settings.thumbnail_size, label=label)
+        self.label = label
+        self.count = count
 
-    def load_pixmap(self):
-        pixmap = super().load_pixmap()
-        image = self.image.load_pixmap(self.size)
-        iw, ih = image.size().toTuple()
+    def render(self):
+        pixmap = super().render()
         p = QPainter(pixmap)
         p.setPen(self.settings.get('text_color'))
-        p.fillRect(0, 0, self.width, self.height, self.settings.get('background_color'))
-        p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
 
         if self.label:
             p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
@@ -44,7 +35,7 @@ class Thumbnail(Cell):
 
         if self.count:
             p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
-            r = p.fontMetrics().tightBoundingRect(self.count)
+            r = p.fontMetrics().tightBoundingRect(str(self.count))
             # If we render using the rect returned by tightBoundingRect, it cuts off the
             # top of the text and leaves empty space at the bottom. Account for this by
             # increasing rect size and moving its bottom outside the bounds of the pixmap
@@ -52,9 +43,19 @@ class Thumbnail(Cell):
             r.moveBottom(self.height + 7)
             r.moveRight(self.width)
             p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, self.count)
+            p.drawText(r, Qt.AlignCenter, str(self.count))
 
         return pixmap
+
+
+class NodeCell(Cell):
+    def __init__(self, node, settings):
+        self.node = node
+        count = len(node.children)
+        image = next(node.images()) if count else node
+        label = node.name if count else None
+        renderer = NodeRenderer(settings, image, label, count)
+        super().__init__(renderer, label)
 
 
 class Browser(QWidget):
@@ -73,10 +74,7 @@ class Browser(QWidget):
         self.setup_layout()
 
     def make_grid(self):
-        grid = Grid()
-        grid.target_updated.connect(self._target_updated)
-        grid.target_selected.connect(self.select)
-        grid.unselected.connect(self.unselect)
+        grid = Grid(scroll_cb=self._target_updated, select_cb=self.select, unselect_cb=self.unselect)
         return grid
 
     def setup_layout(self):
@@ -90,12 +88,12 @@ class Browser(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_container.setLayout(top_layout)
         top_layout.addWidget(self.pathbar.ui)
-        top_layout.addWidget(self.grid)
+        top_layout.addWidget(self.grid.ui)
 
         # When the grid is visible it should take up all available space;
         # when it is hidden the addStretch(0) prevents the other widgets
         # from expanding to filli the gap
-        top_layout.setStretchFactor(self.grid, 1)
+        top_layout.setStretchFactor(self.grid.ui, 1)
         top_layout.addStretch(0)
         top_layout.addWidget(self.status_bar)
 
@@ -107,7 +105,7 @@ class Browser(QWidget):
         self.setLayout(base_layout)
 
     def _target_updated(self, target):
-        if isinstance(target, Thumbnail):
+        if isinstance(target, NodeCell):
             target = target.node
         self.pathbar.set_target(target)
         self.target = target
@@ -116,8 +114,8 @@ class Browser(QWidget):
         if mode is None:
             mode = self.mode or 'grid'
         if mode != self.mode:
-            active = self.grid if mode == 'grid' else self.viewer.ui
-            inactive = self.viewer.ui if mode == 'grid' else self.grid
+            active = self.grid.ui if mode == 'grid' else self.viewer.ui
+            inactive = self.viewer.ui if mode == 'grid' else self.grid.ui
             inactive.hide()
             active.show()
             active.setFocus()
@@ -129,7 +127,7 @@ class Browser(QWidget):
         self.set_mode(mode)
         if self.mode == 'grid':
             self.pathbar.fade_target = True
-            thumbs = [Thumbnail(self.app.settings, child) for child in self.node.children]
+            thumbs = [NodeCell(child, self.app.settings) for child in self.node.children]
             tthumb = thumbs[self.node.children.index(self.target)] if self.target else None
             self.grid.load(thumbs, target=tthumb)
         else:
@@ -141,7 +139,7 @@ class Browser(QWidget):
             self.load_node(self.node, self.target, self.mode)
 
     def select(self, widget):
-        assert isinstance(widget, Thumbnail), widget
+        assert isinstance(widget, NodeCell), widget
         target = widget.node
         if target.children:
             self.load_node(target, mode='grid')

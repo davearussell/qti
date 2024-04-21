@@ -134,13 +134,12 @@ class ImporterDialog(DataDialog):
         self.field_group.field_unfocused.connect(self.field_updated)
 
     def load_grid(self, new_images, default_values):
-        self.grid = Grid(self.app.settings, self.keybinds)
+        self.grid = Grid(scroll_cb=self.grid_target_updated)
         self.images = [NewImage(self.app.settings, self.library, path, default_values.copy(),
                                 self.app.settings.thumbnail_size)
                        for path in new_images]
-        self.grid.target_updated.connect(self.grid_target_updated)
         self.grid.load(self.images, target=self.images[0])
-        self.body.layout().addWidget(self.grid)
+        self.body.layout().addWidget(self.grid.ui)
 
     def drop_images(self, images):
         self.images = [image for image in self.images if image not in images]
