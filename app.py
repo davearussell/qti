@@ -1,7 +1,5 @@
 import copy
 
-import jinja2
-
 import library
 import browser
 import settings
@@ -22,17 +20,17 @@ import keys
 import template
 from qt.datastore import Datastore
 from qt.app import QTApp
-
+from qt import color
 from qt.keys import event_keystroke
 
 STYLESHEET_TMPL = """
 
 QMainWindow {
-  background-color: {{ background_color.name() }};
+  background-color: {{ background_color }};
 }
 
 *#Grid {
-  background-color: {{ background_color.name() }};
+  background-color: {{ background_color }};
 }
 
 *[qtiOverlay="true"] {
@@ -50,15 +48,15 @@ QMainWindow {
 }
 
 *[qtiFont="statusbar"] {
-  color: {{ text_color.name() }};
+  color: {{ text_color }};
   font-size: {{ statusbar_font_size }}pt;
   font-family: "{{ font }}";
 }
 
-*[qtiFontStyle="sep"]       { color: {{ pathbar_separator.name() }};  }
-*[qtiFontStyle="sep_fade"]  { color: {{ pathbar_separator.darker().name() }};  }
-*[qtiFontStyle="node"]      { color: {{ text_color.name() }}; }
-*[qtiFontStyle="node_fade"] { color: {{ text_color.darker().name() }};  }
+*[qtiFontStyle="sep"]       { color: {{ pathbar_separator }};  }
+*[qtiFontStyle="sep_fade"]  { color: {{ pathbar_separator.fade(background_color) }};  }
+*[qtiFontStyle="node"]      { color: {{ text_color }}; }
+*[qtiFontStyle="node_fade"] { color: {{ text_color.fade(background_color) }};  }
 
 *#ValueBox {background-color: white; }
 *[valid="false"] { color: red; }
@@ -138,8 +136,7 @@ class Application:
         self.cacher.stop()
 
     def apply_settings(self):
-        env = jinja2.Environment().from_string(STYLESHEET_TMPL)
-        stylesheet = env.render(self.settings.to_dict())
+        stylesheet = template.apply(self.settings.to_dict(), STYLESHEET_TMPL)
         self.ui.setStyleSheet(stylesheet)
         self.browser.reload_node()
         self.cacher.cache_all_images()

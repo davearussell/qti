@@ -1,6 +1,4 @@
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
-
+from color import Color
 
 class Size(list):
     def __init__(self, text):
@@ -15,11 +13,11 @@ class Size(list):
 
 
 DEFAULT_APP_SETTINGS = {
-    'background_color':          QColor(Qt.black),
-    'text_color':                QColor(Qt.white),
-    'selection_color':           QColor(Qt.yellow),
-    'mark_color':                QColor(Qt.gray),
-    'pathbar_separator':         QColor(Qt.cyan),
+    'background_color':          Color('black'),
+    'text_color':                Color('white'),
+    'selection_color':           Color('yellow'),
+    'mark_color':                Color('gray'),
+    'pathbar_separator':         Color('cyan'),
     'thumbnail_size':            Size("250 x 200"),
     'font':                      'Liberation mono',
     'zoom_rate':                 1.2,

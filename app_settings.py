@@ -1,16 +1,16 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QColorDialog
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette
 
 from dialog import FieldDialog
 from fields import Field, TextField, ValidatedTextField
 from line_edit import ValidatedLineEdit
 from keys import KeyMap
-from settings import Size
+from color import Color
 
 
 class ColorPicker(QLabel):
-    color_picked = Signal(QColor)
+    color_picked = Signal(Color)
 
     def __init__(self):
         super().__init__()
@@ -19,24 +19,19 @@ class ColorPicker(QLabel):
 
     def set_color(self, color):
         self.color = color
-        self.setText("Click to edit [%s]" % color.name())
+        self.setText("Click to edit [%s]" % color)
         self.apply_palette()
 
     def apply_palette(self):
         pal = self.palette()
         pal.setColor(QPalette.Window, self.color)
-        pal.setColor(QPalette.WindowText, self.contrasting_color(self.color))
+        pal.setColor(QPalette.WindowText, self.color.contrasting())
         self.setPalette(pal)
 
-    def contrasting_color(self, color):
-        values = [color.red(), color.green(), color.blue()]
-        for i in range(len(values)):
-            values[i] = 255 if values[i] < 128 else 0
-        return QColor(*values)
-
     def pick_new_color(self):
-        new_color = QColorDialog.getColor(self.color)
-        if new_color.isValid():
+        qcolor = QColorDialog.getColor(self.color)
+        if qcolor.isValid():
+            new_color = Color(qcolor.name())
             self.set_color(new_color)
             self.color_picked.emit(new_color)
 
@@ -70,50 +65,21 @@ class ColorField(Field):
         self.picker.set_color(color)
 
 
-class TypedEdit(ValidatedLineEdit):
-    def normalise(self, value):
-        return self.to_text(self.from_text(value))
-
-    @classmethod
-    def from_text(cls, text):
-        raise NotImplementedError()
-
-    @classmethod
-    def to_text(cls, value):
-        return str(value)
-
-
 class TypedField(ValidatedTextField):
-    edit_cls = TypedEdit
+    class edit_cls(ValidatedLineEdit):
+        value_type = None # updated by set_value below
+
+        def normalise(self, value):
+            return str(self.value_type(value))
 
     def set_value(self, value):
-        super().set_value(self.edit_cls.to_text(value))
+        self.body.value_type = type(value)
+        super().set_value(str(value))
 
     def get_value(self):
         if self.body.valid:
-            return self.edit_cls.from_text(super().get_value())
+            return self.body.value_type(super().get_value())
         return self.original_value
-
-
-class IntField(TypedField):
-    class edit_cls(TypedEdit):
-        @classmethod
-        def from_text(cls, text):
-            return int(text, base=0)
-
-
-class FloatField(TypedField):
-    class edit_cls(TypedEdit):
-        @classmethod
-        def from_text(cls, text):
-            return float(text)
-
-
-class SizeField(TypedField):
-    class edit_cls(TypedEdit):
-        @classmethod
-        def from_text(cls, text):
-            return Size(text)
 
 
 class AppSettingsDialog(FieldDialog):
@@ -126,15 +92,11 @@ class AppSettingsDialog(FieldDialog):
 
     def choose_fields(self):
         field_types = {
-            Size: SizeField,
-            str: TextField,
-            int: IntField,
-            float: FloatField,
-            QColor: ColorField,
+            Color: ColorField,
         }
         keymap = KeyMap()
         return [
-            field_types[type(value)](key, value, keymap=keymap)
+            field_types.get(type(value), TypedField)(key, value, keymap=keymap)
             for key, value in self.settings.to_dict().items()
         ]
 
