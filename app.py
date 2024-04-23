@@ -82,7 +82,7 @@ class Application:
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
         self.browser = browser.Browser(self)
-        self.ui.set_main_widget(self.browser)
+        self.ui.set_main_widget(self.browser.ui)
         self.size = self.ui.size
         self.window = self.ui.window
         self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')

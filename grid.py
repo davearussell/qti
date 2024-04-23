@@ -93,3 +93,6 @@ class Grid:
             self.action_map[action](action)
             return True
         return False
+
+    def handle_mouse(self, *args):
+        return False # Any relevent mouse events will be caught by self.ui and handled there

@@ -7,7 +7,7 @@ from qt.viewer import ViewerWidget
 
 class Viewer:
     def __init__(self, app, scroll_cb, close_cb):
-        self.ui = ViewerWidget()
+        self.ui = ViewerWidget(mouse_cb=self.handle_mouse)
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app
@@ -114,6 +114,17 @@ class Viewer:
         if self.raw_pixmap is not None:
             self._reset_zoom()
             self.redraw_image()
+
+    def handle_mouse(self, event_type, position, value):
+        if event_type == 'wheel':
+            self.zoom(position, value)
+        elif event_type == 'click':
+            self.start_panning(position)
+        elif event_type == 'drag':
+            self.pan(position)
+        else:
+            return False
+        return True
 
     def zoom(self, pos, direction):
         if self.zoom_level + direction < 0:

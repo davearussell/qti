@@ -1,51 +1,9 @@
-#! /bin/python3
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
-from PySide6.QtGui import QPainter, QFont, QPixmap, QColor
-from PySide6.QtCore import Qt
 from grid import Grid, Cell
 from viewer import Viewer
 from pathbar import Pathbar
 from tree import TreeError
 
-from qt.keys import event_keystroke
-from qt.grid import ScaledRenderer
-
-
-
-class NodeRenderer(ScaledRenderer):
-    def __init__(self, settings, image, label, count):
-        super().__init__(image.abspath, settings.thumbnail_size, settings.background_color)
-        self.settings = settings
-        self.label = label
-        self.count = count
-
-    def render(self):
-        pixmap = super().render()
-        p = QPainter(pixmap)
-        p.setPen(self.settings.get('text_color'))
-
-        if self.label:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
-            r = p.fontMetrics().tightBoundingRect(self.label)
-            r.adjust(0, 0, 10, 10)
-            r.moveTop(0)
-            r.moveLeft(pixmap.width() / 2 - r.width() / 2)
-            p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, self.label)
-
-        if self.count:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
-            r = p.fontMetrics().tightBoundingRect(str(self.count))
-            # If we render using the rect returned by tightBoundingRect, it cuts off the
-            # top of the text and leaves empty space at the bottom. Account for this by
-            # increasing rect size and moving its bottom outside the bounds of the pixmap
-            r.adjust(0, 0, 10, 12)
-            r.moveBottom(self.height + 7)
-            r.moveRight(self.width)
-            p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, str(self.count))
-
-        return pixmap
+from qt.browser import BrowserWidget, NodeRenderer
 
 
 class NodeCell(Cell):
@@ -58,51 +16,30 @@ class NodeCell(Cell):
         super().__init__(renderer, label)
 
 
-class Browser(QWidget):
+class Browser:
     def __init__(self, app):
-        super().__init__()
         self.app = app
         self.library = self.app.library
         self.keybinds = app.keybinds
         self.mode = None
-        self.grid = None
         self.node = None
         self.target = None
-        self.pathbar = None
-        self.status_bar = app.status_bar.ui
         self.hide_bars = False
-        self.setup_layout()
+        self.setup_widgets()
 
-    def make_grid(self):
-        grid = Grid(scroll_cb=self._target_updated, select_cb=self.select, unselect_cb=self.unselect)
-        return grid
-
-    def setup_layout(self):
+    def setup_widgets(self):
+        self.grid = Grid(scroll_cb=self._target_updated,
+                         select_cb=self.select,
+                         unselect_cb=self.unselect)
+        self.viewer = Viewer(self.app,
+                             scroll_cb=self._target_updated,
+                             close_cb=self.unselect)
         self.pathbar = Pathbar(click_cb=self.unselect)
-        self.grid = self.make_grid()
-        self.viewer = Viewer(self.app, scroll_cb=self._target_updated, close_cb=self.unselect)
-
-        top_container = QWidget()
-        top_layout = QVBoxLayout()
-        top_layout.setSpacing(0)
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_container.setLayout(top_layout)
-        top_layout.addWidget(self.pathbar.ui)
-        top_layout.addWidget(self.grid.ui)
-
-        # When the grid is visible it should take up all available space;
-        # when it is hidden the addStretch(0) prevents the other widgets
-        # from expanding to filli the gap
-        top_layout.setStretchFactor(self.grid.ui, 1)
-        top_layout.addStretch(0)
-        top_layout.addWidget(self.status_bar)
-
-        base_layout = QStackedLayout()
-        base_layout.setStackingMode(QStackedLayout.StackAll)
-        self.setLayout(base_layout)
-        base_layout.addWidget(top_container)
-        base_layout.addWidget(self.viewer.ui)
-        self.setLayout(base_layout)
+        self.ui = BrowserWidget(grid=self.grid.ui,
+                                viewer=self.viewer.ui,
+                                status_bar=self.app.status_bar.ui,
+                                pathbar=self.pathbar.ui,
+                                keydown_cb=self.handle_keydown)
 
     def _target_updated(self, target):
         if isinstance(target, NodeCell):
@@ -114,12 +51,8 @@ class Browser(QWidget):
         if mode is None:
             mode = self.mode or 'grid'
         if mode != self.mode:
-            active = self.grid.ui if mode == 'grid' else self.viewer.ui
-            inactive = self.viewer.ui if mode == 'grid' else self.grid.ui
-            inactive.hide()
-            active.show()
-            active.setFocus()
             self.mode = mode
+            self.ui.set_mode(mode)
 
     def load_node(self, node, target=None, mode=None):
         self.node = node
@@ -188,16 +121,7 @@ class Browser(QWidget):
             return [cell.node for cell in self.grid.marked_cells()]
         return [self.target]
 
-    def set_bar_visibility(self, hidden):
-        self.hide_bars = hidden
-        for bar in [self.pathbar.ui, self.status_bar]:
-            if hidden:
-                bar.hide()
-            else:
-                bar.show()
-
-    def keyPressEvent(self, event):
-        keystroke = event_keystroke(event)
+    def handle_keydown(self, keystroke):
         action = self.keybinds.get_action(keystroke)
         widget = self.viewer if self.mode == 'viewer' else self.grid
         if widget.handle_action(action):
@@ -209,29 +133,8 @@ class Browser(QWidget):
         elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
             self.swap_cells(action[len('swap_'):])
         elif action == 'toggle_hide':
-            self.set_bar_visibility(not self.hide_bars)
+            self.hide_bars = not self.hide_bars
+            self.ui.set_bar_visibility(self.hide_bars)
         else:
-            event.ignore()
-
-    def wheelEvent(self, event):
-        # Our stacked layout means the viewer never can never get mouse events
-        # directly so we catch them here and pass them on
-        if self.mode == 'viewer':
-            pos = event.position().toTuple()
-            direction = 1 if event.angleDelta().y() > 0 else -1
-            self.viewer.zoom(pos, direction)
-        else:
-            super().wheelEvent(event)
-
-    def mousePressEvent(self, event):
-        if self.mode == 'viewer':
-            self.viewer.start_panning(event.position().toTuple())
-        else:
-            super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        # NOTE: QT will only call this while a mouse button is pressed
-        if self.mode == 'viewer':
-            self.viewer.pan(event.position().toTuple())
-        else:
-            super().mouseMoveEvent(event)
+            return False
+        return True
