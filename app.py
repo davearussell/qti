@@ -13,7 +13,7 @@ from metadata import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
 from quick_actions import QuickActionDialog
 from app_settings import AppSettingsDialog
-from key_config import KeybindDialog
+from dialogs.key_config import KeybindDialog
 from background import BackgroundCacher
 from search import SearchDialog
 import cache
@@ -111,7 +111,7 @@ class Application:
         elif action == 'edit_quick_actions':
             QuickActionDialog(self).exec()
         elif action == 'edit_keybinds':
-            KeybindDialog(self).exec()
+            KeybindDialog(self).run()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':

@@ -46,3 +46,29 @@ class Dialog:
 
     def apply(self):
         raise NotImplementedError()
+
+
+class DataDialog(Dialog):
+    actions = {
+        'accept': None,
+        'apply': None,
+        'cancel': None,
+    }
+
+    def accept(self):
+        if self.dirty():
+            self.commit()
+        super().accept()
+
+    def data_updated(self):
+        self.ui.set_dirty(self.dirty())
+
+    def apply(self):
+        self.commit()
+        self.ui.set_dirty(False)
+
+    def dirty(self):
+        raise NotImplementedError()
+
+    def commit(self):
+        raise NotImplementedError()

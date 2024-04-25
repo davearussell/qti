@@ -71,3 +71,13 @@ class DialogWidget(QDialog):
 
     def run(self):
         self.exec()
+
+
+class DataDialogWidget(DialogWidget):
+    def add_action_buttons(self):
+        super().add_action_buttons()
+        self.set_dirty(False)
+
+    def set_dirty(self, dirty):
+        if 'apply' in self.actions:
+            self.action_button('apply').setEnabled(dirty)
