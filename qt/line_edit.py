@@ -14,7 +14,8 @@ class LineEdit(QLineEdit):
         self.setStyleSheet('QLineEdit[readOnly="true"] {background-color: #E0E0E0;}')
         if read_only:
             self.setReadOnly(True)
-        self.textChanged.connect(self.update_cb)
+        if self.update_cb:
+            self.textChanged.connect(self.update_cb)
 
     def get_value(self):
         return self.text()
@@ -30,7 +31,8 @@ class LineEdit(QLineEdit):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             # Normally a QLineEdit will pass the <Enter> key event up
             # to its parent, which we don't want, so swallow it here.
-            self.commit_cb()
+            if self.commit_cb:
+                self.commit_cb()
         else:
             super().keyPressEvent(event)
 

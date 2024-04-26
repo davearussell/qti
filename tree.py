@@ -197,6 +197,10 @@ class BaseTree(Root):
         for image in self.images():
             image.spec[key] = value
 
+    def delete_key(self, key):
+        for image in self.images():
+            del image.spec[key]
+
     def rename_key(self, old_name, new_name):
         for node in self.descendants():
             if node.type == 'image':
@@ -376,6 +380,9 @@ class FilteredTree(Root):
 
     def add_key(self, key, value):
         self.base_node.add_key(key, value)
+
+    def delete_key(self, key):
+        self.base_node.delete_key(key)
 
     def rename_key(self, old_name, new_name):
         self.base_node.rename_key(old_name, new_name)

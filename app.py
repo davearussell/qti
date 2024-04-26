@@ -10,7 +10,7 @@ from filtering import default_filter_config
 from dialogs.deleter import DeleterDialog
 from dialogs.filter_config import FilterConfigDialog
 from importer import ImporterDialog
-from metadata import MetadataEditorDialog
+from dialogs.metadata_editor import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
 from quick_actions import QuickActionDialog
 from app_settings import AppSettingsDialog
@@ -106,7 +106,7 @@ class Application:
         elif action == 'delete':
             DeleterDialog(self, self.browser.marked_nodes()).run()
         elif action == 'edit_metadata':
-            MetadataEditorDialog(self).exec()
+            MetadataEditorDialog(self).run()
         elif action == 'edit_quick_filters':
             QuickFilterDialog(self).exec()
         elif action == 'edit_quick_actions':
