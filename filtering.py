@@ -1,10 +1,5 @@
 import copy
-
-from dialog import FieldDialog
-from line_edit import ValidatedLineEdit
-from fields import SetField, ValidatedTextField
 import expr
-from tree import SORT_TYPES
 
 
 class FilterConfig:
@@ -60,42 +55,3 @@ def default_filter_config(library):
     c.defaults = copy.deepcopy(c.defaults)
     c.defaults['group_by'] = hierarchy.copy()
     return c
-
-
-class ExprField(ValidatedTextField):
-    class edit_cls(ValidatedLineEdit):
-        def normalise(self, value):
-            return str(expr.parse_expr(value))
-
-
-class FilterConfigDialog(FieldDialog):
-    title = "Filtering and grouping"
-
-    def __init__(self, app, library, filter_config):
-        super().__init__(app)
-        self.library = library
-        self.config = filter_config
-        self.init_fields(self.choose_fields())
-
-    def choose_fields(self):
-        can_group_by = self.library.metadata.groupable_keys()
-        values_by_key = self.library.values_by_key()
-        all_tags = set()
-        for key in self.library.metadata.keys:
-            if not (key.in_hierarchy or key.builtin):
-                all_tags |= values_by_key[key.name]
-        config = self.config.copy()
-        return [
-            SetField("group_by", config.group_by, can_group_by, keybind='g'),
-            SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='o'),
-            SetField('include_tags', config.include_tags, all_tags, keybind='i'),
-            SetField('exclude_tags', config.exclude_tags, all_tags, keybind='x'),
-            ExprField('custom_expr', config.custom_expr, keybind='u'),
-        ]
-
-    def commit(self):
-        super().commit()
-        self.app.reload_tree()
-
-    def apply_field_update(self, field, value):
-        setattr(self.config, field.key, value)

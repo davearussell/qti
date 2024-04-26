@@ -6,8 +6,9 @@ import settings
 from status_bar import StatusBar
 from editor import EditorDialog
 from bulk_edit import BulkEditDialog
-from filtering import default_filter_config, FilterConfigDialog
+from filtering import default_filter_config
 from dialogs.deleter import DeleterDialog
+from dialogs.filter_config import FilterConfigDialog
 from importer import ImporterDialog
 from metadata import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
@@ -101,7 +102,7 @@ class Application:
             if self.browser.target:
                 BulkEditDialog(self, self.browser.node).exec()
         elif action == 'filter_config':
-            FilterConfigDialog(self, self.library, self.filter_config).exec()
+            FilterConfigDialog(self).run()
         elif action == 'delete':
             DeleterDialog(self, self.browser.marked_nodes()).run()
         elif action == 'edit_metadata':
