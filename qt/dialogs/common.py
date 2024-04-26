@@ -81,3 +81,14 @@ class DataDialogWidget(DialogWidget):
     def set_dirty(self, dirty):
         if 'apply' in self.actions:
             self.action_button('apply').setEnabled(dirty)
+
+
+class FieldDialogWidget(DataDialogWidget):
+    def __init__(self, group, **kwargs):
+        self._group = group
+        super().__init__(**kwargs)
+        self.layout().addWidget(group)
+        self.add_action_buttons()
+
+    def focusInEvent(self, event):
+        self._group.setFocus()

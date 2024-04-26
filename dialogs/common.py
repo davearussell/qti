@@ -1,3 +1,7 @@
+from .fields import FieldGroup
+from qt.dialogs.common import FieldDialogWidget
+
+
 class Dialog:
     ui_cls = None
     ui_args = {}
@@ -71,4 +75,37 @@ class DataDialog(Dialog):
         raise NotImplementedError()
 
     def commit(self):
+        raise NotImplementedError()
+
+
+class FieldDialog(DataDialog):
+    ui_cls = FieldDialogWidget
+
+    def __init__(self, parent, fields):
+        self._group = FieldGroup(fields, update_cb=self.handle_update)
+        super().__init__(parent)
+
+    @property
+    def ui_args(self):
+        return {
+            'group': self._group.ui,
+        }
+
+    @property
+    def fields(self):
+        return self._group.fields
+
+    def handle_update(self, field):
+        self.data_updated()
+
+    def dirty(self):
+        return any(field.dirty() for field in self.fields)
+
+    def commit(self):
+        for field in self.fields:
+            if field.dirty():
+                self.apply_field_update(field, field.get_value())
+                field.mark_clean()
+
+    def apply_field_update(self, field, value):
         raise NotImplementedError()
