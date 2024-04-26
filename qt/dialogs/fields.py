@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, Signal
 
 from qt.keys import event_keystroke
-from qt.line_edit import TabCompleteLineEdit
+from qt.line_edit import LineEdit, TabCompleteLineEdit
 from qt.set_picker import SetPicker
 
 
@@ -102,3 +102,10 @@ class TextFieldWidget(FieldWidget):
 
 class SetFieldWidget(TextFieldWidget):
     body_cls = SetPicker
+
+
+class ValidatedTextFieldWidget(FieldWidget):
+    body_cls = LineEdit
+
+    def set_valid(self, valid):
+        self.body.set_property("valid", valid)

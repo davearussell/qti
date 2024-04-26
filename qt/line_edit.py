@@ -22,6 +22,10 @@ class LineEdit(QLineEdit):
     def set_value(self, text):
         self.setText(text)
 
+    def set_property(self, key, value):
+        self.setProperty(key, value)
+        self.setStyleSheet("/* /") # force stylesheet recalc
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             # Normally a QLineEdit will pass the <Enter> key event up

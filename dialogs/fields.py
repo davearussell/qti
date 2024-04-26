@@ -1,4 +1,5 @@
 from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget, SetFieldWidget
+from qt.dialogs.fields import ValidatedTextFieldWidget
 
 
 class FieldGroup:
@@ -96,3 +97,24 @@ class TextField(Field):
 
 class SetField(TextField):
     ui_cls = SetFieldWidget
+
+
+class ValidatedTextField(Field):
+    ui_cls = ValidatedTextFieldWidget
+
+    def __init__(self, key, value, validator, **kwargs):
+        self.valid = True
+        self.validator = validator
+        super().__init__(key, value, **kwargs)
+
+    def is_valid(self):
+        return self.validator(self.ui.get_value())
+
+    def handle_update(self):
+        if self.valid != self.is_valid():
+            self.valid = not self.valid
+            self.ui.set_valid(self.valid)
+        super().handle_update()
+
+    def get_value(self):
+        return super().get_value() if self.valid else self.original_value
