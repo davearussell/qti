@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 
 from qt.keys import event_keystroke
 from qt.line_edit import TabCompleteLineEdit
+from qt.set_picker import SetPicker
 
 
 class FieldGroupWidget(QWidget):
@@ -97,3 +98,7 @@ class TextFieldWidget(FieldWidget):
         return {
             'completions': self.completions,
         }
+
+
+class SetFieldWidget(TextFieldWidget):
+    body_cls = SetPicker

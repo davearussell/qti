@@ -1,4 +1,4 @@
-from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget
+from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget, SetFieldWidget
 
 
 class FieldGroup:
@@ -92,3 +92,7 @@ class TextField(Field):
     def __init__(self, key, value, completions=None, **kwargs):
         self.ui_args = {'completions': completions}
         super().__init__(key, value, **kwargs)
+
+
+class SetField(TextField):
+    ui_cls = SetFieldWidget
