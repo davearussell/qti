@@ -1,5 +1,5 @@
 from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget, SetFieldWidget
-from qt.dialogs.fields import ValidatedTextFieldWidget
+from qt.dialogs.fields import ValidatedTextFieldWidget, ColorFieldWidget
 
 
 class FieldGroup:
@@ -118,3 +118,25 @@ class ValidatedTextField(Field):
             self.valid = not self.valid
             self.ui.set_valid(self.valid)
         super().handle_update()
+
+
+class TypedField(ValidatedTextField):
+    def __init__(self, key, value, **kwargs):
+        self.parser = type(value)
+        def validator(_value):
+            try:
+                self.parser(_value)
+                return True
+            except:
+                return False
+        super().__init__(key, value, validator, **kwargs)
+
+    def set_value(self, value):
+        super().set_value(str(value))
+
+    def get_value(self):
+        return self.parser(super().get_value()) if self.valid else self.original_value
+
+
+class ColorField(Field):
+    ui_cls = ColorFieldWidget

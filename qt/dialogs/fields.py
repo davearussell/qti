@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from qt.keys import event_keystroke
 from qt.line_edit import LineEdit, TabCompleteLineEdit
 from qt.set_picker import SetPicker
+from qt.color_picker import ColorPicker
 
 
 class FieldGroupWidget(QWidget):
@@ -112,3 +113,14 @@ class ValidatedTextFieldWidget(FieldWidget):
 
     def set_valid(self, valid):
         self.body.set_property("valid", valid)
+
+
+class ColorFieldWidget(FieldWidget):
+    body_cls = ColorPicker
+
+    def focusInEvent(self, event):
+        self.body.pick_new_color()
+
+    def post_commit_cb(self):
+        super().post_commit_cb()
+        self.body.apply_palette() # App stylesheet updates undo our custom palette

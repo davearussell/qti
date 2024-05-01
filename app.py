@@ -13,7 +13,7 @@ from importer import ImporterDialog
 from dialogs.metadata_editor import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
 from quick_actions import QuickActionDialog
-from app_settings import AppSettingsDialog
+from dialogs.app_settings import AppSettingsDialog
 from dialogs.key_config import KeybindDialog
 from background import BackgroundCacher
 from search import SearchDialog
@@ -124,7 +124,7 @@ class Application:
         elif action == 'add_new_images':
             ImporterDialog(self, self.browser.node).exec()
         elif action == 'app_settings':
-            AppSettingsDialog(self).exec()
+            AppSettingsDialog(self).run()
         elif action == 'search':
             SearchDialog(self).exec()
 
