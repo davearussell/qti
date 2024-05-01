@@ -78,6 +78,9 @@ class Field:
         if self.update_cb:
             self.update_cb(self)
 
+    def post_commit_cb(self):
+        self.ui.post_commit_cb()
+
     def make_ui(self):
         return self.ui_cls(**self.ui_args, **self.common_ui_args)
 

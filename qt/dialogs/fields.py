@@ -85,6 +85,9 @@ class FieldWidget(QWidget):
     def set_value(self, value):
         self.body.set_value(value)
 
+    def post_commit_cb(self):
+        pass
+
 
 class TextFieldWidget(FieldWidget):
     body_cls = TabCompleteLineEdit

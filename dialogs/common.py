@@ -114,6 +114,11 @@ class FieldDialog(DataDialog):
             if field.dirty():
                 self.apply_field_update(field, field.get_value())
                 field.mark_clean()
+        self.post_commit_cb()
+
+    def post_commit_cb(self):
+        for field in self.fields:
+            field.post_commit_cb()
 
     def apply_field_update(self, field, value):
         raise NotImplementedError()
