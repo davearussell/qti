@@ -41,6 +41,7 @@ class Field:
     def __init__(self, key, value, keybind=None, keymap=None, commit_cb=None, update_cb=None):
         self.key = key
         self.original_value = value
+        self.valid = True
         self.commit_cb = commit_cb
         self.update_cb = update_cb
         if keymap:
@@ -103,7 +104,6 @@ class ValidatedTextField(Field):
     ui_cls = ValidatedTextFieldWidget
 
     def __init__(self, key, value, validator, **kwargs):
-        self.valid = True
         self.validator = validator
         super().__init__(key, value, **kwargs)
 
@@ -115,6 +115,3 @@ class ValidatedTextField(Field):
             self.valid = not self.valid
             self.ui.set_valid(self.valid)
         super().handle_update()
-
-    def get_value(self):
-        return super().get_value() if self.valid else self.original_value

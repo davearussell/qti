@@ -65,11 +65,15 @@ class DataDialog(Dialog):
         super().accept()
 
     def data_updated(self):
+        self.ui.set_error(self.error())
         self.ui.set_dirty(self.dirty())
 
     def apply(self):
         self.commit()
         self.ui.set_dirty(False)
+
+    def error(self):
+        return None
 
     def dirty(self):
         raise NotImplementedError()
@@ -100,6 +104,10 @@ class FieldDialog(DataDialog):
 
     def dirty(self):
         return any(field.dirty() for field in self.fields)
+
+    def error(self):
+        bad_fields = [field.key for field in self.fields if not field.valid]
+        return 'Invalid field(s): ' + ', '.join(bad_fields) if bad_fields else None
 
     def commit(self):
         for field in self.fields:

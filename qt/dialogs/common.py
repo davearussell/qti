@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QDialog, QDialogButtonBox
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel
 from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtCore import Qt
 
@@ -74,14 +74,34 @@ class DialogWidget(QDialog):
 
 
 class DataDialogWidget(DialogWidget):
+    dirty = False
+    valid = True
+
     def add_action_buttons(self):
+        self.error_box = QLabel()
+        self.error_box.setProperty("valid", False)
+        self.layout().addWidget(self.error_box)
         super().add_action_buttons()
-        self.set_dirty(False)
+        self.refresh_buttons()
+
+    def refresh_buttons(self):
+        if 'apply' in self.actions:
+            self.action_button('apply').setEnabled(self.valid and self.dirty)
+        if 'accept' in self.actions:
+            self.action_button('accept').setEnabled(self.valid)
+
+    def set_error(self, error):
+        self.valid = not error
+        self.error_box.setText(error or '')
+        self.refresh_buttons()
+
+    def accept(self, from_app=False):
+        if self.valid:
+            super().accept(from_app)
 
     def set_dirty(self, dirty):
-        if 'apply' in self.actions:
-            self.action_button('apply').setEnabled(dirty)
-
+        self.dirty = dirty
+        self.refresh_buttons()
 
 class FieldDialogWidget(DataDialogWidget):
     def __init__(self, group, **kwargs):
