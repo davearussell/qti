@@ -115,11 +115,8 @@ class ValidatedTextFieldWidget(FieldWidget):
         self.body.set_property("valid", valid)
 
 
-class ColorFieldWidget(FieldWidget):
+class ColorFieldWidget(ValidatedTextFieldWidget):
     body_cls = ColorPicker
-
-    def focusInEvent(self, event):
-        self.body.pick_new_color()
 
     def post_commit_cb(self):
         super().post_commit_cb()

@@ -138,5 +138,5 @@ class TypedField(ValidatedTextField):
         return self.parser(super().get_value()) if self.valid else self.original_value
 
 
-class ColorField(Field):
+class ColorField(TypedField):
     ui_cls = ColorFieldWidget
