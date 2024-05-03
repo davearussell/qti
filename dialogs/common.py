@@ -89,6 +89,9 @@ class FieldDialog(DataDialog):
         self._group = FieldGroup(fields, update_cb=self.handle_update)
         super().__init__(parent)
 
+    def init_fields(self, fields):
+        self._group.init_fields(fields)
+
     @property
     def ui_args(self):
         return {

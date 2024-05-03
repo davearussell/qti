@@ -93,15 +93,9 @@ class FieldWidget(QWidget):
 class TextFieldWidget(FieldWidget):
     body_cls = TabCompleteLineEdit
 
-    def __init__(self, completions, **kwargs):
-        self.completions = completions
+    def __init__(self, completions=None, read_only=False, **kwargs):
+        self.body_args = {'completions': completions, 'read_only': read_only}
         super().__init__(**kwargs)
-
-    @property
-    def body_args(self):
-        return {
-            'completions': self.completions,
-        }
 
 
 class SetFieldWidget(TextFieldWidget):

@@ -94,9 +94,14 @@ class Field:
 class TextField(Field):
     ui_cls = TextFieldWidget
 
-    def __init__(self, key, value, completions=None, **kwargs):
-        self.ui_args = {'completions': completions}
+    def __init__(self, key, value, completions=None, read_only=False, **kwargs):
+        self.ui_args = {'completions': completions, 'read_only': read_only}
         super().__init__(key, value, **kwargs)
+
+
+class ReadOnlyField(TextField):
+    def __init__(self, key, value, **kwargs):
+        super().__init__(key, value, read_only=True, **kwargs)
 
 
 class SetField(TextField):

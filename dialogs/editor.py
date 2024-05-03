@@ -1,12 +1,9 @@
 import copy
 import os
-from PySide6.QtCore import Signal
-from fields import TextField, ReadOnlyField, SetField
-from dialog import FieldDialog
+from dialogs.fields import TextField, ReadOnlyField, SetField
+from dialogs.common import FieldDialog
 from tree import FilteredContainer
 from keys import KeyMap
-
-from qt.keys import event_keystroke
 
 
 # Helper class for querying and updating fields on multiple nodes at once.
@@ -108,16 +105,15 @@ def choose_fields(library, nodes):
 class EditorDialog(FieldDialog):
     title = "Editor"
 
-    def __init__(self, app, browser):
-        super().__init__(app)
+    def __init__(self, app):
+        self.app = app
         self.library = app.library
-        self.browser = browser
+        self.browser = app.browser
         self.keybinds = self.app.keybinds
-        self.setup_fields()
+        super().__init__(app.window, self.choose_fields())
 
-    def setup_fields(self):
-        nodes = self.browser.marked_nodes()
-        self.init_fields(choose_fields(self.library, nodes))
+    def choose_fields(self):
+        return choose_fields(self.library, self.browser.marked_nodes())
 
     def new_target_path(self):
         target = self.browser.target
@@ -167,13 +163,12 @@ class EditorDialog(FieldDialog):
     def apply_field_update(self, field, value):
         field.update_nodes(value)
 
-    def keyPressEvent(self, event):
-        keystroke = event_keystroke(event)
+    def keydown_cb(self, keystroke):
         action = self.keybinds.get_action(keystroke)
         if self.keybinds.is_scroll(action):
             self.browser.scroll(action)
             if self.dirty():
                 self.commit()
-            self.setup_fields()
-        else:
-            super().keyPressEvent(event)
+            self.init_fields(self.choose_fields())
+            return True
+        return False

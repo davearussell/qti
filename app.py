@@ -4,7 +4,7 @@ import library
 import browser
 import settings
 from status_bar import StatusBar
-from editor import EditorDialog
+from dialogs.editor import EditorDialog
 from bulk_edit import BulkEditDialog
 from filtering import default_filter_config
 from dialogs.deleter import DeleterDialog
@@ -97,7 +97,7 @@ class Application:
             self.ui.quit()
         elif action == 'edit':
             if self.browser.target:
-                EditorDialog(self, self.browser).exec()
+                EditorDialog(self).run()
         elif action == 'bulk_edit':
             if self.browser.target:
                 BulkEditDialog(self, self.browser.node).exec()

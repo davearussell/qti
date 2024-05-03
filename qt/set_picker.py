@@ -43,11 +43,13 @@ class ValueBox(QLabel):
 class SetPicker(QWidget):
     commit = Signal(list)
 
-    def __init__(self, completions, update_cb, commit_cb):
+    def __init__(self, completions, read_only, update_cb, commit_cb):
         super().__init__()
         self.update_cb = update_cb
         self.commit_cb = commit_cb
         self.boxes = []
+        assert not read_only, "TODO: support read-only SetPicker"
+        self.read_only = read_only
         self.text = TextBox(completions=completions,
                             update_cb=update_cb,
                             commit_cb=self.handle_commit)
