@@ -2,13 +2,14 @@ from qt.grid import GridWidget
 
 
 class Grid:
-    def __init__(self, scroll_cb=None, select_cb=None, unselect_cb=None):
+    def __init__(self, scroll_cb=None, select_cb=None, unselect_cb=None, no_selection=False):
         self.scroll_cb = scroll_cb or (lambda x: None)
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
         self.ui = GridWidget(click_cb=self.handle_click)
         self.target_i = None
         self.mark_i = None
+        self.no_selection = no_selection
         self.action_map = {
             'up': self.scroll,
             'down': self.scroll,
@@ -16,11 +17,14 @@ class Grid:
             'right': self.scroll,
             'top': self.scroll,
             'bottom': self.scroll,
-            'select': self.select_current_target,
-            'unselect': self.unselect,
-            'mark': self.set_mark,
-            'cancel': self.clear_mark,
-        }
+            }
+        if not self.no_selection:
+            self.action_map.update({
+                'select': self.select_current_target,
+                'unselect': self.unselect,
+                'mark': self.set_mark,
+                'cancel': self.clear_mark,
+            })
 
     def set_mark(self, _action=None):
         self.mark_i = self.target_i
@@ -31,7 +35,7 @@ class Grid:
         self.ui.set_mark_i(None)
 
     def handle_click(self, cell_i, is_double):
-        if is_double:
+        if is_double and not self.no_selection:
             self.select_cb(cell_i)
         else:
             self.set_target_index(cell_i, ensure_visible=False)

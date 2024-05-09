@@ -9,7 +9,7 @@ from bulk_edit import BulkEditDialog
 from filtering import default_filter_config
 from dialogs.deleter import DeleterDialog
 from dialogs.filter_config import FilterConfigDialog
-from importer import ImporterDialog
+from dialogs.importer import make_importer
 from dialogs.metadata_editor import MetadataEditorDialog
 from quick_filters import QuickFilterDialog
 from quick_actions import QuickActionDialog
@@ -122,7 +122,7 @@ class Application:
         elif action and action.startswith('quick_action_'):
             self.apply_quick_action(action[len('quick_action_'):])
         elif action == 'add_new_images':
-            ImporterDialog(self, self.browser.node).exec()
+            make_importer(self, self.browser.node).run()
         elif action == 'app_settings':
             AppSettingsDialog(self).run()
         elif action == 'search':

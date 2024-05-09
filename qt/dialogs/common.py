@@ -80,6 +80,7 @@ class DataDialogWidget(DialogWidget):
     def add_action_buttons(self):
         self.error_box = QLabel()
         self.error_box.setProperty("valid", False)
+        self.error_box.setAlignment(Qt.AlignRight)
         self.layout().addWidget(self.error_box)
         super().add_action_buttons()
         self.refresh_buttons()

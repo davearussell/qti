@@ -3,9 +3,10 @@ from qt.dialogs.fields import ValidatedTextFieldWidget, ColorFieldWidget
 
 
 class FieldGroup:
-    def __init__(self, fields, update_cb=None):
+    def __init__(self, fields, update_cb=None, commit_cb=None):
         super().__init__()
         self.update_cb = update_cb
+        self.commit_cb = commit_cb
         self.fields = []
         self.keybinds = {}
         self.ui = FieldGroupWidget(keystroke_cb=self.handle_keystroke)
@@ -21,6 +22,8 @@ class FieldGroup:
 
     def handle_commit(self, field):
         self.ui.focus()
+        if self.commit_cb:
+            self.commit_cb(field)
 
     def handle_update(self, field):
         if self.update_cb:
