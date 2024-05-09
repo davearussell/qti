@@ -4,7 +4,6 @@ from PySide6.QtCore import Signal
 from fields import TextField, ReadOnlyField, SetField
 from dialog import FieldDialog
 from tree import FilteredContainer
-from zoom import ZoomField
 from keys import KeyMap
 
 from qt.keys import event_keystroke
@@ -54,7 +53,7 @@ class EditorSetField(EditorTextField, SetField):
     pass
 
 
-def choose_fields(library, nodes, viewer):
+def choose_fields(library, nodes):
     keymap = KeyMap()
     hierarchy = library.metadata.hierarchy()
 
@@ -103,9 +102,6 @@ def choose_fields(library, nodes, viewer):
             else:
                 fields.append(EditorTextField(library, nodes, key.name, keymap=keymap))
 
-    if viewer:
-        assert len(nodes) == 1
-        fields.append(ZoomField(viewer, first_node))
     return fields
 
 
@@ -121,7 +117,7 @@ class EditorDialog(FieldDialog):
 
     def setup_fields(self):
         nodes = self.browser.marked_nodes()
-        self.init_fields(choose_fields(self.library, nodes, self.app.viewer))
+        self.init_fields(choose_fields(self.library, nodes))
 
     def new_target_path(self):
         target = self.browser.target

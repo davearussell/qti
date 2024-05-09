@@ -29,8 +29,6 @@ BUILTIN_KEYS = [
     {'name': 'name', 'required': True},
     {'name': 'path', 'required': True},
     {'name': 'resolution', 'required': True, '_type': list},
-    {'name': 'zoom', 'required': False, 'default': None, '_type': int},
-    {'name': 'pan', 'required': False, 'default': None, '_type': list},
 ]
 
 class Metadata:
