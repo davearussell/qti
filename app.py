@@ -16,6 +16,7 @@ from app_settings import AppSettingsDialog
 from key_config import KeybindDialog
 from background import BackgroundCacher
 from search import SearchDialog
+import cache
 import keys
 import template
 from qt.datastore import Datastore
@@ -70,6 +71,7 @@ class Application:
         self.settings = settings.Settings(self.store)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
+        cache.set_root_dir(self.library.root_dir)
         for qf in self.library.quick_filters:
             self.keybinds.add_action('quick_filter_' + qf)
         for qf in self.library.quick_actions:

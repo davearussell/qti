@@ -1,7 +1,7 @@
 import os
 import random
 
-from image import copy_and_scale, load_image
+from cache import load_scaled
 
 
 class TreeError(Exception): pass
@@ -124,7 +124,6 @@ class Image(Node):
         self.spec = spec
         self.root_dir = root_dir
         self.abspath = os.path.join(root_dir, spec['path'])
-        self._cache_tmpl = os.path.join(root_dir, '.cache', '%dx%d', spec['path'])
         self.base_node = self
         self.key = self.abspath
 
@@ -140,14 +139,8 @@ class Image(Node):
         keys = self.root.metadata.multi_value_keys()
         return {value for key in keys for value in self.spec[key]}
 
-    def cache_path(self, size):
-        return self._cache_tmpl % tuple(size)
-
     def load_pixmap(self, size):
-        scaled_path = self.cache_path(size)
-        if not os.path.exists(scaled_path):
-            copy_and_scale(self.abspath, scaled_path, size)
-        return load_image(scaled_path)
+        return load_scaled(self.abspath, size)
 
     def delete_file(self):
         if os.path.exists(self.abspath):

@@ -2,7 +2,7 @@ import multiprocessing
 import multiprocessing.connection
 import os
 
-from image import copy_and_scale
+from cache import cache_path, ensure_cached
 from qt.timer import Timer
 
 
@@ -40,9 +40,7 @@ class Worker:
     # Remaining methods run in the child process
 
     def run_job(self, job):
-        image_path, cache_path, size = job
-        if not os.path.exists(cache_path):
-            copy_and_scale(image_path, cache_path, size)
+        ensure_cached(*job)
 
     def main_loop(self, pipe):
         jobs = []
@@ -97,13 +95,13 @@ class BackgroundCacher:
         for image in self.app.library.images():
             image_path = image.abspath
             for size in sizes:
-                cache_path = image.cache_path(size)
-                if os.path.exists(cache_path):
+                cached_path = cache_path(image_path, size)
+                if os.path.exists(cached_path):
                     skipped += 1
                     continue
-                if not os.path.isdir(os.path.dirname(cache_path)):
-                    os.makedirs(os.path.dirname(cache_path))
-                jobs.append((image_path, cache_path, size))
+                if not os.path.isdir(os.path.dirname(cached_path)):
+                    os.makedirs(os.path.dirname(cached_path))
+                jobs.append((image_path, size))
         self.assign_jobs(jobs, skipped)
 
     def poll(self):
