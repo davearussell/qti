@@ -276,7 +276,7 @@ class Application(QApplication):
 
     def select_target_by_path(self, tree, target_path):
         if not tree.children: # tree is empty
-            return Tree, None, None
+            return tree, None, None
 
         target = tree
 
