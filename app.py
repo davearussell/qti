@@ -126,7 +126,8 @@ class Application:
         elif action == 'app_settings':
             AppSettingsDialog(self).run()
         elif action == 'search':
-            SearchDialog(self).exec()
+            if self.browser.mode == 'grid':
+                SearchDialog(self).exec()
 
     @property
     def viewer(self):

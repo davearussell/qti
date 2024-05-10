@@ -2,9 +2,8 @@ from qt.grid import GridWidget
 
 
 class Cell:
-    def __init__(self, ui, label=None):
+    def __init__(self, ui):
         self.ui = ui
-        self.label = label
 
 
 class Grid:
@@ -62,9 +61,6 @@ class Grid:
         self.cells = cells
         self.ui.load([cell.ui for cell in cells])
         self.set_target(target)
-
-    def cell_labels(self):
-        return [cell.label for cell in self.cells]
 
     def set_target(self, cell, ensure_visible=True):
         self.target_i = None if cell is None else self.cells.index(cell)

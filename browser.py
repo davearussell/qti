@@ -13,7 +13,7 @@ class NodeCell(Cell):
         image = next(node.images()) if count else node
         label = node.name if count else None
         renderer = NodeRenderer(settings, image, label, count)
-        super().__init__(renderer, label)
+        super().__init__(renderer)
 
 
 class Browser:
@@ -66,6 +66,9 @@ class Browser:
         else:
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
+
+    def node_labels(self):
+        return [child.name for child in self.node.children]
 
     def reload_node(self):
         if self.node:

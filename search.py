@@ -23,7 +23,7 @@ class SearchDialog(TextBoxDialog):
         self.edit.find_next.connect(self.find_next)
         self.edit.textChanged.connect(self.search_text_changed)
         self.grid = app.browser.grid
-        self.cells = self.grid.cell_labels()
+        self.cells = app.browser.node_labels()
         self.match_i = None
         self.matches = []
 
