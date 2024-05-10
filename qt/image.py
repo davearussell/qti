@@ -27,3 +27,9 @@ def crop_and_pan(image, size, x, y, background_color='black'):
     p.drawPixmap(x, y, image)
     p.end()
     return viewport
+
+
+def center_image(image, size, **kwargs):
+    w, h = size
+    iw, ih = image.size().toTuple()
+    return crop_and_pan(image, size, (w - iw) // 2, (h - ih) // 2, **kwargs)

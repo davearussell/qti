@@ -10,7 +10,7 @@ from PIL import Image
 import template
 from keys import KeyMap
 from dialog import YesNoDialog, InfoDialog, DataDialog, AbortCommit
-from grid import Grid, Cell
+from grid import Grid
 from fields import FieldGroup, TextField,  ReadOnlyField
 
 from qt.keys import event_keystroke
@@ -31,7 +31,7 @@ def find_new_images(tree):
     return sorted(image for image in find_all_images(tree.root_dir) if image not in existing_images)
 
 
-class NewImage(Cell):
+class NewImage:
     type = 'image'
 
     def __init__(self, settings, library, image_path, spec, size):

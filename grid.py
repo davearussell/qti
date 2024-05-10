@@ -1,11 +1,6 @@
 from qt.grid import GridWidget
 
 
-class Cell:
-    def __init__(self, ui):
-        self.ui = ui
-
-
 class Grid:
     def __init__(self, scroll_cb=None, select_cb=None, unselect_cb=None):
         self.scroll_cb = scroll_cb or (lambda x: None)
@@ -51,10 +46,10 @@ class Grid:
         lo, hi = sorted([mark, self.target_i])
         return range(lo, hi + 1)
 
-    def load(self, cells, target_i=None):
-        if cells and target_i is None:
+    def load(self, renderers, target_i=None):
+        if renderers and target_i is None:
             target_i = 0
-        self.ui.load([cell.ui for cell in cells])
+        self.ui.load(renderers)
         self.set_target_index(target_i)
 
     def set_target_index(self, target_i, ensure_visible=True):

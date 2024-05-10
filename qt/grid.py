@@ -1,53 +1,23 @@
 from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
-from PySide6.QtCore import Qt, Signal, QRect, QEvent, QSize
-from PySide6.QtGui import QPainter, QPen, QPixmap, QPalette, QColor
-
-from cache import load_scaled
-
-
-class CellRenderer:
-    def __init__(self, size):
-        self.size = size
-        self.width, self.height = size
-        self._pixmap = None
-
-    def render(self):
-        return QPixmap(self.width, self.height)
-
-    @property
-    def pixmap(self):
-        if self._pixmap is None:
-            self._pixmap = self.render()
-        return self._pixmap
-
-
-class ScaledRenderer(CellRenderer):
-
-    def __init__(self, image_path, size, background_color):
-        super().__init__(size)
-        self.image_path = image_path
-        self.background_color = background_color
-
-    def render(self):
-        pixmap = super().render()
-        image = load_scaled(self.image_path, self.size)
-        iw, ih = image.size().toTuple()
-        p = QPainter(pixmap)
-        p.fillRect(0, 0, self.width, self.height, self.background_color)
-        p.drawPixmap((self.width - iw) // 2, (self.height - ih) // 2, image)
-        return pixmap
+from PySide6.QtCore import Qt, Signal, QRect, QSize
+from PySide6.QtGui import QPainter, QPen, QPalette
 
 
 class _Cell:
     def __init__(self, renderer):
         self.renderer = renderer
-        self.pixmap = None
+        self._pixmap = None
         self.row = None
         self.col = None
         self.index = None
         self.border_rect = None
         self.pixmap_rect = None
         self.spacing_rect = None
+
+    def pixmap(self):
+        if self._pixmap is None:
+            self._pixmap = self.renderer()
+        return self._pixmap
 
 
 class GridBody(QWidget):
@@ -104,8 +74,9 @@ class GridBody(QWidget):
         self.mark_i = None
         self.pos_updated.emit(0)
         if self.cells:
-            self.cell_width = renderers[0].width
-            self.cell_height = renderers[0].height
+            pixmap = self.cells[0].pixmap() # NOTE: we require all cells to be the same size
+            self.cell_width = pixmap.width()
+            self.cell_height = pixmap.height()
             self.row_height = self.cell_height + 2 * self.border_width + self.spacing
             self.col_width = self.cell_width + 2 * self.border_width + self.spacing
             self.setMinimumSize(QSize(self.col_width, self.row_height))
@@ -177,7 +148,7 @@ class GridBody(QWidget):
         mark_lo, mark_hi = self.marked_range()
         for i, cell in enumerate(self.cells):
             if cell.border_rect.intersects(self.viewport):
-                pixmap = cell.renderer.pixmap
+                pixmap = cell.pixmap()
                 painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), pixmap)
                 if mark_lo <= i <= mark_hi:
                     tmp = (self.selected if i == self.target_i else self.marked)
@@ -207,8 +178,8 @@ class GridWidget(QFrame):
         self.layout().addWidget(self.body)
         self.layout().addWidget(self.scroll_bar)
 
-    def load(self, cells):
-        self.body.load(cells)
+    def load(self, renderers):
+        self.body.load(renderers)
         self.scroll_bar.setSingleStep(self.body.row_height)
 
     def set_target_i(self, i, ensure_visible=True):

@@ -1,19 +1,10 @@
-from grid import Grid, Cell
+from functools import partial
+from grid import Grid
 from viewer import Viewer
 from pathbar import Pathbar
 from tree import TreeError
 
-from qt.browser import BrowserWidget, NodeRenderer
-
-
-class NodeCell(Cell):
-    def __init__(self, node, settings):
-        self.node = node
-        count = len(node.children)
-        image = next(node.images()) if count else node
-        label = node.name if count else None
-        renderer = NodeRenderer(settings, image, label, count)
-        super().__init__(renderer)
+from qt.browser import BrowserWidget, make_grid_cell
 
 
 class Browser:
@@ -58,9 +49,15 @@ class Browser:
         self.set_mode(mode)
         if self.mode == 'grid':
             self.pathbar.fade_target = True
-            thumbs = [NodeCell(child, self.app.settings) for child in self.node.children]
+            renderers = [partial(make_grid_cell,
+                                 image_path=next(child.images()).abspath,
+                                 size=self.app.settings.thumbnail_size,
+                                 count=len(child.children),
+                                 label=child.name if child.children else None,
+                                 settings=self.app.settings)
+                         for child in self.node.children]
             target_i = self.node.children.index(self.target) if self.target else None
-            self.grid.load(thumbs, target_i=target_i)
+            self.grid.load(renderers, target_i=target_i)
         else:
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)

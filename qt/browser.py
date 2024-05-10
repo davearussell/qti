@@ -2,44 +2,41 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
 from PySide6.QtGui import QPainter, QFont, QColor
 from PySide6.QtCore import Qt
 
+from cache import load_scaled
+
+from .image import center_image
 from .keys import event_keystroke
-from .grid import ScaledRenderer
 
 
-class NodeRenderer(ScaledRenderer):
-    def __init__(self, settings, image, label, count):
-        super().__init__(image.abspath, settings.thumbnail_size, settings.background_color)
-        self.settings = settings
-        self.label = label
-        self.count = count
+def make_grid_cell(image_path, size, settings, label=None, count=None):
+    image = load_scaled(image_path, size)
+    pixmap = center_image(image, size, background_color=settings.background_color)
 
-    def render(self):
-        pixmap = super().render()
-        p = QPainter(pixmap)
-        p.setPen(self.settings.get('text_color'))
+    p = QPainter(pixmap)
+    p.setPen(settings.text_color)
 
-        if self.label:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
-            r = p.fontMetrics().tightBoundingRect(self.label)
-            r.adjust(0, 0, 10, 10)
-            r.moveTop(0)
-            r.moveLeft(pixmap.width() / 2 - r.width() / 2)
-            p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, self.label)
+    if label:
+        p.setFont(QFont(settings.font, settings.thumbnail_name_font_size))
+        r = p.fontMetrics().tightBoundingRect(label)
+        r.adjust(0, 0, 10, 10)
+        r.moveTop(0)
+        r.moveLeft(pixmap.width() / 2 - r.width() / 2)
+        p.fillRect(r, QColor(0, 0, 0, 128))
+        p.drawText(r, Qt.AlignCenter, label)
 
-        if self.count:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
-            r = p.fontMetrics().tightBoundingRect(str(self.count))
-            # If we render using the rect returned by tightBoundingRect, it cuts off the
-            # top of the text and leaves empty space at the bottom. Account for this by
-            # increasing rect size and moving its bottom outside the bounds of the pixmap
-            r.adjust(0, 0, 10, 12)
-            r.moveBottom(self.height + 7)
-            r.moveRight(self.width)
-            p.fillRect(r, QColor(0, 0, 0, 128))
-            p.drawText(r, Qt.AlignCenter, str(self.count))
+    if count:
+        p.setFont(QFont(settings.font, settings.thumbnail_count_font_size))
+        r = p.fontMetrics().tightBoundingRect(str(count))
+        # If we render using the rect returned by tightBoundingRect, it cuts off the
+        # top of the text and leaves empty space at the bottom. Account for this by
+        # increasing rect size and moving its bottom outside the bounds of the pixmap
+        r.adjust(0, 0, 10, 12)
+        r.moveBottom(pixmap.height() + 7)
+        r.moveRight(pixmap.width())
+        p.fillRect(r, QColor(0, 0, 0, 128))
+        p.drawText(r, Qt.AlignCenter, str(count))
 
-        return pixmap
+    return pixmap
 
 
 class BrowserWidget(QWidget):
