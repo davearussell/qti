@@ -12,7 +12,6 @@ class Grid:
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
         self.ui = GridWidget(click_cb=self.handle_click)
-        self.cells = []
         self.target_i = None
         self.mark_i = None
         self.action_map = {
@@ -37,52 +36,45 @@ class Grid:
         self.ui.set_mark_i(None)
 
     def handle_click(self, cell_i, is_double):
-        cell = self.cells[cell_i]
         if is_double:
-            self.select_target(cell)
+            self.select_cb(cell_i)
         else:
-            self.set_target(cell, ensure_visible=False)
-
-    @property
-    def target(self):
-        return self.cells[self.target_i]
+            self.set_target_index(cell_i, ensure_visible=False)
 
     def target_index(self):
         return self.target_i
 
-    def marked_cells(self):
+    def marked_range(self):
         mark = self.mark_i if self.mark_i is not None else self.target_i
         if mark is None:
             return []
         lo, hi = sorted([mark, self.target_i])
-        return self.cells[lo : hi + 1]
+        return range(lo, hi + 1)
 
-    def load(self, cells, target):
-        self.cells = cells
+    def load(self, cells, target_i=None):
+        if cells and target_i is None:
+            target_i = 0
         self.ui.load([cell.ui for cell in cells])
-        self.set_target(target)
+        self.set_target_index(target_i)
 
-    def set_target(self, cell, ensure_visible=True):
-        self.target_i = None if cell is None else self.cells.index(cell)
+    def set_target_index(self, target_i, ensure_visible=True):
+        self.target_i = target_i
         self.ui.set_target_i(self.target_i, ensure_visible=ensure_visible)
-        self.scroll_cb(cell)
-
-    def set_target_index(self, index):
-        self.set_target(self.cells[index])
+        self.scroll_cb(self.target_i)
 
     def unselect(self, _action=None):
         self.unselect_cb()
 
-    def select_target(self, cell):
-        self.select_cb(cell)
-
     def select_current_target(self, _action=None):
-        if self.target:
-            self.select_target(self.target)
+        if self.target_i is not None:
+            self.select_cb(self.target_i)
+
+    def neighbour(self, direction):
+        return self.ui.neighbour(self.target_i, direction)
 
     def scroll(self, direction):
-        if self.target:
-            self.set_target_index(self.ui.neighbour(self.target_i, direction))
+        if self.target_i is not None:
+            self.set_target_index(self.neighbour(direction))
 
     def handle_action(self, action):
         if action in self.action_map:

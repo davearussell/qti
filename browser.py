@@ -29,7 +29,7 @@ class Browser:
 
     def setup_widgets(self):
         self.grid = Grid(scroll_cb=self._target_updated,
-                         select_cb=self.select,
+                         select_cb=self._select,
                          unselect_cb=self.unselect)
         self.viewer = Viewer(self.app,
                              scroll_cb=self._target_updated,
@@ -41,11 +41,9 @@ class Browser:
                                 pathbar=self.pathbar.ui,
                                 keydown_cb=self.handle_keydown)
 
-    def _target_updated(self, target):
-        if isinstance(target, NodeCell):
-            target = target.node
-        self.pathbar.set_target(target)
-        self.target = target
+    def _target_updated(self, target_i):
+        self.target = None if target_i is None else self.node.children[target_i]
+        self.pathbar.set_target(self.target)
 
     def set_mode(self, mode):
         if mode is None:
@@ -61,8 +59,8 @@ class Browser:
         if self.mode == 'grid':
             self.pathbar.fade_target = True
             thumbs = [NodeCell(child, self.app.settings) for child in self.node.children]
-            tthumb = thumbs[self.node.children.index(self.target)] if self.target else None
-            self.grid.load(thumbs, target=tthumb)
+            target_i = self.node.children.index(self.target) if self.target else None
+            self.grid.load(thumbs, target_i=target_i)
         else:
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
@@ -74,9 +72,8 @@ class Browser:
         if self.node:
             self.load_node(self.node, self.target, self.mode)
 
-    def select(self, widget):
-        assert isinstance(widget, NodeCell), widget
-        target = widget.node
+    def _select(self, target_i):
+        target = self.node.children[target_i]
         if target.children:
             self.load_node(target, mode='grid')
         else:
@@ -109,7 +106,7 @@ class Browser:
             i = (self.target.index + (1 if direction == 'right' else -1)) % len(cells)
             other = cells[i]
         elif self.mode == 'grid':
-            other = self.grid.neighbour(self.grid.target, direction).node
+            other = cells[self.grid.neighbour(direction)]
         else:
             return # Cannot swap verticaly when in viewer mode
 
@@ -121,7 +118,7 @@ class Browser:
 
     def marked_nodes(self):
         if self.mode == 'grid':
-            return [cell.node for cell in self.grid.marked_cells()]
+            return [self.node.children[i] for i in self.grid.marked_range()]
         return [self.target]
 
     def handle_keydown(self, keystroke):

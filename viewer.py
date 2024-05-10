@@ -40,15 +40,16 @@ class Viewer:
             self.redraw_image()
         else:
             self.ui.load(self.base_pixmap)
-        self.scroll_cb(target)
+        self.scroll_cb(node.children.index(target))
 
     def scroll(self, action):
         images = self.node.children
         index = images.index(self.target)
         offset = {'right': 1, 'left': -1, 'top': -index, 'bottom': -index - 1}[action]
-        target = images[(index + offset) % (len(images))]
+        new_index = (index + offset) % (len(images))
+        target = images[new_index]
         self.load(self.node, target)
-        self.scroll_cb(target)
+        self.scroll_cb(new_index)
 
     def close(self, _action=None):
         self.close_cb(self.target)
