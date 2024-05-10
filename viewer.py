@@ -87,7 +87,7 @@ class Viewer:
 
     def redraw_image(self):
         viewport = crop_and_pan(self.raw_pixmap, (self.view_width, self.view_height),
-                                -self.xoff, -self.yoff)
+                                -self.xoff, -self.yoff, self.app.settings.background_color)
         self.ui.load(scale_image(viewport, self.ui.size))
 
     def zoom_factor(self):
