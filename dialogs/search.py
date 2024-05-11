@@ -1,27 +1,15 @@
-import copy
-import os
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QLineEdit
-from dialog import TextBoxDialog
+from qt.dialogs.search import SearchDialogWidget
+from .common import Dialog
 
 
-class SearchEdit(QLineEdit):
-    find_next = Signal()
-
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self.find_next.emit()
-        else:
-            super().keyPressEvent(event)
-
-
-class SearchDialog(TextBoxDialog):
-    text_box_cls = SearchEdit
+class SearchDialog(Dialog):
+    title = "Search"
+    actions = {'accept': ''}
+    ui_cls = SearchDialogWidget
 
     def __init__(self, app):
-        super().__init__(app.window, 'Search', '')
-        self.edit.find_next.connect(self.find_next)
-        self.edit.textChanged.connect(self.search_text_changed)
+        self.ui_args  = {'update_cb': self.search_text_changed, 'commit_cb': self.find_next}
+        super().__init__(app.window)
         self.grid = app.browser.grid
         self.cells = app.browser.node_labels()
         self.match_i = None
@@ -31,12 +19,12 @@ class SearchDialog(TextBoxDialog):
         if self.matches:
             grid_i = self.matches[self.match_i]
             self.grid.set_target_index(grid_i)
-            search_text = self.edit.text()
+            search_text = self.ui.get_value()
             match_text = self.cells[grid_i].replace(search_text, '<u>%s</u>' % search_text)
-            self.label.setText('Match %d / %d: %s' % (self.match_i + 1, len(self.matches),
-                                                      match_text))
+            self.ui.set_label('Match %d / %d: %s' % (self.match_i + 1, len(self.matches),
+                                                     match_text))
         else:
-            self.label.setText('No matches')
+            self.ui.set_label('No matches')
 
     def find_next(self):
         if self.matches:

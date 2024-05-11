@@ -16,7 +16,7 @@ from quick_actions import QuickActionDialog
 from dialogs.app_settings import AppSettingsDialog
 from dialogs.key_config import KeybindDialog
 from background import BackgroundCacher
-from search import SearchDialog
+from dialogs.search import SearchDialog
 import cache
 import keys
 import template
@@ -127,7 +127,7 @@ class Application:
             AppSettingsDialog(self).run()
         elif action == 'search':
             if self.browser.mode == 'grid':
-                SearchDialog(self).exec()
+                SearchDialog(self).run()
 
     @property
     def viewer(self):
