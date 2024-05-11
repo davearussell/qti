@@ -21,10 +21,22 @@ class Model(QAbstractTableModel):
         self.header_font = font
         self.header_font.setBold(True)
 
+    def template_spec(self, node):
+        spec = {
+            'i': node.index,
+            'name': node.name,
+        }
+        if node.type == 'image':
+            spec['dir'] = os.path.basename(os.path.dirname(node.abspath))
+            spec['file'] = os.path.splitext(os.path.basename(node.abspath))[0]
+        for key in self.library.metadata.keys:
+            spec[key.name] = node.get_key(key.name)
+        return spec
+
     def set_value(self, key, value):
         col = self.keys.index(key)
         for row, node in zip(self.table, self.parent_node.children):
-            row[col] = template.evaluate(node, value, self.library.metadata)
+            row[col] = template.apply(self.template_spec(node), value)
         self.dirty = True
         self.dataChanged.emit(self.createIndex(0, col),
                               self.createIndex(len(self.table) - 1, col))

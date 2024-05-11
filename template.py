@@ -54,37 +54,21 @@ def uncamel(word):
     return new_word
 
 
-def evaluate(node, template_string, metadata):
-    filters = {
-        'title': f_title,
-        'lstrip': f_lstrip,
-        'rstrip': f_rstrip,
-        'strip_words': f_strip_words,
-        'strip_from': f_strip_from,
-        'strip_digits': f_strip_digits,
-        'dirat': f_dirat,
-        'uncamel': uncamel,
-    }
-
-    spec = {
-        'i': node.index,
-        'name': node.name,
-    }
-    if node.type == 'image':
-        spec.update({
-            'dir': os.path.basename(os.path.dirname(node.abspath)),
-            'file': os.path.splitext(os.path.basename(node.abspath))[0],
-        })
-
-    for key in metadata.keys:
-        if not key.builtin:
-            spec[key.name] = node.get_key(key.name)
-
-    return apply(spec, template_string, filters)
+IMAGE_FILTERS = {
+    'title': f_title,
+    'lstrip': f_lstrip,
+    'rstrip': f_rstrip,
+    'strip_words': f_strip_words,
+    'strip_from': f_strip_from,
+    'strip_digits': f_strip_digits,
+    'dirat': f_dirat,
+    'uncamel': uncamel,
+}
 
 
 def apply(spec, template_string, filters=None):
     env = jinja2.Environment()
+    env.filters.update(IMAGE_FILTERS)
     if filters:
         env.filters.update(filters)
     try:
