@@ -157,6 +157,11 @@ class TypedField(ValidatedTextField):
     def get_value(self):
         return self.parser(super().get_value()) if self.valid else self.original_value
 
+    def handle_commit(self):
+        if self.valid:
+            self.set_value(self.get_value())
+        super().handle_commit()
+
 
 class ColorField(TypedField):
     ui_cls = ColorFieldWidget
