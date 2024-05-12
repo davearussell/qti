@@ -19,6 +19,7 @@ class Dialog:
             'apply': self.apply,
         }
         self.ui = self.make_ui()
+        self.accepted = False
 
     @property
     def common_ui_args(self):
@@ -41,8 +42,10 @@ class Dialog:
 
     def run(self):
         self.ui.run()
+        return self.accepted
 
     def accept(self):
+        self.accepted = True
         self.ui.accept(from_app=True)
 
     def cancel(self):

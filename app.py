@@ -11,7 +11,7 @@ from dialogs.deleter import DeleterDialog
 from dialogs.filter_config import FilterConfigDialog
 from dialogs.importer import make_importer
 from dialogs.metadata_editor import MetadataEditorDialog
-from quick_filters import QuickFilterDialog
+from dialogs.quick_filters import QuickFilterDialog
 from quick_actions import QuickActionDialog
 from dialogs.app_settings import AppSettingsDialog
 from dialogs.key_config import KeybindDialog
@@ -108,7 +108,7 @@ class Application:
         elif action == 'edit_metadata':
             MetadataEditorDialog(self).run()
         elif action == 'edit_quick_filters':
-            QuickFilterDialog(self).exec()
+            QuickFilterDialog(self).run()
         elif action == 'edit_quick_actions':
             QuickActionDialog(self).exec()
         elif action == 'edit_keybinds':
