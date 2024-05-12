@@ -5,7 +5,7 @@ class BadExpr(Exception):
     pass
 
 grammar = """
-?start: expr
+?start: expr | -> do_empty
 ?expr: prefix_expr | infix_expr
 
 PREFIX_OP: "!"
@@ -64,10 +64,22 @@ class Prefix:
         return self.op(self.value.matches(tags))
 
 
+class Empty:
+    def __init__(self, arg):
+        assert not arg
+
+    def __str__(self):
+        return ''
+
+    def matches(self, tags):
+        return True
+
+
 class Tree(lark.Transformer):
     do_tag = Tag
     do_infix = Infix
     do_prefix = Prefix
+    do_empty = Empty
 
 
 parser = lark.Lark(grammar, parser='lalr', transformer=Tree())
