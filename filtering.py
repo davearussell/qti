@@ -8,7 +8,7 @@ class FilterConfig:
         'order_by': [],
         'include_tags': [],
         'exclude_tags': [],
-        'custom_expr': '',
+        'custom_expr': expr.Empty(),
     }
 
     def __init__(self, **kwargs):

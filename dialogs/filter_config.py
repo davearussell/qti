@@ -1,15 +1,7 @@
 import expr
 from dialogs.common import FieldDialog
-from dialogs.fields import SetField, ValidatedTextField
+from dialogs.fields import SetField, TypedField
 from tree import SORT_TYPES
-
-
-def is_valid_expr(value):
-    try:
-        expr.parse_expr(value)
-        return True
-    except:
-        return False
 
 
 class FilterConfigDialog(FieldDialog):
@@ -34,7 +26,7 @@ class FilterConfigDialog(FieldDialog):
             SetField("order_by", config.order_by, SORT_TYPES.keys(), keybind='o'),
             SetField('include_tags', config.include_tags, all_tags, keybind='i'),
             SetField('exclude_tags', config.exclude_tags, all_tags, keybind='x'),
-            ValidatedTextField('custom_expr', config.custom_expr, is_valid_expr, keybind='u'),
+            TypedField('custom_expr', config.custom_expr, expr.parse_expr, keybind='u'),
         ]
 
     def commit(self):

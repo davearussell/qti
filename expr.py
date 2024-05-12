@@ -65,8 +65,11 @@ class Prefix:
 
 
 class Empty:
-    def __init__(self, arg):
+    def __init__(self, arg=None):
         assert not arg
+
+    def __len__(self):
+        return 0
 
     def __str__(self):
         return ''

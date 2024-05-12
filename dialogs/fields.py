@@ -141,8 +141,8 @@ class ValidatedTextField(Field):
 
 
 class TypedField(ValidatedTextField):
-    def __init__(self, key, value, **kwargs):
-        self.parser = type(value)
+    def __init__(self, key, value, parser=None, **kwargs):
+        self.parser = type(value) if parser is None else parser
         def validator(_value):
             try:
                 self.parser(_value)
