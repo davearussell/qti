@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 
 from dialog import DataDialog, FieldDialog
 from fields import TextField, SetField
-from keys import KeyMap
 
 
 class FilterEditor(FieldDialog):
@@ -18,13 +17,12 @@ class FilterEditor(FieldDialog):
         self.qf = qf
         self.other_names = [name for name, other_qf in filters.items() if other_qf != qf]
         self.filters = filters
-        km = KeyMap()
-        self.name_field = TextField("name", self.qf['name'], keymap=km)
+        self.name_field = TextField("name", self.qf['name'])
         self.init_fields([
             self.name_field,
-            SetField("group", self.qf['group'], keymap=km),
-            SetField("order", self.qf['order'], keymap=km),
-            TextField("expr", self.qf['expr'], keymap=km),
+            SetField("group", self.qf['group']),
+            SetField("order", self.qf['order']),
+            TextField("expr", self.qf['expr']),
         ])
         self.data_updated()
 

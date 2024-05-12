@@ -4,7 +4,6 @@ from functools import partial
 from PIL import Image
 
 import template
-from keys import KeyMap
 from grid import Grid
 
 from .simple import InfoDialog
@@ -79,14 +78,13 @@ class ImporterDialog(DataDialog):
         }
 
     def setup_fields(self):
-        km = KeyMap()
         fields = [
             ReadOnlyField('directory', ''),
             ReadOnlyField('filename', ''),
             ReadOnlyField('resolution', ''),
-            TextField('name', '', keymap=km),
+            TextField('name', ''),
         ]
-        fields += [TextField(key, self.default_values.get(key, ''), keymap=km)
+        fields += [TextField(key, self.default_values.get(key, ''))
                   for key in self.library.metadata.hierarchy()]
         field_group = FieldGroup(fields, commit_cb=self.field_updated)
         return field_group

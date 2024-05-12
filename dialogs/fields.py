@@ -2,17 +2,30 @@ from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget, Se
 from qt.dialogs.fields import ValidatedTextFieldWidget, ColorFieldWidget
 
 
+def assign_keybind(keys, word):
+    for char in word.lower():
+        if char not in keys:
+            keys.add(char)
+            return char
+
+
 class FieldGroup:
-    def __init__(self, fields, update_cb=None, commit_cb=None):
+    def __init__(self, fields, update_cb=None, commit_cb=None, auto_keybinds=True):
         super().__init__()
         self.update_cb = update_cb
         self.commit_cb = commit_cb
+        self.auto_keybinds = auto_keybinds
         self.fields = []
         self.keybinds = {}
         self.ui = FieldGroupWidget(keystroke_cb=self.handle_keystroke)
         self.init_fields(fields)
 
     def init_fields(self, fields):
+        if self.auto_keybinds:
+            keys = set()
+            for field in fields:
+                if not field.read_only:
+                    field.set_keybind(assign_keybind(keys, field.key))
         self.ui.set_fields([field.ui for field in fields])
         self.fields = fields
         self.keybinds = {field.keybind: field for field in self.fields if field.keybind}
@@ -40,20 +53,21 @@ class FieldGroup:
 class Field:
     ui_cls = FieldWidget
     ui_args = {}
+    read_only = False
 
-    def __init__(self, key, value, keybind=None, keymap=None, commit_cb=None, update_cb=None):
+    def __init__(self, key, value, keybind=None, commit_cb=None, update_cb=None):
         self.key = key
         self.original_value = value
         self.valid = True
         self.commit_cb = commit_cb
         self.update_cb = update_cb
-        if keymap:
-            assert keybind is None, (keybind, keymap)
-            self.keybind = keymap.assign_keybind(self.key)
-        else:
-            self.keybind = keybind.lower() if keybind else None
         self.ui = self.make_ui()
+        self.set_keybind(keybind.lower() if keybind else None)
         self.set_value(self.original_value)
+
+    def set_keybind(self, keybind):
+        self.keybind = keybind
+        self.ui.set_keybind(keybind)
 
     def focus(self):
         self.ui.focus()
@@ -68,7 +82,6 @@ class Field:
     def common_ui_args(self):
         return {
             'key': self.key,
-            'keybind': self.keybind,
             'update_cb': self.handle_update,
             'commit_cb': self.handle_commit,
         }
@@ -97,14 +110,13 @@ class Field:
 class TextField(Field):
     ui_cls = TextFieldWidget
 
-    def __init__(self, key, value, completions=None, read_only=False, **kwargs):
-        self.ui_args = {'completions': completions, 'read_only': read_only}
+    def __init__(self, key, value, completions=None, **kwargs):
+        self.ui_args = {'completions': completions, 'read_only': self.read_only}
         super().__init__(key, value, **kwargs)
 
 
 class ReadOnlyField(TextField):
-    def __init__(self, key, value, **kwargs):
-        super().__init__(key, value, read_only=True, **kwargs)
+    read_only = True
 
 
 class SetField(TextField):

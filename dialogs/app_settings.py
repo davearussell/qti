@@ -1,6 +1,5 @@
 from .common import FieldDialog
 from .fields import TypedField, ColorField
-from keys import KeyMap
 from settings import Color, Size
 
 FIELD_TYPES = {
@@ -17,8 +16,7 @@ class AppSettingsDialog(FieldDialog):
 
     def __init__(self, app):
         self.app = app
-        keymap = KeyMap()
-        fields = [FIELD_TYPES[type(value)](key, value, keymap=keymap)
+        fields = [FIELD_TYPES[type(value)](key, value)
                   for key, value in self.app.settings.to_dict().items()]
         super().__init__(app.window, fields)
 

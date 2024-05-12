@@ -85,8 +85,8 @@ class DataDialog(Dialog):
 class FieldDialog(DataDialog):
     ui_cls = FieldDialogWidget
 
-    def __init__(self, parent, fields):
-        self._group = FieldGroup(fields, update_cb=self.handle_update)
+    def __init__(self, parent, fields, auto_keybinds=True):
+        self._group = FieldGroup(fields, update_cb=self.handle_update, auto_keybinds=auto_keybinds)
         super().__init__(parent)
 
     def init_fields(self, fields):

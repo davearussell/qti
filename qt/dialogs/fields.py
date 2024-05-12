@@ -38,13 +38,13 @@ class FieldWidget(QWidget):
     body_cls = None
     body_args = {}
 
-    def __init__(self, key, keybind, update_cb, commit_cb):
+    def __init__(self, key, update_cb, commit_cb):
         super().__init__()
         self.key = key
-        self.keybind = keybind
         self.update_cb = update_cb
         self.commit_cb = commit_cb
-        self.label = self.make_label()
+        self.label = QLabel()
+        self.set_keybind(None)
         self.body = self.make_body()
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -52,20 +52,19 @@ class FieldWidget(QWidget):
         layout.addWidget(self.body)
         layout.setContentsMargins(0, 0, 0, 0)
 
+    def set_keybind(self, keybind):
+        self.keybind = keybind
+        text = self.key.replace('_', ' ').title()
+        if self.keybind:
+            idx = text.lower().find(self.keybind)
+            text = text[:idx] + '<u>%s</u>' % text[idx] + text[idx+1:]
+        self.label.setText(text)
+
     def focus(self):
         self.setFocus()
 
     def focusInEvent(self, event):
         self.body.setFocus()
-
-    def make_label(self):
-        label = QLabel()
-        text = self.key.replace('_', ' ').title()
-        if self.keybind:
-            idx = text.lower().find(self.keybind)
-            text = text[:idx] + '<u>%s</u>' % text[idx] + text[idx+1:]
-        label.setText(text)
-        return label
 
     def done(self):
         self.unfocus.emit(self)

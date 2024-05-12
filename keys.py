@@ -111,15 +111,3 @@ class Keybinds:
 
     def is_scroll(self, action):
         return action in SCROLL_ACTIONS
-
-
-class KeyMap:
-    def __init__(self):
-        self.keys = {}
-
-    def assign_keybind(self, word):
-        for char in word.lower():
-            if char not in self.keys:
-                self.keys[char] = word
-                return char
-        raise Exception("Cannot find a free free keybind for %r" % (word,))

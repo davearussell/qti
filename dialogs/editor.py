@@ -3,7 +3,6 @@ import os
 from dialogs.fields import TextField, ReadOnlyField, SetField
 from dialogs.common import FieldDialog
 from tree import FilteredContainer
-from keys import KeyMap
 
 
 # Helper class for querying and updating fields on multiple nodes at once.
@@ -51,7 +50,6 @@ class EditorSetField(EditorTextField, SetField):
 
 
 def choose_fields(library, nodes):
-    keymap = KeyMap()
     hierarchy = library.metadata.hierarchy()
 
     first_node = nodes[0]
@@ -73,7 +71,7 @@ def choose_fields(library, nodes):
                 ReadOnlyField('resolution', '%d x %d' % tuple(first_node.spec['resolution'])),
             ]
         fields  += [
-            EditorTextField(library, [first_node], 'name', keymap=keymap, completions=completions),
+            EditorTextField(library, [first_node], 'name', completions=completions),
         ]
 
     if first_node.base_node: # nodes are in the hierarchy
@@ -87,17 +85,17 @@ def choose_fields(library, nodes):
             ancestor_completions = [sibling.name
                                     for ancestor in ancestors[ancestor_type]
                                     for sibling in ancestor.parent.children]
-            field = EditorTextField(library, nodes, ancestor_type, keymap=keymap,
+            field = EditorTextField(library, nodes, ancestor_type,
                                     completions=ancestor_completions)
             fields.append(field)
 
     for key in library.metadata.keys:
         if key.name not in hierarchy and not key.builtin:
             if key.multi:
-                fields.append(EditorSetField(library, nodes, key.name, keymap=keymap,
+                fields.append(EditorSetField(library, nodes, key.name,
                                              completions=key_values[key.name]))
             else:
-                fields.append(EditorTextField(library, nodes, key.name, keymap=keymap))
+                fields.append(EditorTextField(library, nodes, key.name))
 
     return fields
 

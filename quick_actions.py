@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 
 from dialog import DataDialog, FieldDialog
 from fields import TextField, SetField, EnumField
-from keys import KeyMap
 
 OPS = ['add', 'remove', 'toggle']
 
@@ -20,13 +19,12 @@ class ActionEditor(FieldDialog):
         self.qa = qa
         self.other_names = [name for name, other_qa in actions.items() if other_qa != qa]
         self.actions = actions
-        km = KeyMap()
-        self.name_field = TextField("name", self.qa['name'], keymap=km)
+        self.name_field = TextField("name", self.qa['name'])
         self.init_fields([
             self.name_field,
-            TextField("key", self.qa['key'], keymap=km),
-            EnumField("operation", self.qa['operation'], OPS, keymap=km),
-            TextField("value", self.qa['value'], keymap=km),
+            TextField("key", self.qa['key']),
+            EnumField("operation", self.qa['operation'], OPS),
+            TextField("value", self.qa['value']),
         ])
         self.data_updated()
 
