@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QComboBox
 from PySide6.QtCore import Qt, Signal
 
 from qt.keys import event_keystroke
@@ -114,3 +114,34 @@ class ColorFieldWidget(ValidatedTextFieldWidget):
     def post_commit_cb(self):
         super().post_commit_cb()
         self.body.apply_palette() # App stylesheet updates undo our custom palette
+
+
+class EnumBox(QComboBox):
+    def __init__(self, values, update_cb, commit_cb):
+        super().__init__()
+        self.setFocusPolicy(Qt.NoFocus)
+        for value in values:
+            self.addItem(value)
+        self.commit_cb = commit_cb
+        self.currentTextChanged.connect(update_cb)
+
+    def get_value(self):
+        return self.currentText()
+
+    def set_value(self, value):
+        self.setCurrentText(value)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if self.commit_cb:
+                self.commit_cb()
+        else:
+            super().keyPressEvent(event)
+
+
+class EnumFieldWidget(FieldWidget):
+    body_cls = EnumBox
+
+    def __init__(self, values, **kwargs):
+        self.body_args = {'values': values}
+        super().__init__(**kwargs)

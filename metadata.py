@@ -68,6 +68,9 @@ class Metadata:
     def multi_value_keys(self):
         return [key.name for key in self.keys if key.multi]
 
+    def editable_keys(self):
+        return [key.name for key in self.keys if not key.builtin]
+
     def json(self):
         return [key.json() for key in self.keys if not key.builtin]
 

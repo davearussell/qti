@@ -1,5 +1,5 @@
 from qt.dialogs.fields import FieldGroupWidget, FieldWidget, TextFieldWidget, SetFieldWidget
-from qt.dialogs.fields import ValidatedTextFieldWidget, ColorFieldWidget
+from qt.dialogs.fields import ValidatedTextFieldWidget, ColorFieldWidget, EnumFieldWidget
 
 
 def assign_keybind(keys, word):
@@ -166,3 +166,11 @@ class TypedField(ValidatedTextField):
 
 class ColorField(TypedField):
     ui_cls = ColorFieldWidget
+
+
+class EnumField(Field):
+    ui_cls = EnumFieldWidget
+
+    def __init__(self, key, value, values, **kwargs):
+        self.ui_args = {'values': values}
+        super().__init__(key, value, **kwargs)
