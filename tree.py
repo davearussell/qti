@@ -260,8 +260,13 @@ class FilteredContainer(Container):
                 values.insert(0, '...')
             return values
         else:
-            values = {image.get_key(key) for image in self.images()}
-            return values.pop() if len(values) == 1 else '...'
+            value = None
+            for image in self.images():
+                image_value = image.get_key(key)
+                if value not in [None, image_value]:
+                    return '...'
+                value = image_value
+            return value
 
 
 class FilteredSet(FilteredContainer):
