@@ -129,6 +129,7 @@ class ValidatedTextField(Field):
     def __init__(self, key, value, validator, **kwargs):
         self.validator = validator
         super().__init__(key, value, **kwargs)
+        self.handle_update()
 
     def is_valid(self):
         return self.validator(self.ui.get_value())
