@@ -13,26 +13,24 @@ def button(label, cb, **cb_args):
     return button
 
 
-class QuickFilterDialogWidget(DataDialogWidget):
-    title = 'Quick Filters'
-
-    def __init__(self, filter_names, new_cb, edit_cb, delete_cb, **kwargs):
+class ListManagerDialogWidget(DataDialogWidget):
+    def __init__(self, item_names, new_cb, edit_cb, delete_cb, **kwargs):
         super().__init__(**kwargs)
-        self.filter_names = filter_names
+        self.item_names = item_names
         self.new_cb = new_cb
         self.edit_cb = edit_cb
         self.delete_cb = delete_cb
         self.body = QWidget()
         self.layout().addWidget(self.body)
-        self.load_filters()
+        self.load_items()
         self.add_action_buttons()
 
-    def load_filters(self):
+    def load_items(self):
         QWidget().setLayout(self.body.layout()) # clears any existing layout
         grid = QGridLayout()
         self.body.setLayout(grid)
-        for i, name in enumerate(self.filter_names):
+        for i, name in enumerate(self.item_names):
             grid.addWidget(QLabel(name), i, 0)
-            grid.addWidget(button('Edit', self.edit_cb, filter_name=name), i, 1)
-            grid.addWidget(button('Delete', self.delete_cb, filter_name=name), i, 2)
-        grid.addWidget(button('Add new filter', self.new_cb), len(self.filter_names), 0, 1, 3)
+            grid.addWidget(button('Edit', self.edit_cb, item_name=name), i, 1)
+            grid.addWidget(button('Delete', self.delete_cb, item_name=name), i, 2)
+        grid.addWidget(button('Add new', self.new_cb), len(self.item_names), 0, 1, 3)
