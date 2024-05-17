@@ -9,7 +9,6 @@ class LineEdit(QLineEdit):
         super().__init__()
         self.update_cb = update_cb
         self.commit_cb = commit_cb
-        self.setFocusPolicy(Qt.ClickFocus) # We don't want <TAB> to jump between fields
         self.setText(text)
         self.setStyleSheet('QLineEdit[readOnly="true"] {background-color: #E0E0E0;}')
         if read_only:
@@ -42,6 +41,7 @@ class TabCompleteLineEdit(LineEdit):
 
     def __init__(self, completions, **kwargs):
         super().__init__(**kwargs)
+        self.setFocusPolicy(Qt.ClickFocus) # We don't want <TAB> to jump between fields
         self.completions = completions
         self.setCompleter(QCompleter(completions))
 
