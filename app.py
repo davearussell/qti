@@ -13,6 +13,7 @@ from dialogs.importer import make_importer
 from dialogs.metadata_editor import MetadataEditorDialog
 from dialogs.quick_filters import QuickFilterDialog
 from dialogs.quick_actions import QuickActionDialog
+from dialogs.macros import MacroDialog
 from dialogs.app_settings import AppSettingsDialog
 from dialogs.key_config import KeybindDialog
 from background import BackgroundCacher
@@ -111,6 +112,8 @@ class Application:
             QuickFilterDialog(self).run()
         elif action == 'edit_quick_actions':
             QuickActionDialog(self).run()
+        elif action == 'edit_macros':
+            MacroDialog(self).run()
         elif action == 'edit_keybinds':
             KeybindDialog(self).run()
         elif action == 'save_snapshot':

@@ -36,6 +36,7 @@ DEFAULT_KEYBINDS = {
     'edit_keybinds':      ['k'],
     'edit_quick_filters': ['f'],
     'edit_quick_actions': ['g'],
+    'edit_macros':        ['CTRL-m'],
     'auto_scroll':        ['CTRL-a'],
     'search':             ['CTRL-f'],
 
