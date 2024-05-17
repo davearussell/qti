@@ -1,4 +1,5 @@
 import copy
+import traceback
 
 import library
 import browser
@@ -20,6 +21,7 @@ from background import BackgroundCacher
 from dialogs.search import SearchDialog
 import cache
 import keys
+import macros
 import template
 from qt.datastore import Datastore
 from qt.app import QTApp
@@ -76,11 +78,14 @@ class Application:
         self.settings = settings.Settings(self.store)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
+        self.metadata = self.library.metadata
         cache.set_root_dir(self.library.root_dir)
         for qf in self.library.quick_filters:
             self.keybinds.add_action('quick_filter_' + qf)
         for qf in self.library.quick_actions:
             self.keybinds.add_action('quick_action_' + qf)
+        for macro in self.library.macros:
+            self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar()
         self.browser = browser.Browser(self)
@@ -124,6 +129,8 @@ class Application:
             self.apply_quick_filter(action[len('quick_filter_'):])
         elif action and action.startswith('quick_action_'):
             self.apply_quick_action(action[len('quick_action_'):])
+        elif action and action.startswith('macro_'):
+            self.run_macro(action[len('macro_'):])
         elif action == 'add_new_images':
             make_importer(self, self.browser.node).run()
         elif action == 'app_settings':
@@ -160,6 +167,17 @@ class Application:
         if self.snapshots:
             node, target, mode, self.filter_config = self.snapshots.pop()
             self.browser.load_node(node, target=target, mode=mode)
+
+    def run_macro(self, name):
+        for macro in self.library.macros:
+            if macro['name'] == name:
+                try:
+                    macros.run_macro(self, macro['text'])
+                except Exception as e:
+                    traceback.print_exc()
+                    self.status_bar.set_text('Macro error: %s' % (e,), duration_s=10)
+                return
+        assert 0, name
 
     def apply_quick_filter(self, name):
         qf = self.library.quick_filters.get(name)
