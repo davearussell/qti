@@ -12,7 +12,6 @@ from dialogs.deleter import DeleterDialog
 from dialogs.filter_config import FilterConfigDialog
 from dialogs.importer import make_importer
 from dialogs.metadata_editor import MetadataEditorDialog
-from dialogs.quick_filters import QuickFilterDialog
 from dialogs.quick_actions import QuickActionDialog
 from dialogs.macros import MacroDialog
 from dialogs.app_settings import AppSettingsDialog
@@ -80,8 +79,6 @@ class Application:
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata
         cache.set_root_dir(self.library.root_dir)
-        for qf in self.library.quick_filters:
-            self.keybinds.add_action('quick_filter_' + qf)
         for qf in self.library.quick_actions:
             self.keybinds.add_action('quick_action_' + qf)
         for macro in self.library.macros:
@@ -113,8 +110,6 @@ class Application:
             DeleterDialog(self, self.browser.marked_nodes()).run()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self).run()
-        elif action == 'edit_quick_filters':
-            QuickFilterDialog(self).run()
         elif action == 'edit_quick_actions':
             QuickActionDialog(self).run()
         elif action == 'edit_macros':
@@ -125,8 +120,6 @@ class Application:
             self.save_snapshot()
         elif action == 'restore_snapshot':
             self.restore_snapshot()
-        elif action and action.startswith('quick_filter_'):
-            self.apply_quick_filter(action[len('quick_filter_'):])
         elif action and action.startswith('quick_action_'):
             self.apply_quick_action(action[len('quick_action_'):])
         elif action and action.startswith('macro_'):
@@ -178,45 +171,6 @@ class Application:
                     self.status_bar.set_text('Macro error: %s' % (e,), duration_s=10)
                 return
         assert 0, name
-
-    def apply_quick_filter(self, name):
-        qf = self.library.quick_filters.get(name)
-        if qf is None:
-            return
-
-        target = self.browser.target
-        keys = self.library.metadata.groupable_keys()
-        key_values = {key: set() for key in keys}
-
-        for image in target.images():
-            for key in keys:
-                if image.spec.get(key):
-                    value = image.spec[key]
-                    if isinstance(value, str):
-                        value = [value]
-                    key_values[key] |= set(value)
-        spec = {key: ','.join(values) for key, values in key_values.items()}
-        spec['name'] = target.name
-
-        self.save_snapshot()
-        self.filter_config.clear_filters()
-        skip_root = False
-        if qf.get('group'):
-            group_by = []
-            for i, word in enumerate(qf['group']):
-                if i == 0 and ':' in word:
-                    skip_root = True
-                group_by.append(template.apply(spec, word))
-            self.filter_config.group_by = group_by
-        if qf.get('order'):
-            self.filter_config.order_by = qf['order'].copy()
-        if qf.get('expr'):
-            self.filter_config.custom_expr = qf['expr']
-
-        root = self.library.make_tree(self.filter_config)
-        node = root.children[0] if root.children and skip_root else root
-        mode = 'grid' if node.type != 'image' else self.browser.mode
-        self.browser.load_node(node, mode=mode)
 
     def apply_quick_action(self, name):
         qa = self.library.quick_actions.get(name)
