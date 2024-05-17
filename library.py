@@ -17,7 +17,6 @@ class Library:
         for key in spec['keys']:
             self.metadata.add_key(**key)
         self.macros = spec.get('macros', [])
-        self.quick_actions = spec.get('quick_actions', {})
         self.base_tree = tree.BaseTree(self.root_dir, self.metadata, spec['images'])
 
     def images(self):
@@ -41,7 +40,6 @@ class Library:
             'images': [image.spec for image in self.images()],
             'keys': self.metadata.json(),
             'macros': self.macros,
-            'quick_actions': self.quick_actions,
         }
         with open(self.json_path, 'w', encoding='UTF_8') as f:
             json.dump(spec, f, indent=4)

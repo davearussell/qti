@@ -35,7 +35,6 @@ DEFAULT_KEYBINDS = {
     'app_settings':       ['a'],
     'edit_keybinds':      ['k'],
     'edit_macros':        ['f'],
-    'edit_quick_actions': ['g'],
     'auto_scroll':        ['CTRL-a'],
     'search':             ['CTRL-f'],
 

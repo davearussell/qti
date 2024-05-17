@@ -12,7 +12,6 @@ from dialogs.deleter import DeleterDialog
 from dialogs.filter_config import FilterConfigDialog
 from dialogs.importer import make_importer
 from dialogs.metadata_editor import MetadataEditorDialog
-from dialogs.quick_actions import QuickActionDialog
 from dialogs.macros import MacroDialog
 from dialogs.app_settings import AppSettingsDialog
 from dialogs.key_config import KeybindDialog
@@ -79,8 +78,6 @@ class Application:
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata
         cache.set_root_dir(self.library.root_dir)
-        for qf in self.library.quick_actions:
-            self.keybinds.add_action('quick_action_' + qf)
         for macro in self.library.macros:
             self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
@@ -110,8 +107,6 @@ class Application:
             DeleterDialog(self, self.browser.marked_nodes()).run()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self).run()
-        elif action == 'edit_quick_actions':
-            QuickActionDialog(self).run()
         elif action == 'edit_macros':
             MacroDialog(self).run()
         elif action == 'edit_keybinds':
@@ -120,8 +115,6 @@ class Application:
             self.save_snapshot()
         elif action == 'restore_snapshot':
             self.restore_snapshot()
-        elif action and action.startswith('quick_action_'):
-            self.apply_quick_action(action[len('quick_action_'):])
         elif action and action.startswith('macro_'):
             self.run_macro(action[len('macro_'):])
         elif action == 'add_new_images':
@@ -171,32 +164,6 @@ class Application:
                     self.status_bar.set_text('Macro error: %s' % (e,), duration_s=10)
                 return
         assert 0, name
-
-    def apply_quick_action(self, name):
-        qa = self.library.quick_actions.get(name)
-        if qa is None:
-            return
-        md = self.library.metadata.lut.get(qa['key'])
-        if md is None:
-            return
-
-        target = self.browser.target
-        if not md.multi:
-            if qa['operation'] != 'add':
-                return
-            target.update(qa['key'], qa['value'])
-        else:
-            if qa['operation'] == 'add':
-                target.update_set(qa['key'], add={qa['value']}, remove=set())
-                self.status_bar.set_text("Added %(key)s %(value)r" % qa, duration_s=5)
-            elif qa['operation'] == 'remove':
-                target.update_set(qa['key'], remove={qa['value']}, add=set())
-                self.status_bar.set_text("Removed %(key)s %(value)r" % qa, duration_s=5)
-            elif qa['operation'] == 'toggle':
-                assert 0, "write me"
-                self.status_bar.set_text("Toggled %(key)s %(value)r" % qa, duration_s=5)
-            else:
-                assert 0, qa
 
     def select_target(self, new_tree, old_target):
         # If either the old or current tree was empty, return the root of the new tree
