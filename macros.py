@@ -164,6 +164,34 @@ class Load(Command):
         self.app.browser.load_node(node, target, self.mode)
 
 
+class Edit(Command):
+    command = 'edit'
+    min_args = 2
+
+    def process_args(self, args):
+        args = [resolve_ref(self.app, arg) for arg in args]
+        self.key, self.op, *self.value = args
+        if self.key not in self.app.metadata.editable_keys():
+            self.bad_expr("is read-only")
+        self.is_multi = self.key in self.app.metadata.multi_value_keys()
+        if self.op == 'set':
+            if not self.is_multi:
+                if len(self.value) != 1:
+                    self.bad_expr("one value required")
+                self.value = self.value[0]
+        elif self.op in ['add', 'remove', 'toggle']:
+            if not self.is_multi:
+                self.bad_expr("op requres a multi-value key")
+        else:
+            self.bad_expr("unknown op")
+
+    def run(self):
+        target = self.app.browser.target
+        if self.op == 'set':
+            target.update(self.key, self.value)
+        else:
+            target.update_set(self.key, **{self.op: set(self.value)})
+
 def parse_macro(app, macro):
     command_map = Command.command_map()
     commands = []
