@@ -29,7 +29,7 @@ class NodeGroup(FilteredContainer):
             to_add = [key for key in new_value if key not in old_value]
             to_remove = [key for key in old_value if key not in new_value]
             for node in self.nodes:
-                node.update_set(key, to_add, to_remove)
+                node.update_set(key, add=to_add, remove=to_remove)
         else:
             for node in self.nodes:
                 node.update(key, new_value)

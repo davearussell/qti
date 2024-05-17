@@ -147,9 +147,19 @@ class Image(Node):
             print("Deleting", self.abspath)
             os.unlink(self.abspath)
 
-    def update_set(self, key, add, remove):
-        old = self.spec[key]
-        self.spec[key] = [x for x in old if x not in remove] + [x for x in add if x not in old]
+    def update_set(self, key, add=None, remove=None, toggle=None):
+        keep = []
+        add = (add or set()) | (toggle or set())
+        remove = (remove or set()) | (toggle or set())
+        for val in self.spec[key]:
+            if val in add:
+                add.remove(val)
+            if val in remove:
+                continue
+            keep.append(val)
+        self.spec[key] = keep
+        if add:
+            self.spec[key] += add
 
 
 class BaseTree(Root):
@@ -238,9 +248,9 @@ class FilteredContainer(Container):
         if key in base_tree.metadata.hierarchy():
             base_tree.move_images(images, key, value)
 
-    def update_set(self, key, add, remove):
+    def update_set(self, key, **kwargs):
         for image in self.images():
-            image.base_node.update_set(key, add, remove)
+            image.base_node.update_set(key, **kwargs)
 
     def get_key(self, key):
         if key == 'name':
@@ -306,8 +316,8 @@ class FilteredImage(Image):
         if key in base_tree.metadata.hierarchy():
             base_tree.move_images([self.base_node], key, value)
 
-    def update_set(self, key, add, remove):
-        self.base_node.update_set(key, add, remove)
+    def update_set(self, key, **kwargs):
+        self.base_node.update_set(key, **kwargs)
 
     def get_key(self, key):
         return self.spec[key]
