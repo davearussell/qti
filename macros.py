@@ -24,6 +24,21 @@ def resolve_ref(app, ref):
     raise MacroError("Cannot resolve ref %r" % (ref,))
 
 
+def tokenize(line):
+    token_start = None
+    for i, char in enumerate(line):
+        is_sep = char.isspace() or char in '#:'
+        if is_sep:
+            if token_start is not None:
+                yield line[token_start:i]
+            yield line[i]
+            token_start = None
+        elif token_start is None:
+            token_start = i
+    if token_start is not None:
+        yield line[token_start:]
+
+
 class Command:
     command = None
     min_args = None
@@ -52,6 +67,25 @@ class Command:
                 commands[subcls.command] = subcls
             commands |= subcls.command_map()
         return commands
+
+    @classmethod
+    def syntax_highlight(cls, text):
+        pos = 0
+        comment = False
+        done_command = False
+        for token in tokenize(text):
+            if token == '#':
+                comment = True
+            word_type = None
+            if comment:
+                word_type = 'comment'
+            elif not done_command and not token.isspace():
+                word_type = 'command' if token in cls.command_map() else 'error'
+                done_command = True
+            elif '.' in token:
+                word_type = 'variable'
+            yield pos, len(token), word_type
+            pos += len(token)
 
 
 class Group(Command):
@@ -198,7 +232,7 @@ def parse_macro(app, macro):
     for line in macro.strip().split('\n'):
         if not line.strip():
             continue
-        command, *args = line.split()
+        command, *args = line.split('#')[0].split()
         if '.' in command:
             command = resolve_ref(app, command)
         if command not in command_map:

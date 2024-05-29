@@ -2,6 +2,7 @@ import copy
 from .common import DataDialog
 from .simple import LineEditDialog
 from qt.dialogs.macros import MacroDialogWidget
+from macros import Command
 
 
 class NewDialog(LineEditDialog):
@@ -35,6 +36,8 @@ class MacroDialog(DataDialog):
     def ui_args(self):
         return {
             'names': [macro['name'] for macro in self.macros],
+            'settings': self.app.settings,
+            'highlight_cb': Command.syntax_highlight,
             'select_name_cb': self.select_name,
             'update_cb': self.handle_update,
             'new_cb': self.new_macro,

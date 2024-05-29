@@ -23,6 +23,7 @@ DEFAULT_APP_SETTINGS = {
     'zoom_rate':                 1.2,
     'pathbar_font_size':         16,
     'statusbar_font_size':       16,
+    'macro_font_size':           14,
     'thumbnail_name_font_size':  14,
     'thumbnail_count_font_size': 30,
     'key_picker_font_size':      20,

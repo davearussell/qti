@@ -1,9 +1,33 @@
 from PySide6.QtWidgets import QComboBox, QTextEdit, QPushButton, QWidget, QHBoxLayout, QLabel
+from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
 from qt.dialogs.common import DataDialogWidget
 
 
+class Highlighter(QSyntaxHighlighter):
+    color_map = {
+        'comment': 'dark red',
+        'error': 'red',
+        'command': 'blue',
+        'variable': 'green',
+    }
+
+    def __init__(self, document, settings, highlight_cb):
+        self.settings = settings
+        self.highlight_cb = highlight_cb
+        self.fmt = QTextCharFormat()
+        self.fmt.setFont(self.settings.font)
+        self.fmt.setFontPointSize(self.settings.macro_font_size)
+        super().__init__(document)
+
+    def highlightBlock(self, text):
+        for start, count, word_type in self.highlight_cb(text):
+            self.fmt.setForeground(QColor(self.color_map.get(word_type, 'black')))
+            self.setFormat(start, count, self.fmt)
+
+
 class MacroDialogWidget(DataDialogWidget):
-    def __init__(self, names, select_name_cb, update_cb, new_cb, delete_cb, **kwargs):
+    def __init__(self, names, settings, highlight_cb, select_name_cb,
+                 update_cb, new_cb, delete_cb, **kwargs):
         super().__init__(**kwargs)
         self.setFixedSize(self.parent().size() / 3)
 
@@ -21,6 +45,7 @@ class MacroDialogWidget(DataDialogWidget):
         self.text_area = QTextEdit()
         self.text_area.setLineWrapMode(QTextEdit.NoWrap)
         self.text_area.textChanged.connect(update_cb)
+        self.highlighter = Highlighter(self.text_area.document(), settings, highlight_cb)
         if not names:
             self.set_editable(False)
 
