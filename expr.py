@@ -23,10 +23,23 @@ infix_expr: expr INFIX_OP prefix_expr -> do_infix
 %ignore WS
 """
 
+class Expr:
+    def __eq__(self, other):
+        return str(self) == str(other)
 
-class Tag:
+    def __len__(self):
+        return len(str(self))
+
+    def __str__(self):
+        raise NotImplementedError()
+
+    def matches(self, tags):
+        raise NotImplementedError()
+
+
+class Tag(Expr):
     def __init__(self, arg):
-        self.value = arg[0]
+        self.value, = arg
 
     def __str__(self):
         return str(self.value)
@@ -35,7 +48,7 @@ class Tag:
         return self.value in tags
 
 
-class Infix:
+class Infix(Expr):
     def __init__(self, arg):
         self.lhs, self.symbol, self.rhs = arg
         self.op = {
@@ -50,7 +63,7 @@ class Infix:
         return self.op(self.lhs.matches(tags), self.rhs.matches(tags))
 
 
-class Prefix:
+class Prefix(Expr):
     def __init__(self, arg):
         self.symbol, self.value = arg
         self.op = {
@@ -64,12 +77,9 @@ class Prefix:
         return self.op(self.value.matches(tags))
 
 
-class Empty:
+class Empty(Expr):
     def __init__(self, arg=None):
         assert not arg
-
-    def __len__(self):
-        return 0
 
     def __str__(self):
         return ''
