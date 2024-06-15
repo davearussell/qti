@@ -51,6 +51,7 @@ class Grid:
         return range(lo, hi + 1)
 
     def load(self, renderers, target_i=None):
+        self.clear_mark()
         if renderers and target_i is None:
             target_i = 0
         self.ui.load(renderers)
