@@ -150,6 +150,7 @@ class ImporterDialog(DataDialog):
     def commit(self):
         self.library.base_tree.populate(self.specs)
         self.app.reload_tree()
+        self.app.cacher.cache_all_images()
 
     def keydown_cb(self, keystroke):
         return self.grid.handle_action(self.keybinds.get_action(keystroke))
