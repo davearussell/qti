@@ -177,7 +177,7 @@ class Load(Command):
         args = [resolve_ref(self.app, arg) for arg in args]
         self.mode, *self.path = args
         if self.mode not in ['grid', 'viewer']:
-            self.bad_expr('expected load <grid|viewer> ...')
+            self.bad_args('expected load <grid|viewer> ...')
 
     def run(self):
         node = self.app.library.make_tree(self.app.filter_config)
@@ -206,18 +206,18 @@ class Edit(Command):
         args = [resolve_ref(self.app, arg) for arg in args]
         self.key, self.op, *self.value = args
         if self.key not in self.app.metadata.editable_keys():
-            self.bad_expr("is read-only")
+            self.bad_args("is read-only")
         self.is_multi = self.key in self.app.metadata.multi_value_keys()
         if self.op == 'set':
             if not self.is_multi:
                 if len(self.value) != 1:
-                    self.bad_expr("one value required")
+                    self.bad_args("one value required")
                 self.value = self.value[0]
         elif self.op in ['add', 'remove', 'toggle']:
             if not self.is_multi:
-                self.bad_expr("op requres a multi-value key")
+                self.bad_args("op requres a multi-value key")
         else:
-            self.bad_expr("unknown op")
+            self.bad_args("unknown op")
 
     def run(self):
         target = self.app.browser.target
