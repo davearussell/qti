@@ -1,5 +1,6 @@
 import expr
 from tree import SORT_TYPES
+from dialogs.deleter import delete_nodes
 
 class MacroError(Exception):
     pass
@@ -18,8 +19,13 @@ def resolve_ref(app, ref):
             value = value[int(args.pop())]
         return value
 
-    if start == 'browser' and args == ['mode']:
-        return app.browser.mode
+    if start == 'browser':
+        if args == ['mode']:
+            return app.browser.mode
+        if args == ['target']:
+            return app.browser.target
+        if args == ['marked']:
+            return app.browser.marked_nodes()
 
     raise MacroError("Cannot resolve ref %r" % (ref,))
 
@@ -226,13 +232,31 @@ class Edit(Command):
         else:
             target.update_set(self.key, **{self.op: set(self.value)})
 
+
+class Delete(Command):
+    command = 'delete'
+    min_args = 1
+    max_args = 2
+
+    def process_args(self, args):
+        nodes = resolve_ref(self.app, args[0])
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+        self.nodes = nodes
+        self.mode = args[1] if len(args) == 2 else 'library'
+
+    def run(self):
+        delete_nodes(self.app, self.nodes, self.mode)
+
+
 def parse_macro(app, macro):
     command_map = Command.command_map()
     commands = []
     for line in macro.strip().split('\n'):
-        if not line.strip():
+        line = line.split('#')[0].strip()
+        if not line:
             continue
-        command, *args = line.split('#')[0].split()
+        command, *args = line.split()
         if '.' in command:
             command = resolve_ref(app, command)
         if command not in command_map:
