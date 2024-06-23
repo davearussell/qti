@@ -1,5 +1,6 @@
 import expr
 from tree import SORT_TYPES
+from keys import SCROLL_ACTIONS
 from dialogs.deleter import delete_nodes
 
 class MacroError(Exception):
@@ -247,6 +248,20 @@ class Delete(Command):
 
     def run(self):
         delete_nodes(self.app, self.nodes, self.mode)
+
+
+class Scroll(Command):
+    command = 'scroll'
+    min_args = 1
+    max_args = 1
+
+    def process_args(self, args):
+        self.direction = args[0]
+        if self.direction not in SCROLL_ACTIONS:
+            self.bad_args('invalid scroll direction')
+
+    def run(self):
+        self.app.browser.scroll(self.direction)
 
 
 def parse_macro(app, macro):
