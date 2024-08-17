@@ -1,4 +1,5 @@
 import os
+import re
 import jinja2
 
 
@@ -44,6 +45,10 @@ def f_dirat(path, i):
     return path.split(os.path.sep)[int(i)]
 
 
+def f_default(text, default):
+    return text or default
+
+
 def uncamel(word):
     """Converts 'WordInCamelCase' -> 'Word In Camel Case' """
     new_word = ''
@@ -62,6 +67,7 @@ IMAGE_FILTERS = {
     'strip_from': f_strip_from,
     'strip_digits': f_strip_digits,
     'dirat': f_dirat,
+    'default': f_default,
     'uncamel': uncamel,
 }
 
