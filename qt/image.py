@@ -1,6 +1,8 @@
-from PySide6.QtGui import QPixmap, QImage, QPainter
+from PySide6.QtGui import QPixmap, QImage, QPainter, QImageReader
 from PySide6.QtCore import Qt, QSize
 
+# By default QImageReader refuses to read anything over 256MiB
+QImageReader.setAllocationLimit(0)
 
 def load_image(image_path, for_display=True):
     cls = QPixmap if for_display else QImage

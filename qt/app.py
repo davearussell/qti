@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QMainWindow, QApplication
-from PySide6.QtGui import QImageReader
 
 from . import keys
 import template
@@ -62,7 +61,6 @@ class QTApp(QApplication):
         self.keydown_hook = keydown_hook
         self.exit_hook = exit_hook
         super().__init__([])
-        QImageReader.setAllocationLimit(0)
         self.size = self.primaryScreen().size().toTuple()
         self.window = Window(self)
 
