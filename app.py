@@ -20,53 +20,10 @@ from dialogs.search import SearchDialog
 import cache
 import keys
 import macros
-import template
 from qt.datastore import Datastore
 from qt.app import QTApp
 from qt import color
 from qt.keys import event_keystroke
-
-STYLESHEET_TMPL = """
-
-QMainWindow {
-  background-color: {{ background_color }};
-}
-
-*#Grid {
-  background-color: {{ background_color }};
-}
-
-*[selectType="selected"] { color: {{ selection_color }}; }
-*[selectType="marked"]   { color: {{ mark_color }};      }
-
-*[qtiOverlay="true"] {
-  background-color: rgba(0, 0, 0, 128);
-}
-
-*[qtiFont="pathbar"] {
-  font-size: {{ pathbar_font_size }}pt;
-  font-family: "{{ font }}";
-}
-
-*[qtiFont="keypicker"] {
-  font-size: {{ key_picker_font_size }}pt;
-  font-family: "{{ font }}";
-}
-
-*[qtiFont="statusbar"] {
-  color: {{ text_color }};
-  font-size: {{ statusbar_font_size }}pt;
-  font-family: "{{ font }}";
-}
-
-*[qtiFontStyle="sep"]       { color: {{ pathbar_separator }};  }
-*[qtiFontStyle="sep_fade"]  { color: {{ pathbar_separator.fade(background_color) }};  }
-*[qtiFontStyle="node"]      { color: {{ text_color }}; }
-*[qtiFontStyle="node_fade"] { color: {{ text_color.fade(background_color) }};  }
-
-*#ValueBox {background-color: white; }
-*[valid="false"] { color: red; }
-"""
 
 
 class Application:
@@ -139,8 +96,7 @@ class Application:
         self.cacher.stop()
 
     def apply_settings(self):
-        stylesheet = template.apply(self.settings.to_dict(), STYLESHEET_TMPL)
-        self.ui.setStyleSheet(stylesheet)
+        self.ui.apply_settings(self.settings.to_dict())
         self.browser.reload_node()
         self.cacher.cache_all_images()
 
