@@ -20,7 +20,7 @@ from dialogs.search import SearchDialog
 import cache
 import keys
 import macros
-from qt.datastore import Datastore
+from datastore import Datastore
 from qt.app import QTApp
 from qt import color
 from qt.keys import event_keystroke
