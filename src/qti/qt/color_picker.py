@@ -14,7 +14,10 @@ class ColorClicker(QLabel):
         self.commit_cb = commit_cb
 
     def set_value(self, color):
-        self.color = Color(color)
+        try:
+            self.color = Color(color)
+        except:
+            pass
         self.apply_palette()
 
     def get_value(self):
@@ -22,12 +25,12 @@ class ColorClicker(QLabel):
 
     def apply_palette(self):
         pal = self.palette()
-        pal.setColor(QPalette.Window, self.color)
-        pal.setColor(QPalette.WindowText, self.color.contrasting())
+        pal.setColor(QPalette.Window, str(self.color))
+        pal.setColor(QPalette.WindowText, str(self.color.contrasting()))
         self.setPalette(pal)
 
     def pick_new_color(self):
-        qcolor = QColorDialog.getColor(self.color)
+        qcolor = QColorDialog.getColor(str(self.color))
         if qcolor.isValid():
             self.set_value(Color(qcolor.name()))
             self.update_cb()

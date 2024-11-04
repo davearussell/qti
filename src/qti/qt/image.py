@@ -24,7 +24,7 @@ def image_size(image):
 
 def crop_and_pan(image, size, x, y, background_color='black'):
     viewport = QPixmap(QSize(*size))
-    viewport.fill(background_color)
+    viewport.fill(str(background_color))
     p = QPainter(viewport)
     p.drawPixmap(x, y, image)
     p.end()

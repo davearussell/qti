@@ -13,7 +13,7 @@ def make_grid_cell(image_path, size, settings, label=None, count=None):
     pixmap = center_image(image, size, background_color=settings.background_color)
 
     p = QPainter(pixmap)
-    p.setPen(settings.text_color)
+    p.setPen(str(settings.text_color))
 
     if label:
         p.setFont(QFont(settings.font, settings.thumbnail_name_font_size))
