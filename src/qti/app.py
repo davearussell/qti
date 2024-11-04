@@ -24,8 +24,6 @@ from .dialogs.search import SearchDialog
 from .datastore import Datastore
 
 from .qt.app import QTApp
-from .qt import color
-from .qt.keys import event_keystroke
 
 
 class Application:
