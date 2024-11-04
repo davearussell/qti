@@ -1,5 +1,6 @@
 import time
 
+from .cache import ensure_cached
 from .qt.image import load_image, crop_and_pan, scale_image, image_size
 from .qt.viewer import ViewerWidget
 
@@ -29,7 +30,7 @@ class Viewer:
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.base_pixmap = self.target.load_pixmap(self.ui.size)
+        self.base_pixmap = load_image(ensure_cached(self.target.abspath, self.ui.size))
         self.raw_pixmap = None
         self.base_zoom = None
         self.zoom_level = 0

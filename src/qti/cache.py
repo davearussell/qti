@@ -1,5 +1,5 @@
 import os
-from .qt.image import load_image, save_image, scale_image
+from PIL import Image
 
 
 ROOT_DIR = None
@@ -16,14 +16,9 @@ def cache_path(image_path, size):
 def ensure_cached(image_path, size):
     scaled_path = cache_path(image_path, size)
     if not os.path.isfile(scaled_path):
-        image = load_image(image_path, for_display=False)
-        scaled = scale_image(image, size)
-        if not os.path.isdir(os.path.dirname(scaled_path)):
-            os.makedirs(os.path.dirname(scaled_path))
-        save_image(scaled, scaled_path)
+        image = Image.open(image_path)
+        old_size = image.size
+        ratio = min(size[0] / old_size[0], size[1] / old_size[1])
+        new_size = (int(old_size[0] * ratio), int(old_size[1] * ratio))
+        image.resize(new_size).save(scaled_path)
     return scaled_path
-
-
-def load_scaled(image_path, size):
-    scaled_path = ensure_cached(image_path, size)
-    return load_image(scaled_path)

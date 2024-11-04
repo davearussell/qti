@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QPalette
 
-from ..cache import load_scaled
-from .image import center_image
+from ..cache import ensure_cached
+from .image import load_image, center_image
 
 
 class Cell:
@@ -25,7 +25,7 @@ class Cell:
         return self._pixmap
 
     def render(self):
-        image = load_scaled(self.image_path, self.size)
+        image = load_image(ensure_cached(self.image_path, self.size))
         return center_image(image, self.size, background_color=self.settings.background_color)
 
 

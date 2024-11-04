@@ -1,7 +1,7 @@
 import os
 import random
 
-from .cache import load_scaled
+from .cache import ensure_cached
 
 
 class TreeError(Exception): pass
@@ -138,9 +138,6 @@ class Image(Node):
     def all_tags(self):
         keys = self.root.metadata.multi_value_keys()
         return {value for key in keys for value in self.spec[key]}
-
-    def load_pixmap(self, size):
-        return load_scaled(self.abspath, size)
 
     def delete_file(self):
         if os.path.exists(self.abspath):
