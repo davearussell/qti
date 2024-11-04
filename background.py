@@ -19,7 +19,7 @@ class BackgroundCacher:
     def cache_all_images(self):
         sizes = [self.app.size,
                  self.app.settings.thumbnail_size]
-        cmd = [os.path.join(MY_DIR, 'cache-images'), self.app.library.root_dir]
+        cmd = [os.path.join(MY_DIR, 'qti-image-cacher'), self.app.library.root_dir]
         for size in sizes:
             cmd += ['-s', '%dx%d' % tuple(size)]
         self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)

@@ -1,4 +1,3 @@
-#! /bin/env python3
 import argparse
 import os
 import multiprocessing
@@ -98,7 +97,8 @@ class Cacher:
             worker.stop()
 
 
-def main(options):
+def main():
+    options = parse_cmdline()
     done = -1
     total = 0
 
@@ -128,7 +128,3 @@ def parse_cmdline():
     parser.add_argument('-s', '--size', metavar='WIDTHxHEIGHT', action='append',
                         type=size, default=[], help='Cached image size')
     return parser.parse_args()
-
-
-if __name__ == '__main__':
-    main(parse_cmdline())
