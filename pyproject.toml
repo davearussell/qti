@@ -1,0 +1,18 @@
+[project]
+name = "qti"
+version = "0.1.0"
+description = "An image browser"
+dependencies = [
+  "lark",
+  "jinja2",
+  "pillow",
+  "PySide6==6.6.0",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+qti = "qti.cli:main"
+qti-image-cacher="qti.image_cacher:main"
