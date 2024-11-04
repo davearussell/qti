@@ -1,13 +1,12 @@
 import time
-from .qt.timer import Timer
 from .qt.status_bar import StatusBarWidget
 
 
 class StatusBar:
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
         self.msg = ''
-        self.timer = Timer(self.refresh_msg)
+        self.timer = app.timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
         self.ui = StatusBarWidget()

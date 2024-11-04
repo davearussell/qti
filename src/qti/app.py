@@ -7,6 +7,7 @@ from . import settings
 from . import cache
 from . import keys
 from . import macros
+from . import timer
 
 from .status_bar import StatusBar
 from .dialogs.editor import EditorDialog
@@ -38,7 +39,7 @@ class Application:
         for macro in self.library.macros:
             self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
-        self.status_bar = StatusBar()
+        self.status_bar = StatusBar(self)
         self.browser = browser.Browser(self)
         self.ui.set_main_widget(self.browser.ui)
         self.size = self.ui.size
@@ -90,6 +91,9 @@ class Application:
 
     def run(self):
         self.ui.run()
+
+    def timer(self, *args, **kwargs):
+        return timer.Timer(self, *args, **kwargs)
 
     def exit_hook(self):
         self.library.save()

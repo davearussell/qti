@@ -1,3 +1,4 @@
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMainWindow, QApplication
 
 from . import keys
@@ -69,6 +70,13 @@ class QTApp(QApplication):
 
     def set_main_widget(self, widget):
         self.window.setCentralWidget(widget)
+
+    def call_later(self, delay_s, fn, *args, **kwargs):
+        timer = QTimer()
+        timer.timeout.connect(lambda: fn(*args, **kwargs))
+        timer.setSingleShot(True)
+        timer.start(int(1000 * delay_s))
+        return timer
 
     def run(self):
         self.window.setFixedSize(self.primaryScreen().size())

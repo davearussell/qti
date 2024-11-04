@@ -1,6 +1,5 @@
 import select
 import subprocess
-from .qt.timer import Timer
 
 
 class BackgroundCacher:
@@ -8,7 +7,7 @@ class BackgroundCacher:
 
     def __init__(self, app):
         self.app = app
-        self.timer = Timer(self.poll, repeat=True)
+        self.timer = app.timer(self.poll, repeat=True)
         self.done = None
         self.total = None
         self.proc = None

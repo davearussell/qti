@@ -1,6 +1,5 @@
 import time
 
-from .qt.timer import Timer
 from .qt.image import load_image, crop_and_pan, scale_image, image_size
 from .qt.viewer import ViewerWidget
 
@@ -15,7 +14,7 @@ class Viewer:
         self.target = None
         self.auto_scroll_enabled = False
         self.auto_scroll_at = None
-        self.auto_scroll_timer = Timer(self.auto_scroll_tick, repeat=True)
+        self.auto_scroll_timer = app.timer(self.auto_scroll_tick, repeat=True)
         self.action_map = {
             'left': self.scroll,
             'right': self.scroll,
