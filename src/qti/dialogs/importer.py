@@ -10,7 +10,7 @@ from .simple import InfoDialog
 from .common import DataDialog
 from .fields import FieldGroup, TextField, ReadOnlyField
 
-from ..qt.dialogs.importer import ImporterDialogWidget
+from .. import ui
 
 
 def find_all_images(path):
@@ -44,7 +44,7 @@ def make_spec(image_path, root_dir, defaults):
 
 class ImporterDialog(DataDialog):
     title = 'Import images'
-    ui_cls = ImporterDialogWidget
+    ui_cls = ui.cls('importer_dialog')
     actions = {
         'accept': None,
         'cancel': None,

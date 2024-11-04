@@ -1,4 +1,4 @@
-from .qt.grid import GridWidget
+from . import ui
 
 
 class Grid:
@@ -6,7 +6,7 @@ class Grid:
         self.scroll_cb = scroll_cb or (lambda x: None)
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
-        self.ui = GridWidget(settings, click_cb=self.handle_click)
+        self.ui = ui.cls('grid')(settings, click_cb=self.handle_click)
         self.target_i = None
         self.mark_i = None
         self.no_selection = no_selection

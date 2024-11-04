@@ -1,5 +1,5 @@
 from .fields import FieldGroup
-from ..qt.dialogs.common import FieldDialogWidget
+from .. import ui
 
 
 class Dialog:
@@ -86,7 +86,7 @@ class DataDialog(Dialog):
 
 
 class FieldDialog(DataDialog):
-    ui_cls = FieldDialogWidget
+    ui_cls = ui.cls('field_dialog')
 
     def __init__(self, parent, fields, auto_keybinds=True):
         self._group = FieldGroup(fields, update_cb=self.handle_update, auto_keybinds=auto_keybinds)

@@ -2,13 +2,17 @@ import time
 
 from .cache import ensure_cached
 from .image import image_resolution
-from .qt.image import load_image, crop_and_pan, scale_image
-from .qt.viewer import ViewerWidget
+from . import ui
+
+# TEMP: to remove once image functions refactored
+load_image = ui.cls('load_image')
+crop_and_pan = ui.cls('crop_and_pan')
+scale_image = ui.cls('scale_image')
 
 
 class Viewer:
     def __init__(self, app, scroll_cb, close_cb):
-        self.ui = ViewerWidget(mouse_cb=self.handle_mouse)
+        self.ui = ui.cls('viewer')(mouse_cb=self.handle_mouse)
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app

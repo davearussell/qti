@@ -1,5 +1,5 @@
 import time
-from .qt.status_bar import StatusBarWidget
+from . import ui
 
 
 class StatusBar:
@@ -9,7 +9,7 @@ class StatusBar:
         self.timer = app.timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
-        self.ui = StatusBarWidget()
+        self.ui = ui.cls('status_bar')()
 
     def set_text(self, msg, duration_s=None, priority=0):
         """

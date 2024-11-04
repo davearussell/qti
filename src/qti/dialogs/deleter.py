@@ -1,7 +1,7 @@
 import os
 
 from .common import Dialog
-from ..qt.dialogs.choice import ChoiceDialogWidget
+from .. import ui
 
 
 def delete_nodes(app, nodes, delete_mode):
@@ -40,7 +40,7 @@ def delete_nodes(app, nodes, delete_mode):
 
 
 class DeleterDialog(Dialog):
-    ui_cls = ChoiceDialogWidget
+    ui_cls = ui.cls('choice_dialog')
     actions = {
         'yes': 'y',
         'no': 'n',

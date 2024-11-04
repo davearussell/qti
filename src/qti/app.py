@@ -8,6 +8,7 @@ from . import cache
 from . import keys
 from . import macros
 from . import timer
+from . import ui
 
 from .status_bar import StatusBar
 from .dialogs.editor import EditorDialog
@@ -24,12 +25,10 @@ from .background import BackgroundCacher
 from .dialogs.search import SearchDialog
 from .datastore import Datastore
 
-from .qt.app import QTApp
-
 
 class Application:
     def __init__(self, json_file):
-        self.ui = QTApp(self.handle_keydown, self.exit_hook)
+        self.ui = ui.cls('app')(self.handle_keydown, self.exit_hook)
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
         self.keybinds = keys.Keybinds(self.store)

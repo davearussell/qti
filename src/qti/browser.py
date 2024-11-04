@@ -3,7 +3,7 @@ from .viewer import Viewer
 from .pathbar import Pathbar
 from .tree import TreeError
 
-from .qt.browser import BrowserWidget
+from . import ui
 
 
 class Browser:
@@ -26,11 +26,11 @@ class Browser:
                              scroll_cb=self._target_updated,
                              close_cb=self.unselect)
         self.pathbar = Pathbar(click_cb=self.unselect)
-        self.ui = BrowserWidget(grid=self.grid.ui,
-                                viewer=self.viewer.ui,
-                                status_bar=self.app.status_bar.ui,
-                                pathbar=self.pathbar.ui,
-                                keydown_cb=self.handle_keydown)
+        self.ui = ui.cls('browser')(grid=self.grid.ui,
+                                    viewer=self.viewer.ui,
+                                    status_bar=self.app.status_bar.ui,
+                                    pathbar=self.pathbar.ui,
+                                    keydown_cb=self.handle_keydown)
 
     def _target_updated(self, target_i):
         self.target = None if target_i is None else self.node.children[target_i]

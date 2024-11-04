@@ -1,12 +1,12 @@
 import copy
 
 from .. import template
-from ..qt.dialogs.bulk_edit import BulkEditDialogWidget
+from ..import ui
 from .common import DataDialog
 
 
 class BulkEditDialog(DataDialog):
-    ui_cls = BulkEditDialogWidget
+    ui_cls = ui.cls('bulk_edit_dialog')
 
     def __init__(self, app, node):
         self.app = app

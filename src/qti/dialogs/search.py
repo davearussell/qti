@@ -1,11 +1,11 @@
-from ..qt.dialogs.search import SearchDialogWidget
+from .. import ui
 from .common import Dialog
 
 
 class SearchDialog(Dialog):
     title = "Search"
     actions = {'accept': ''}
-    ui_cls = SearchDialogWidget
+    ui_cls = ui.cls('search_dialog')
 
     def __init__(self, app):
         self.ui_args  = {'update_cb': self.search_text_changed, 'commit_cb': self.find_next}

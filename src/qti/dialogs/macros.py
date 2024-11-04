@@ -1,7 +1,7 @@
 import copy
 from .common import DataDialog
 from .simple import LineEditDialog
-from ..qt.dialogs.macros import MacroDialogWidget
+from .. import ui
 from ..macros import Command
 
 
@@ -22,7 +22,7 @@ class NewDialog(LineEditDialog):
 
 class MacroDialog(DataDialog):
     title = 'Macros'
-    ui_cls = MacroDialogWidget
+    ui_cls = ui.cls('macro_dialog')
 
     def __init__(self, app):
         self.app = app

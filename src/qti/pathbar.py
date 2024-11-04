@@ -1,4 +1,4 @@
-from .qt.pathbar import PathbarWidget
+from . import ui
 
 
 class PathbarEntry:
@@ -13,7 +13,7 @@ class PathbarEntry:
 class Pathbar:
     def __init__(self, click_cb):
         self.click_cb = click_cb
-        self.ui = PathbarWidget(self.entry_clicked)
+        self.ui = ui.cls('pathbar')(self.entry_clicked)
         self.fade_target = False
 
     def entry_clicked(self, entry):

@@ -57,7 +57,7 @@ class Window(QMainWindow):
         self.app.keydown_hook(keys.event_keystroke(event))
 
 
-class QTApp(QApplication):
+class App(QApplication):
     def __init__(self, keydown_hook, exit_hook):
         self.keydown_hook = keydown_hook
         self.exit_hook = exit_hook
