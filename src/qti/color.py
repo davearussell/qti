@@ -1,4 +1,7 @@
-from .qt.color import to_rgb
+from colour import Color as CColor
+
+def to_rgb(name):
+    return [round(v * 255) for v in CColor(name).rgb]
 
 
 # We inherit from str for convenience: it allows us to pass Color objects
