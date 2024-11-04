@@ -2,11 +2,11 @@ from .qt.grid import GridWidget
 
 
 class Grid:
-    def __init__(self, scroll_cb=None, select_cb=None, unselect_cb=None, no_selection=False):
+    def __init__(self, settings, scroll_cb=None, select_cb=None, unselect_cb=None, no_selection=False):
         self.scroll_cb = scroll_cb or (lambda x: None)
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
-        self.ui = GridWidget(click_cb=self.handle_click)
+        self.ui = GridWidget(settings, click_cb=self.handle_click)
         self.target_i = None
         self.mark_i = None
         self.no_selection = no_selection
@@ -50,11 +50,11 @@ class Grid:
         lo, hi = sorted([mark, self.target_i])
         return range(lo, hi + 1)
 
-    def load(self, renderers, target_i=None):
+    def load(self, cells, target_i=None):
         self.clear_mark()
-        if renderers and target_i is None:
+        if cells and target_i is None:
             target_i = 0
-        self.ui.load(renderers)
+        self.ui.load(cells)
         self.set_target_index(target_i)
 
     def set_target_index(self, target_i, ensure_visible=True):

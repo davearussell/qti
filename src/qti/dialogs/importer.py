@@ -11,7 +11,6 @@ from .common import DataDialog
 from .fields import FieldGroup, TextField, ReadOnlyField
 
 from ..qt.dialogs.importer import ImporterDialogWidget
-from ..qt.browser import make_grid_cell
 
 
 def find_all_images(path):
@@ -90,13 +89,10 @@ class ImporterDialog(DataDialog):
         return field_group
 
     def setup_grid(self):
-        grid = Grid(scroll_cb=self.grid_target_updated, no_selection=True)
-        renderers = [partial(make_grid_cell,
-                             image_path=image,
-                             size=self.app.settings.thumbnail_size,
-                             settings=self.app.settings)
-                     for image in self.images]
-        grid.load(renderers)
+        grid = Grid(self.app.settings, scroll_cb=self.grid_target_updated, no_selection=True)
+        cells = [{'image_path': image, 'size': self.app.settings.thumbnail_size}
+                 for image in self.images]
+        grid.load(cells)
         return grid
 
     def dirty(self):

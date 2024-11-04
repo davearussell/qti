@@ -2,10 +2,15 @@ from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QPalette
 
+from ..cache import load_scaled
+from .image import center_image
 
-class _Cell:
-    def __init__(self, renderer):
-        self.renderer = renderer
+
+class Cell:
+    def __init__(self, settings, image_path, size):
+        self.image_path = image_path
+        self.size = size
+        self.settings = settings
         self._pixmap = None
         self.row = None
         self.col = None
@@ -16,8 +21,12 @@ class _Cell:
 
     def pixmap(self):
         if self._pixmap is None:
-            self._pixmap = self.renderer()
+            self._pixmap = self.render()
         return self._pixmap
+
+    def render(self):
+        image = load_scaled(self.image_path, self.size)
+        return center_image(image, self.size, background_color=self.settings.background_color)
 
 
 class GridBody(QWidget):
@@ -68,8 +77,8 @@ class GridBody(QWidget):
     def viewport(self):
         return QRect(0, self.pos, *self.size().toTuple())
 
-    def load(self, renderers):
-        self.cells = [_Cell(renderer) for renderer in renderers]
+    def load(self, cells):
+        self.cells = cells #[self.renderer(self.settings, **cell_dict) for cell_dict in cell_dicts]
         self.pos = 0
         self.mark_i = None
         self.pos_updated.emit(0)
@@ -160,9 +169,12 @@ class GridBody(QWidget):
 
 
 class GridWidget(QFrame):
-    def __init__(self, click_cb):
+    renderer = Cell
+
+    def __init__(self, settings, click_cb):
         super().__init__()
         self.setObjectName("Grid")
+        self.settings = settings
         self.click_cb = click_cb
 
         self.body = GridBody()
@@ -178,8 +190,12 @@ class GridWidget(QFrame):
         self.layout().addWidget(self.body)
         self.layout().addWidget(self.scroll_bar)
 
-    def load(self, renderers):
-        self.body.load(renderers)
+    def set_renderer(self, cls):
+        self.renderer = cls
+
+    def load(self, cell_dicts):
+        cells = [self.renderer(self.settings, **cell_dict) for cell_dict in cell_dicts]
+        self.body.load(cells)
         self.scroll_bar.setSingleStep(self.body.row_height)
 
     def set_target_i(self, i, ensure_visible=True):

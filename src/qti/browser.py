@@ -1,10 +1,9 @@
-from functools import partial
 from .grid import Grid
 from .viewer import Viewer
 from .pathbar import Pathbar
 from .tree import TreeError
 
-from .qt.browser import BrowserWidget, make_grid_cell
+from .qt.browser import BrowserWidget
 
 
 class Browser:
@@ -19,7 +18,8 @@ class Browser:
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.grid = Grid(scroll_cb=self._target_updated,
+        self.grid = Grid(settings=self.app.settings,
+                         scroll_cb=self._target_updated,
                          select_cb=self._select,
                          unselect_cb=self.unselect)
         self.viewer = Viewer(self.app,
@@ -49,15 +49,16 @@ class Browser:
         self.set_mode(mode)
         if self.mode == 'grid':
             self.pathbar.fade_target = True
-            renderers = [partial(make_grid_cell,
-                                 image_path=next(child.images()).abspath,
-                                 size=self.app.settings.thumbnail_size,
-                                 count=len(child.children),
-                                 label=child.name if child.children else None,
-                                 settings=self.app.settings)
-                         for child in self.node.children]
+            cells = [
+                {
+                    'image_path': next(child.images()).abspath,
+                    'label': child.name if child.children else None,
+                    'count': len(child.children),
+                }
+                for child in self.node.children
+            ]
             target_i = self.node.children.index(self.target) if self.target else None
-            self.grid.load(renderers, target_i=target_i)
+            self.grid.load(cells, target_i=target_i)
         else:
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
