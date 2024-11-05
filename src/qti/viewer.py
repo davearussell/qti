@@ -1,7 +1,8 @@
 import time
 
 from .cache import ensure_cached
-from .qt.image import load_image, crop_and_pan, scale_image, image_size
+from .image import image_resolution
+from .qt.image import load_image, crop_and_pan, scale_image
 from .qt.viewer import ViewerWidget
 
 
@@ -30,13 +31,26 @@ class Viewer:
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.base_pixmap = load_image(ensure_cached(self.target.abspath, self.ui.size))
-        self.raw_pixmap = None
-        self.base_zoom = None
-        self.zoom_level = 0
-        self.xoff = self.yoff = None
-        self.ui.load(self.base_pixmap)
+        self.init_image(self.target.abspath, self.ui.size)
         self.scroll_cb(node.children.index(target))
+
+    def init_image(self, image_path, window_size):
+        self.window_size = window_size
+        self.scaled_path = ensure_cached(image_path, window_size)
+        self.scaled_size = image_resolution(self.scaled_path)
+        self.image_size = image_resolution(self.target.abspath)
+        self.base_zoom = self.scaled_size[0] / self.image_size[0]
+        self.base_image = load_image(self.scaled_path)
+        self.raw_image = None
+        self.reset_zoom()
+
+    def reset_zoom(self, _action=None):
+        self.zoom_level = 0
+        self.view_width = int(self.window_size[0] / self.base_zoom)
+        self.view_height = int(self.window_size[1] / self.base_zoom)
+        self.xoff = (self.image_size[0] - self.view_width) // 2
+        self.yoff = (self.image_size[1] - self.view_height) // 2
+        self.ui.load(self.base_image)
 
     def scroll(self, action):
         images = self.node.children
@@ -82,32 +96,15 @@ class Viewer:
         return False
 
     def redraw_image(self):
-        viewport = crop_and_pan(self.raw_pixmap, (self.view_width, self.view_height),
+        viewport = crop_and_pan(self.raw_image, (self.view_width, self.view_height),
                                 -self.xoff, -self.yoff, self.app.settings.background_color)
         self.ui.load(scale_image(viewport, self.ui.size))
 
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
 
-    def _reset_zoom(self):
-        self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
-        self.zoom_level = 0
-        iw, ih = self.image_size
-        sw, sh = self.ui.size
-        self.view_width = int(sw / self.zoom_factor())
-        self.view_height = int(sh / self.zoom_factor())
-        self.xoff = (iw - self.view_width) // 2
-        self.yoff = (ih - self.view_height) // 2
-
-    def load_raw_pixmap(self):
-        self.raw_pixmap = load_image(self.target.abspath)
-        self.image_size = image_size(self.raw_pixmap)
-        self._reset_zoom()
-
-    def reset_zoom(self, _action=None):
-        if self.raw_pixmap is not None:
-            self._reset_zoom()
-            self.redraw_image()
+    def load_raw_image(self):
+        self.raw_image = load_image(self.target.abspath)
 
     def handle_mouse(self, event_type, position, value):
         if event_type == 'wheel':
@@ -127,8 +124,8 @@ class Viewer:
         sx, sy = pos
         sw, sh = self.ui.size
 
-        if self.raw_pixmap is None:
-            self.load_raw_pixmap()
+        if self.raw_image is None:
+            self.load_raw_image()
 
         old_zoom = self.zoom_factor()
         iw, ih = self.image_size
@@ -145,8 +142,8 @@ class Viewer:
         self.redraw_image()
 
     def start_panning(self, pos):
-        if self.raw_pixmap is None:
-            self.load_raw_pixmap()
+        if self.raw_image is None:
+            self.load_raw_image()
         self.click_pos = pos
 
     def pan(self, pos):

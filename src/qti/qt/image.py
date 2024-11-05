@@ -10,10 +10,6 @@ def scale_image(image, size):
     return image.scaled(QSize(*size), aspectMode=Qt.KeepAspectRatio, mode=Qt.SmoothTransformation)
 
 
-def image_size(image):
-    return image.size().toTuple()
-
-
 def crop_and_pan(image, size, x, y, background_color='black'):
     viewport = QPixmap(QSize(*size))
     viewport.fill(str(background_color))
