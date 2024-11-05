@@ -35,11 +35,7 @@ class Viewer:
         self.base_zoom = None
         self.zoom_level = 0
         self.xoff = self.yoff = None
-        if target.spec.get('zoom') is not None:
-            self.load_raw_pixmap(zoom=target.spec['zoom'], pan=target.spec['pan'])
-            self.redraw_image()
-        else:
-            self.ui.load(self.base_pixmap)
+        self.ui.load(self.base_pixmap)
         self.scroll_cb(node.children.index(target))
 
     def scroll(self, action):
@@ -93,23 +89,20 @@ class Viewer:
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
 
-    def _reset_zoom(self, zoom=0, pan=None):
+    def _reset_zoom(self):
         self.base_zoom = self.base_pixmap.width() / self.raw_pixmap.width()
-        self.zoom_level = zoom
+        self.zoom_level = 0
         iw, ih = self.image_size
         sw, sh = self.ui.size
         self.view_width = int(sw / self.zoom_factor())
         self.view_height = int(sh / self.zoom_factor())
-        if pan:
-            self.xoff, self.yoff = pan
-        else:
-            self.xoff = (iw - self.view_width) // 2
-            self.yoff = (ih - self.view_height) // 2
+        self.xoff = (iw - self.view_width) // 2
+        self.yoff = (ih - self.view_height) // 2
 
-    def load_raw_pixmap(self, **kwargs):
+    def load_raw_pixmap(self):
         self.raw_pixmap = load_image(self.target.abspath)
         self.image_size = image_size(self.raw_pixmap)
-        self._reset_zoom(**kwargs)
+        self._reset_zoom()
 
     def reset_zoom(self, _action=None):
         if self.raw_pixmap is not None:
