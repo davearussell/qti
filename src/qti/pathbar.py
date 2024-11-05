@@ -1,4 +1,13 @@
-from .qt.pathbar import PathbarWidget, PathbarEntry
+from .qt.pathbar import PathbarWidget
+
+
+class PathbarEntry:
+    def __init__(self, name, index, total, fade, ctx=None):
+        self.name = name
+        self.index = index
+        self.total = total
+        self.fade = fade
+        self.ctx = ctx
 
 
 class Pathbar:

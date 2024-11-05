@@ -2,15 +2,6 @@ from PySide6.QtWidgets import QWidget, QLabel, QFrame, QHBoxLayout
 from PySide6.QtCore import Qt, Signal
 
 
-class PathbarEntry:
-    def __init__(self, name, index, total, fade, ctx=None):
-        self.name = name
-        self.index = index
-        self.total = total
-        self.fade = fade
-        self.ctx = ctx
-
-
 class PathbarLabel(QLabel):
     def __init__(self, text, style):
         super().__init__()
