@@ -3,17 +3,17 @@ from PySide6.QtGui import QPainter, QFont, QColor
 from PySide6.QtCore import Qt
 
 from .keys import event_keystroke
-from .grid import Cell
+from .grid import QCell
 
 
-class BrowserCell(Cell):
+class BrowserCell(QCell):
     def __init__(self, settings, image_path, label, count):
         super().__init__(settings, image_path, settings.thumbnail_size)
         self.label = label
         self.count = count
 
     def render(self):
-        pixmap = super().render().image
+        pixmap = super().render()
 
         p = QPainter(pixmap)
         p.setPen(str(self.settings.text_color))

@@ -1,4 +1,57 @@
 from . import ui
+from .cache import ensure_cached
+
+
+class Cell:
+    image_cls = None # subclasses must set these
+    rect_cls = None
+
+    def __init__(self, settings, image_path, size):
+        self.settings = settings
+        self.image_path = image_path
+        self.size = size
+        self._contents = None
+        self.row = None
+        self.col = None
+        self.index = None
+        self.border_rect = None
+        self.contents_rect = None
+        self.spacing_rect = None
+
+    def contents(self):
+        if self._contents is None:
+            self._contents = self.render()
+        return self._contents
+
+    def render(self):
+        image = self.image_cls(ensure_cached(self.image_path, self.size))
+        return image.center(self.size, background_color=self.settings.background_color).image
+
+
+def layout_cells(cells, grid_width, cell_size, spacing, border_width):
+    cell_width, cell_height = cell_size
+    col_width = cell_width + 2 * border_width + spacing
+    row_height = cell_height + 2 * border_width + spacing
+    n_cols = max(1, (grid_width - spacing) // col_width)
+
+    grid = []
+    for i, cell in enumerate(cells):
+        cell.index = i
+        cell.row, cell.col = divmod(i, n_cols)
+        if cell.row >= len(grid):
+            grid.append([])
+        assert len(grid[cell.row]) == cell.col
+        grid[cell.row].append(cell)
+        cell_x = spacing + cell.col * col_width
+        cell_y = spacing + cell.row * row_height
+        cell.border_rect = cell.rect_cls(cell_x, cell_y,
+                                         col_width - spacing, row_height - spacing)
+        cell.contents_rect = cell.rect_cls(cell_x + border_width, cell_y + border_width,
+                                           cell_width, cell_height)
+        cell.spacing_rect = cell.rect_cls(cell_x - spacing, cell_y - spacing,
+                                          col_width + spacing, row_height + spacing)
+
+    return grid
 
 
 class Grid:
@@ -70,7 +123,21 @@ class Grid:
             self.select_cb(self.target_i)
 
     def neighbour(self, direction):
-        return self.ui.neighbour(self.target_i, direction)
+        grid = self.ui.cell_grid()
+        n_cols = len(grid[0])
+        row, col = divmod(self.target_i, n_cols)
+        cell = grid[row][col]
+        if direction in ('left', 'right'):
+            offset = (1 if direction == 'right' else -1)
+            col = (col + offset) % len(grid[row])
+        elif direction in ('up', 'down'):
+            offset = (1 if direction == 'down' else -1)
+            row = (row + offset) % len(grid)
+            if col >= len(grid[row]):
+                col = len(grid[row]) - 1
+        elif direction in ('top', 'bottom'):
+            row = col = (0 if direction == 'top' else -1)
+        return grid[row][col].index
 
     def scroll(self, direction):
         if self.target_i is not None:

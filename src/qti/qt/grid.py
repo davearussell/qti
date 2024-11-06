@@ -2,31 +2,12 @@ from PySide6.QtWidgets import QWidget, QFrame, QScrollBar, QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QPalette
 
-from ..cache import ensure_cached
 from .image import Image
+from ..grid import Cell, layout_cells
 
-
-class Cell:
-    def __init__(self, settings, image_path, size):
-        self.image_path = image_path
-        self.size = size
-        self.settings = settings
-        self._pixmap = None
-        self.row = None
-        self.col = None
-        self.index = None
-        self.border_rect = None
-        self.pixmap_rect = None
-        self.spacing_rect = None
-
-    def pixmap(self):
-        if self._pixmap is None:
-            self._pixmap = self.render()
-        return self._pixmap
-
-    def render(self):
-        image = Image(ensure_cached(self.image_path, self.size))
-        return image.center(self.size, background_color=self.settings.background_color)
+class QCell(Cell):
+    rect_cls = QRect
+    image_cls = Image
 
 
 class GridBody(QWidget):
@@ -42,13 +23,10 @@ class GridBody(QWidget):
         self.setFocusPolicy(Qt.NoFocus)
         self.pos = None
         self.cells = None
-        self.grid_width = None
         self.grid_height = None
         self.grid = None
         self.target_i = None
         self.mark_i = None
-        self.cell_width = None
-        self.cell_height = None
         self.row_height = 0
         self.col_width = 0
         self.selected = QFrame()
@@ -83,38 +61,19 @@ class GridBody(QWidget):
         self.mark_i = None
         self.pos_updated.emit(0)
         if self.cells:
-            pixmap = self.cells[0].pixmap() # NOTE: we require all cells to be the same size
-            self.cell_width = pixmap.width()
-            self.cell_height = pixmap.height()
-            self.row_height = self.cell_height + 2 * self.border_width + self.spacing
-            self.col_width = self.cell_width + 2 * self.border_width + self.spacing
+            cell_width, cell_height = self.cells[0].size
+            self.row_height = cell_height + 2 * self.border_width + self.spacing
+            self.col_width = cell_width + 2 * self.border_width + self.spacing
             self.setMinimumSize(QSize(self.col_width, self.row_height))
         self.setup_grid()
 
     def setup_grid(self):
-        self.grid_width = self.width()
-        self.grid = []
         if self.cells:
-            n_cols = max(1, (self.grid_width - self.spacing) // self.col_width)
-            for i, cell in enumerate(self.cells):
-                cell.index = i
-                cell.row, cell.col = divmod(i, n_cols)
-                if cell.row >= len(self.grid):
-                    self.grid.append([])
-                assert len(self.grid[cell.row]) == cell.col, (cell.row, cell.col)
-                self.grid[cell.row].append(cell)
-                cell_x = self.spacing + cell.col * self.col_width
-                cell_y = self.spacing + cell.row * self.row_height - self.pos
-                cell.border_rect = QRect(cell_x, cell_y,
-                                         self.col_width - self.spacing,
-                                         self.row_height - self.spacing)
-                cell.pixmap_rect = QRect(cell_x + self.border_width, cell_y + self.border_width,
-                                         self.cell_width, self.cell_height)
-                cell.spacing_rect = QRect(cell_x - self.spacing, cell_y - self.spacing,
-                                          self.col_width + self.spacing,
-                                          self.row_height + self.spacing)
+            self.grid = layout_cells(self.cells, self.width(), self.cells[0].size,
+                                     self.spacing, self.border_width)
             self.grid_height = self.cells[-1].spacing_rect.bottom()
         else:
+            self.grid = []
             self.grid_height = 0
         self.height_updated.emit(self.grid_height)
 
@@ -157,8 +116,8 @@ class GridBody(QWidget):
         mark_lo, mark_hi = self.marked_range()
         for i, cell in enumerate(self.cells):
             if cell.border_rect.intersects(self.viewport):
-                pixmap = cell.pixmap()
-                painter.drawPixmap(cell.pixmap_rect.translated(0, -self.pos), pixmap)
+                pixmap = cell.contents()
+                painter.drawPixmap(cell.contents_rect.translated(0, -self.pos), pixmap)
                 if mark_lo <= i <= mark_hi:
                     tmp = (self.selected if i == self.target_i else self.marked)
                     pen = QPen(tmp.palette().color(QPalette.Text))
@@ -169,7 +128,7 @@ class GridBody(QWidget):
 
 
 class GridWidget(QFrame):
-    renderer = Cell
+    renderer = QCell
 
     def __init__(self, settings, click_cb):
         super().__init__()
@@ -210,20 +169,8 @@ class GridWidget(QFrame):
         self.body.mark_i = i
         self.body.repaint()
 
-    def neighbour(self, cell_i, direction):
-        cell = self.body.cells[cell_i]
-        row, col = cell.row, cell.col
-        if direction in ('left', 'right'):
-            offset = (1 if direction == 'right' else -1)
-            col = (col + offset) % len(self.body.grid[row])
-        elif direction in ('up', 'down'):
-            offset = (1 if direction == 'down' else -1)
-            row = (row + offset) % len(self.body.grid)
-            if col >= len(self.body.grid[row]):
-                col = len(self.body.grid[row]) - 1
-        elif direction in ('top', 'bottom'):
-            row = col = (0 if direction == 'top' else -1)
-        return self.body.grid[row][col].index
+    def cell_grid(self):
+        return self.body.grid
 
     def handle_click(self, cell_i, is_double):
         self.click_cb(cell_i, is_double=is_double)
