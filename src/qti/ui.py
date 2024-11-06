@@ -2,12 +2,11 @@ import importlib
 import os
 
 UI_TYPE = os.environ.get('UI', 'qt')
+DEBUG = os.environ.get('DEBUG')
 
 CLASSES = {
     'app': 'app.App',
-    'load_image': 'image.load_image',
-    'scale_image': 'image.scale_image',
-    'crop_and_pan': 'image.crop_and_pan',
+    'image': 'image.Image',
     'browser': 'browser.BrowserWidget',
     'grid': 'grid.GridWidget',
     'viewer': 'viewer.ViewerWidget',
@@ -42,5 +41,6 @@ def cls(name):
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
     except (ModuleNotFoundError, AttributeError):
-        print("WARNING: failed to import %s.%s" % (module_name, class_name))
+        if DEBUG:
+            print("WARNING: failed to import %s.%s" % (module_name, class_name))
         return None

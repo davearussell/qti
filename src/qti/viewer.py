@@ -1,13 +1,9 @@
 import time
 
 from .cache import ensure_cached
-from .image import image_resolution
 from . import ui
 
-# TEMP: to remove once image functions refactored
-load_image = ui.cls('load_image')
-crop_and_pan = ui.cls('crop_and_pan')
-scale_image = ui.cls('scale_image')
+Image = ui.cls('image')
 
 
 class Viewer:
@@ -41,19 +37,17 @@ class Viewer:
     def init_image(self, image_path, window_size):
         self.window_size = window_size
         self.scaled_path = ensure_cached(image_path, window_size)
-        self.scaled_size = image_resolution(self.scaled_path)
-        self.image_size = image_resolution(self.target.abspath)
-        self.base_zoom = self.scaled_size[0] / self.image_size[0]
-        self.base_image = load_image(self.scaled_path)
-        self.raw_image = None
+        self.base_image = Image(self.scaled_path)
+        self.raw_image = Image(self.target.abspath)
+        self.base_zoom = self.base_image.size[0] / self.raw_image.size[0]
         self.reset_zoom()
 
     def reset_zoom(self, _action=None):
         self.zoom_level = 0
         self.view_width = int(self.window_size[0] / self.base_zoom)
         self.view_height = int(self.window_size[1] / self.base_zoom)
-        self.xoff = (self.image_size[0] - self.view_width) // 2
-        self.yoff = (self.image_size[1] - self.view_height) // 2
+        self.xoff = (self.raw_image.size[0] - self.view_width) // 2
+        self.yoff = (self.raw_image.size[1] - self.view_height) // 2
         self.ui.load(self.base_image)
 
     def scroll(self, action):
@@ -100,15 +94,15 @@ class Viewer:
         return False
 
     def redraw_image(self):
-        viewport = crop_and_pan(self.raw_image, (self.view_width, self.view_height),
-                                -self.xoff, -self.yoff, self.app.settings.background_color)
-        self.ui.load(scale_image(viewport, self.ui.size))
+        viewport = self.raw_image.crop_and_pan((self.view_width, self.view_height), -self.xoff,
+                                               -self.yoff, self.app.settings.background_color)
+        self.ui.load(viewport.scale(self.ui.size))
 
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
 
     def load_raw_image(self):
-        self.raw_image = load_image(self.target.abspath)
+        self.raw_image = Image(self.target.abspath)
 
     def handle_mouse(self, event_type, position, value):
         if event_type == 'wheel':
@@ -132,7 +126,7 @@ class Viewer:
             self.load_raw_image()
 
         old_zoom = self.zoom_factor()
-        iw, ih = self.image_size
+        iw, ih = self.raw_image.size
 
         # ix, iy: image pixel we clicked on. Will be centered after zoom
         ix = int(sx / old_zoom) + self.xoff

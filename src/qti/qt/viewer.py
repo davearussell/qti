@@ -9,7 +9,7 @@ class ViewerWidget(QLabel):
         self.mouse_cb = mouse_cb
 
     def load(self, image):
-        self.setPixmap(image)
+        self.setPixmap(image.image)
 
     @property
     def size(self):

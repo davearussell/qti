@@ -1,7 +1,7 @@
 import os
 from functools import partial
 
-from ..image import image_resolution
+from ..image import Image
 
 from .. import template
 from ..grid import Grid
@@ -33,7 +33,7 @@ def make_spec(image_path, root_dir, defaults):
         'path': relpath,
         'name': template.f_title(os.path.splitext(os.path.basename(image_path))[0]),
         'filename': os.path.basename(relpath),
-        'resolution': list(image_resolution(image_path)),
+        'resolution': list(Image(image_path).size),
 
         # These are not saved in the database but may be helpful for templating
         'directory': os.path.dirname(relpath),

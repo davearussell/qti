@@ -13,7 +13,7 @@ class BrowserCell(Cell):
         self.count = count
 
     def render(self):
-        pixmap = super().render()
+        pixmap = super().render().image
 
         p = QPainter(pixmap)
         p.setPen(str(self.settings.text_color))
