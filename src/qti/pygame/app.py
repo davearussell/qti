@@ -10,6 +10,11 @@ def make_gui_settings(settings):
             'bgcolor': settings.background_color,
         },
 
+        'GridWidget': {
+            'cell_size': settings.thumbnail_size,
+            'select_color': settings.selection_color,
+        },
+
     }
 
 
