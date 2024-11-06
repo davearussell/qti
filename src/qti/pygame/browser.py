@@ -27,7 +27,7 @@ class BrowserWidget(VBox):
         if mode == 'grid':
             self.children = [self.scroll]
         else:
-            assert 0
+            self.children = [self.viewer]
         self.relayout()
         self.redraw()
 
