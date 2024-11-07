@@ -64,8 +64,6 @@ class Cacher:
                 if os.path.exists(cached_path):
                     self.skipped += 1
                     continue
-                if not os.path.isdir(os.path.dirname(cached_path)):
-                    os.makedirs(os.path.dirname(cached_path))
                 jobs.append((image_path, size))
         self.total = len(jobs)
         self.jobs = iter(jobs)

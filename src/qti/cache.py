@@ -15,6 +15,11 @@ def cache_path(image_path, size):
 
 def ensure_cached(image_path, size):
     scaled_path = cache_path(image_path, size)
+    if not os.path.exists(os.path.dirname(scaled_path)):
+        try:
+            os.makedirs(os.path.dirname(scaled_path))
+        except FileExistsError:
+            pass
     if not os.path.isfile(scaled_path):
         image = Image.open(image_path)
         old_size = image.size
