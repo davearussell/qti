@@ -67,6 +67,7 @@ class GridWidget(Widget):
 
     cell_size = (100, 100)
     select_color = 'yellow'
+    mark_color = 'orange'
 
     double_click_period = 0.5
 
@@ -78,6 +79,7 @@ class GridWidget(Widget):
         self.cells = []
         self.grid = []
         self.target_i = None
+        self.mark_i = None
         self.yoff = 0
         self.last_click = (0, None) # (timestamp, cell_i)
 
@@ -87,7 +89,8 @@ class GridWidget(Widget):
             self.renderer_ctx = ctx
 
     def set_mark_i(self, mark_i):
-        pass
+        self.mark_i = mark_i
+        self.redraw()
 
     def set_target_i(self, target_i, ensure_visible=False):
         self.target_i = target_i
@@ -108,6 +111,7 @@ class GridWidget(Widget):
         return self.grid
 
     def load(self, cell_dicts):
+        self.mark_i = None
         self.cells = [self.renderer(self, self.renderer_ctx, **cell_dict)
                       for cell_dict in cell_dicts]
         self.setup_grid()
@@ -140,12 +144,18 @@ class GridWidget(Widget):
             top = 0
             bottom = self.height
 
+        if self.mark_i is None:
+            mark_lo = mark_hi = self.target_i
+        else:
+            mark_lo, mark_hi = min(self.mark_i, self.target_i), max(self.mark_i, self.target_i)
+
         for cell in self.cells:
             if cell.border_rect.bottom < top:
                 continue
             if cell.border_rect.top >= bottom:
                 break
             self.surface.blit(cell.contents(), cell.contents_rect.move(0, -top))
-            if cell.index == self.target_i:
-                pygame.draw.rect(self.surface, self.select_color,
-                                 cell.border_rect.move(0, -top), self.cell_border_thickness)
+            if mark_lo <= cell.index <= mark_hi:
+                color = self.select_color if cell.index == self.target_i else self.mark_color
+                pygame.draw.rect(self.surface, color, cell.border_rect.move(0, -top),
+                                 self.cell_border_thickness)

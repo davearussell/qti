@@ -19,6 +19,7 @@ def make_gui_settings(settings):
         'GridWidget': {
             'cell_size': settings.thumbnail_size,
             'select_color': settings.selection_color,
+            'mark_color': settings.mark_color,
         },
 
         'BrowserWidget': {
