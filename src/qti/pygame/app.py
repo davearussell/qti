@@ -2,9 +2,15 @@ import pygame
 
 from xui import app as xapp
 
+# HACK: makes pygame render fonts at about the same size as qt
+FONT_RATIO = 1.35
 
 def make_gui_settings(settings):
     return {
+
+        'font': settings.font,
+        'color': settings.text_color,
+        'font_size': int(settings.font_size * FONT_RATIO),
 
         'Screen': {
             'bgcolor': settings.background_color,
@@ -13,6 +19,10 @@ def make_gui_settings(settings):
         'GridWidget': {
             'cell_size': settings.thumbnail_size,
             'select_color': settings.selection_color,
+        },
+
+        'StatusBarWidget': {
+            'font_size': int(settings.header_font_size * FONT_RATIO),
         },
 
     }
