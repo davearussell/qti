@@ -72,9 +72,9 @@ class MetadataEditorDialog(DataDialog):
                     self.tree.rename_key(old['name'], new['name'])
                 if new['type'] != old['type']:
                     is_multi = new['type'] == 'multi'
-                    self.metadata.lut[name].in_hierarchy = new['type'] == 'hierarchy'
+                    self.metadata.lut[new['name']].in_hierarchy = new['type'] == 'hierarchy'
                     if is_multi != (old['type'] == 'multi'):
-                        self.metadata.lut[name].multi = is_multi
+                        self.metadata.lut[new['name']].multi = is_multi
                         self.tree.set_key_multi(name, is_multi)
         self.metadata.keys = [self.metadata.lut[entry['name']] for entry in self.data]
 
