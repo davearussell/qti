@@ -100,9 +100,9 @@ class ImporterDialog(DataDialog):
 
     def get_default_values(self):
         try:
-            image = next(self.node.images())
+            image_spec = next(self.node.images()).spec
         except StopIteration:
-            return {}
+            image_spec = {}
         default_values = {}
         seen_our_node = not self.node.parent
         for key in self.library.metadata.hierarchy():
