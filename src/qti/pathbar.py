@@ -11,9 +11,9 @@ class PathbarEntry:
 
 
 class Pathbar:
-    def __init__(self, click_cb):
+    def __init__(self, app, click_cb):
         self.click_cb = click_cb
-        self.ui = ui.cls('pathbar')(self.entry_clicked)
+        self.ui = ui.cls('pathbar')(app.ui, self.entry_clicked)
         self.fade_target = False
 
     def entry_clicked(self, entry):

@@ -43,7 +43,7 @@ class BrowserCell(QCell):
 
 
 class BrowserWidget(QWidget):
-    def __init__(self, grid, viewer, status_bar, pathbar, keydown_cb):
+    def __init__(self, app, grid, viewer, status_bar, pathbar, keydown_cb):
         super().__init__()
         self.pathbar = pathbar
         self.status_bar = status_bar

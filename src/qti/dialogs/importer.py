@@ -89,7 +89,7 @@ class ImporterDialog(DataDialog):
         return field_group
 
     def setup_grid(self):
-        grid = Grid(self.app.settings, scroll_cb=self.grid_target_updated, no_selection=True)
+        grid = Grid(self.app, scroll_cb=self.grid_target_updated, no_selection=True)
         cells = [{'image_path': image, 'size': self.app.settings.thumbnail_size}
                  for image in self.images]
         grid.load(cells)

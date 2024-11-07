@@ -55,11 +55,11 @@ def layout_cells(cells, grid_width, cell_size, spacing, border_width):
 
 
 class Grid:
-    def __init__(self, settings, scroll_cb=None, select_cb=None, unselect_cb=None, no_selection=False):
+    def __init__(self, app, scroll_cb=None, select_cb=None, unselect_cb=None, no_selection=False):
         self.scroll_cb = scroll_cb or (lambda x: None)
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
-        self.ui = ui.cls('grid')(settings, click_cb=self.handle_click)
+        self.ui = ui.cls('grid')(app.ui, click_cb=self.handle_click)
         self.target_i = None
         self.mark_i = None
         self.no_selection = no_selection

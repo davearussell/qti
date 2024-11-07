@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QLabel
 
 
 class ViewerWidget(QLabel):
-    def __init__(self, mouse_cb):
+    def __init__(self, app, mouse_cb):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
         self.mouse_cb = mouse_cb

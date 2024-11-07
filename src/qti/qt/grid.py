@@ -130,10 +130,10 @@ class GridBody(QWidget):
 class GridWidget(QFrame):
     renderer = QCell
 
-    def __init__(self, settings, click_cb):
+    def __init__(self, app, click_cb):
         super().__init__()
         self.setObjectName("Grid")
-        self.settings = settings
+        self.settings = app.settings
         self.click_cb = click_cb
 
         self.body = GridBody()

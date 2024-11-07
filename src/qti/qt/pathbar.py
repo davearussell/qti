@@ -27,7 +27,7 @@ class EntryLabel(PathbarLabel):
 class PathbarWidget(QFrame):
     fade_target = False
 
-    def __init__(self, click_cb):
+    def __init__(self, app, click_cb):
         super().__init__()
         self.setProperty("qtiOverlay", "true")
         self.layout = QHBoxLayout()

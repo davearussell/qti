@@ -18,15 +18,16 @@ class Browser:
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.grid = Grid(settings=self.app.settings,
+        self.grid = Grid(self.app,
                          scroll_cb=self._target_updated,
                          select_cb=self._select,
                          unselect_cb=self.unselect)
         self.viewer = Viewer(self.app,
                              scroll_cb=self._target_updated,
                              close_cb=self.unselect)
-        self.pathbar = Pathbar(click_cb=self.unselect)
-        self.ui = ui.cls('browser')(grid=self.grid.ui,
+        self.pathbar = Pathbar(self.app, click_cb=self.unselect)
+        self.ui = ui.cls('browser')(self.app.ui,
+                                    grid=self.grid.ui,
                                     viewer=self.viewer.ui,
                                     status_bar=self.app.status_bar.ui,
                                     pathbar=self.pathbar.ui,

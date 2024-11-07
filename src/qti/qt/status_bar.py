@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QLabel, QFrame, QHBoxLayout
 
 
 class StatusBarWidget(QFrame):
-    def __init__(self, text=''):
+    def __init__(self, app, text=''):
         super().__init__()
         self.setProperty("qtiOverlay", "true")
 

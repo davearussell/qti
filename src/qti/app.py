@@ -28,9 +28,9 @@ from .datastore import Datastore
 
 class Application:
     def __init__(self, json_file):
-        self.ui = ui.cls('app')(self.handle_keydown, self.exit_hook)
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
+        self.ui = ui.cls('app')(self.settings, self.handle_keydown, self.exit_hook)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata

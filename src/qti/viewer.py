@@ -8,7 +8,7 @@ Image = ui.cls('image')
 
 class Viewer:
     def __init__(self, app, scroll_cb, close_cb):
-        self.ui = ui.cls('viewer')(mouse_cb=self.handle_mouse)
+        self.ui = ui.cls('viewer')(app.ui, mouse_cb=self.handle_mouse)
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app
