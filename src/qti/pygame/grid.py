@@ -35,7 +35,7 @@ def layout_cells(cells, grid_width, cell_size, spacing, border_width):
 
 
 class Cell:
-    def __init__(self, grid, image_path):
+    def __init__(self, grid, ctx, image_path):
         self.grid = grid
         self.image_path = image_path
         self._contents = None
@@ -72,6 +72,7 @@ class GridWidget(Widget):
 
     def __init__(self, app, click_cb):
         super().__init__()
+        self.renderer_ctx = None
         self.app = app
         self.click_cb = click_cb
         self.cells = []
@@ -80,8 +81,10 @@ class GridWidget(Widget):
         self.yoff = 0
         self.last_click = (0, None) # (timestamp, cell_i)
 
-    def set_renderer(self, cls):
+    def set_renderer(self, cls, ctx=None):
         self.renderer = cls
+        if ctx is not None:
+            self.renderer_ctx = ctx
 
     def set_mark_i(self, mark_i):
         pass
@@ -105,7 +108,7 @@ class GridWidget(Widget):
         return self.grid
 
     def load(self, cell_dicts):
-        self.cells = [self.renderer(self, **cell_dict)
+        self.cells = [self.renderer(self, self.renderer_ctx, **cell_dict)
                       for cell_dict in cell_dicts]
         self.setup_grid()
         self.redraw()

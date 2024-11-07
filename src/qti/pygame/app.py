@@ -21,6 +21,11 @@ def make_gui_settings(settings):
             'select_color': settings.selection_color,
         },
 
+        'BrowserWidget': {
+            'name_size': int(settings.header_font_size * FONT_RATIO),
+            'count_size': int(2 * settings.header_font_size * FONT_RATIO),
+        },
+
         'StatusBarWidget': {
             'font_size': int(settings.header_font_size * FONT_RATIO),
         },
