@@ -25,6 +25,11 @@ def make_gui_settings(settings):
             'font_size': int(settings.header_font_size * FONT_RATIO),
         },
 
+        'PathbarWidget': {
+            'font_size': int(settings.header_font_size * FONT_RATIO),
+            'sep_color': settings.pathbar_separator,
+        },
+
     }
 
 

@@ -19,7 +19,7 @@ class BrowserWidget(VBox):
         self.grid = grid
         self.scroll = ScrollArea(self.grid, right_bar=True, greedy_height=True)
         self.viewer = viewer
-        self.pathbar = pathbar
+        self.pathbar = ScrollArea(pathbar, horizontal=True, greedy_width=True)
         self.status_bar = status_bar
         self.grid.set_renderer(BrowserCell)
 
