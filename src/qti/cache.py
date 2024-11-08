@@ -10,7 +10,8 @@ def set_root_dir(root_dir): # Called by App.__init__
 
 def cache_path(image_path, size):
     relpath = os.path.relpath(image_path, ROOT_DIR)
-    return os.path.join(ROOT_DIR, '.cache', '%dx%d' % tuple(size), relpath)
+    as_jpg = os.path.splitext(relpath)[0] + '.jpg'
+    return os.path.join(ROOT_DIR, '.cache', '%dx%d' % tuple(size), as_jpg)
 
 
 def ensure_cached(image_path, size):
@@ -22,6 +23,8 @@ def ensure_cached(image_path, size):
             pass
     if not os.path.isfile(scaled_path):
         image = Image.open(image_path)
+        if image.mode == 'RGBA':
+            image = image.convert('RGB')
         old_size = image.size
         ratio = min(size[0] / old_size[0], size[1] / old_size[1])
         new_size = (int(old_size[0] * ratio), int(old_size[1] * ratio))
