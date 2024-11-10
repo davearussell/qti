@@ -10,6 +10,7 @@ def make_gui_settings(settings):
 
         'font': settings.font,
         'color': settings.text_color,
+        'border_color': settings.text_color,
         'font_size': int(settings.font_size * FONT_RATIO),
 
         'Screen': {
@@ -29,6 +30,10 @@ def make_gui_settings(settings):
 
         'StatusBarWidget': {
             'font_size': int(settings.header_font_size * FONT_RATIO),
+        },
+
+        'DialogWidget': {
+            'header_font_size': int(settings.header_font_size * FONT_RATIO),
         },
 
         'PathbarWidget': {
