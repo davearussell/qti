@@ -46,7 +46,7 @@ class ImporterDialog(DataDialog):
     title = 'Import images'
     ui_cls = ui.cls('importer_dialog')
     actions = {
-        'accept': None,
+        'ok': None,
         'cancel': None,
     }
 

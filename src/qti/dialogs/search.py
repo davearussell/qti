@@ -4,7 +4,7 @@ from .common import Dialog
 
 class SearchDialog(Dialog):
     title = "Search"
-    actions = {'accept': ''}
+    actions = {'ok': ''}
     ui_cls = ui.cls('search_dialog')
 
     def __init__(self, app):

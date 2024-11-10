@@ -3,7 +3,7 @@ from .. import ui
 
 
 class InfoDialog(Dialog):
-    actions = {'accept': None}
+    actions = {'ok': None}
     ui_cls = ui.cls('label_dialog')
 
     def __init__(self, app, parent, text, **kwargs):
@@ -12,7 +12,7 @@ class InfoDialog(Dialog):
 
 
 class LineEditDialog(Dialog):
-    actions = {'accept': None, 'cancel': None}
+    actions = {'ok': None, 'cancel': None}
     ui_cls = ui.cls('line_edit_dialog')
 
     def __init__(self, app, parent, **kwargs):

@@ -7,7 +7,7 @@ class Dialog:
     ui_args = {}
     title = 'Dialog'
     actions = {
-        'accept': None,
+        'ok': None,
         'cancel': None,
     }
 
@@ -15,13 +15,13 @@ class Dialog:
         self.app = app
         self.parent = parent
         self.action_cbs = {
-            'accept': self.accept,
+            'ok': self.accept,
             'yes': self.accept,
             'cancel': self.cancel,
             'no': self.cancel,
             'apply': self.apply,
         }
-        assert all(k in self.action_cbs for k in self.actions)
+        assert all(k in self.action_cbs for k in self.actions), self.actions
         self.ui = self.make_ui()
         self.accepted = False
 
@@ -62,7 +62,7 @@ class Dialog:
 
 class DataDialog(Dialog):
     actions = {
-        'accept': None,
+        'ok': None,
         'apply': None,
         'cancel': None,
     }

@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from ..keys import event_keystroke
 
 BUTTON_TYPES = {
-    'accept': QDialogButtonBox.Ok,
+    'ok': QDialogButtonBox.Ok,
     'cancel': QDialogButtonBox.Cancel,
     'apply': QDialogButtonBox.Apply,
     'yes': QDialogButtonBox.Yes,
@@ -54,7 +54,7 @@ class DialogWidget(QDialog):
             super().reject()
 
     def accept(self):
-        self.action_cb('accept') # NOTE: will trigger a call to self.exit(True)
+        self.action_cb('ok') # NOTE: will trigger a call to self.exit(True)
 
     def reject(self):
         self.action_cb('cancel') # NOTE: will trigger a call to self.exit(False)
@@ -82,8 +82,8 @@ class DataDialogWidget(DialogWidget):
     def refresh_buttons(self):
         if 'apply' in self.actions:
             self.action_button('apply').setEnabled(self.valid and self.dirty)
-        if 'accept' in self.actions:
-            self.action_button('accept').setEnabled(self.valid)
+        if 'ok' in self.actions:
+            self.action_button('ok').setEnabled(self.valid)
 
     def set_error(self, error):
         self.valid = not error
