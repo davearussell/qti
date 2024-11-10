@@ -16,9 +16,12 @@ class Dialog:
         self.parent = parent
         self.action_cbs = {
             'accept': self.accept,
+            'yes': self.accept,
             'cancel': self.cancel,
+            'no': self.cancel,
             'apply': self.apply,
         }
+        assert all(k in self.action_cbs for k in self.actions)
         self.ui = self.make_ui()
         self.accepted = False
 

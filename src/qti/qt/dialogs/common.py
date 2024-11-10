@@ -4,14 +4,6 @@ from PySide6.QtCore import Qt
 
 from ..keys import event_keystroke
 
-ACTION_NAMES = {
-    QDialogButtonBox.AcceptRole: 'accept',
-    QDialogButtonBox.YesRole: 'accept',
-    QDialogButtonBox.RejectRole: 'cancel',
-    QDialogButtonBox.NoRole: 'cancel',
-    QDialogButtonBox.ApplyRole: 'apply',
-}
-
 BUTTON_TYPES = {
     'accept': QDialogButtonBox.Ok,
     'cancel': QDialogButtonBox.Cancel,
@@ -19,6 +11,7 @@ BUTTON_TYPES = {
     'yes': QDialogButtonBox.Yes,
     'no': QDialogButtonBox.No,
 }
+BUTTON_NAMES = {v: k for k, v in BUTTON_TYPES.items()}
 
 
 class DialogWidget(QDialog):
@@ -52,7 +45,7 @@ class DialogWidget(QDialog):
         return self.action_buttons.button(BUTTON_TYPES[action])
 
     def _clicked(self, button):
-        self.action_cb(ACTION_NAMES[self.action_buttons.buttonRole(button)])
+        self.action_cb(BUTTON_NAMES[self.action_buttons.standardButton(button)])
 
     def exit(self, success):
         if success:
