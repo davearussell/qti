@@ -29,7 +29,7 @@ class MacroDialog(DataDialog):
         self.orig_macros = app.library.macros
         self.macros = copy.deepcopy(self.orig_macros)
         self.by_name = {macro['name']: macro for macro in self.macros}
-        super().__init__(app.window)
+        super().__init__(app, app.window)
         self.select_name(self.macros[0]['name'] if self.macros else None)
 
     @property

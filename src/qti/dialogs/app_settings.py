@@ -18,7 +18,7 @@ class AppSettingsDialog(FieldDialog):
         self.app = app
         fields = [FIELD_TYPES[type(value)](key, value)
                   for key, value in self.app.settings.to_dict().items()]
-        super().__init__(app.window, fields)
+        super().__init__(app, app.window, fields)
 
     def apply_field_update(self, field, value):
         self.app.settings.set(field.key, str(value))

@@ -60,7 +60,7 @@ class ImporterDialog(DataDialog):
         self.specs = self.make_specs(self.images)
         self.field_group = self.setup_fields()
         self.grid = self.setup_grid()
-        super().__init__(app.window)
+        super().__init__(app, app.window)
         self.data_updated()
 
     def make_specs(self, images):
@@ -159,6 +159,6 @@ def make_importer(app, node):
     if not images:
         problem = "No new images found"
     if problem:
-        return InfoDialog(app.window, problem, title="Importer error")
+        return InfoDialog(app, app.window, problem, title="Importer error")
     else:
         return ImporterDialog(app, node, images)

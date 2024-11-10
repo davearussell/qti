@@ -49,7 +49,7 @@ class DeleterDialog(Dialog):
     def __init__(self, app, nodes):
         self.app = app
         self.nodes = nodes
-        super().__init__(app.window)
+        super().__init__(app, app.window)
 
     @property
     def ui_args(self):

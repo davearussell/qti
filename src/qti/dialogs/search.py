@@ -9,7 +9,7 @@ class SearchDialog(Dialog):
 
     def __init__(self, app):
         self.ui_args  = {'update_cb': self.search_text_changed, 'commit_cb': self.find_next}
-        super().__init__(app.window)
+        super().__init__(app, app.window)
         self.grid = app.browser.grid
         self.cells = app.browser.node_labels()
         self.match_i = None

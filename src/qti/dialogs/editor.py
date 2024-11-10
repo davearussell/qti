@@ -108,7 +108,7 @@ class EditorDialog(FieldDialog):
         self.library = app.library
         self.browser = app.browser
         self.keybinds = self.app.keybinds
-        super().__init__(app.window, self.choose_fields())
+        super().__init__(app, app.window, self.choose_fields())
 
     def choose_fields(self):
         return choose_fields(self.library, self.browser.marked_nodes())

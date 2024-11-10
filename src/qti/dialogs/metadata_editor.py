@@ -28,7 +28,7 @@ class MetadataEditorDialog(DataDialog):
             for i, key in enumerate(self.metadata.keys)
         ]
         self.orig_data = copy.deepcopy(self.data)
-        super().__init__(app.window)
+        super().__init__(app, app.window)
 
     @property
     def ui_args(self):

@@ -11,7 +11,8 @@ class Dialog:
         'cancel': None,
     }
 
-    def __init__(self, parent):
+    def __init__(self, app, parent):
+        self.app = app
         self.parent = parent
         self.action_cbs = {
             'accept': self.accept,
@@ -24,6 +25,7 @@ class Dialog:
     @property
     def common_ui_args(self):
         return {
+            'app': self.app.ui,
             'parent': self.parent,
             'title': self.title,
             'actions': self.actions,
@@ -88,9 +90,9 @@ class DataDialog(Dialog):
 class FieldDialog(DataDialog):
     ui_cls = ui.cls('field_dialog')
 
-    def __init__(self, parent, fields, auto_keybinds=True):
+    def __init__(self, app, parent, fields, auto_keybinds=True):
         self._group = FieldGroup(fields, update_cb=self.handle_update, auto_keybinds=auto_keybinds)
-        super().__init__(parent)
+        super().__init__(app, parent)
         self.data_updated()
 
     def init_fields(self, fields):

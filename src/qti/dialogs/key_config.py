@@ -54,7 +54,7 @@ class KeybindDialog(DataDialog):
                     self.keymap[keybind] = (action, idx)
                     self.keybinds[(action, idx)] = keybind
             self.grid.append((action, label, binds))
-        super().__init__(app.window)
+        super().__init__(app, app.window)
 
     @property
     def ui_args(self):

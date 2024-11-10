@@ -22,10 +22,11 @@ BUTTON_TYPES = {
 
 
 class DialogWidget(QDialog):
-    def __init__(self, parent, title, actions, action_cb, keydown_cb):
+    def __init__(self, app, parent, title, actions, action_cb, keydown_cb):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setLayout(QVBoxLayout())
+        self.app = app
         self.actions = actions
         self.action_cb = action_cb
         self.keydown_cb = keydown_cb

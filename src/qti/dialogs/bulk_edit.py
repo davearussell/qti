@@ -17,7 +17,7 @@ class BulkEditDialog(DataDialog):
         self.keys = self.choose_keys()
         self.table = self.make_table(self.keys)
         self.orig_table = copy.deepcopy(self.table)
-        super().__init__(app.window)
+        super().__init__(app, app.window)
 
     @property
     def ui_args(self):

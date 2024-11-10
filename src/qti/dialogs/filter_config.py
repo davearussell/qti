@@ -11,7 +11,7 @@ class FilterConfigDialog(FieldDialog):
         self.app = app
         self.library = app.library
         self.config = app.filter_config
-        super().__init__(app.window, self.choose_fields())
+        super().__init__(app, app.window, self.choose_fields())
 
     def choose_fields(self):
         can_group_by = self.library.metadata.groupable_keys()
