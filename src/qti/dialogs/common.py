@@ -48,10 +48,10 @@ class Dialog:
 
     def accept(self):
         self.accepted = True
-        self.ui.accept(from_app=True)
+        self.ui.exit(success=True)
 
     def cancel(self):
-        self.ui.reject(from_app=True)
+        self.ui.exit(success=False)
 
     def apply(self):
         raise NotImplementedError()

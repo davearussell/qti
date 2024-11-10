@@ -54,17 +54,17 @@ class DialogWidget(QDialog):
     def _clicked(self, button):
         self.action_cb(ACTION_NAMES[self.action_buttons.buttonRole(button)])
 
-    def accept(self, from_app=False):
-        if from_app:
+    def exit(self, success):
+        if success:
             super().accept()
         else:
-            self.action_cb('accept')
-
-    def reject(self, from_app=False):
-        if from_app:
             super().reject()
-        else:
-            self.action_cb('cancel')
+
+    def accept(self):
+        self.action_cb('accept') # NOTE: will trigger a call to self.exit(True)
+
+    def reject(self):
+        self.action_cb('cancel') # NOTE: will trigger a call to self.exit(False)
 
     def keyPressEvent(self, event):
         if not self.keydown_cb(event_keystroke(event)):
