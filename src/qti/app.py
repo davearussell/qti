@@ -30,7 +30,7 @@ class Application:
     def __init__(self, json_file):
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
-        self.ui = ui.cls('app')(self.settings, self.handle_keydown, self.exit_hook)
+        self.ui = ui.cls('app')(self.settings, self.handle_keydown, self.exit_hook, self.idle_cb)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata
@@ -93,6 +93,9 @@ class Application:
 
     def run(self):
         self.ui.run()
+
+    def idle_cb(self, deadline):
+        pass
 
     def timer(self, *args, **kwargs):
         return timer.Timer(self, *args, **kwargs)

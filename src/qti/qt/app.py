@@ -58,7 +58,7 @@ class Window(QMainWindow):
 
 
 class App(QApplication):
-    def __init__(self, settings, keydown_hook, exit_hook):
+    def __init__(self, settings, keydown_hook, exit_hook, idle_cb):
         self.settings = settings
         self.keydown_hook = keydown_hook
         self.exit_hook = exit_hook
