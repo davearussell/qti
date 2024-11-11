@@ -5,6 +5,8 @@ from xui.widgets import VBox, VSpacer, ScrollArea
 from .grid import Cell
 from ..color import Color
 
+CELL_CACHE_LIMIT = 5000
+CELL_CACHE = {} # (image_path, label, count) -> surface
 
 class BrowserCell(Cell):
     def __init__(self, grid, ctx, label, count, **kwargs):
@@ -12,6 +14,7 @@ class BrowserCell(Cell):
         self.browser = ctx
         self.label = label
         self.count = count
+        self._contents = CELL_CACHE.get((self.image_path, label, count))
 
     def render(self):
         surface = super().render()
@@ -39,6 +42,8 @@ class BrowserCell(Cell):
             fade.blit(text, (0, 0))
             surface.blit(fade, text_rect)
 
+        if len(CELL_CACHE) < CELL_CACHE_LIMIT:
+            CELL_CACHE[(self.image_path, self.label, self.count)] = surface
         return surface
 
 
@@ -96,3 +101,6 @@ class BrowserWidget(VBox):
 
     def handle_keydown(self, keystroke):
         return self.keydown_cb(keystroke)
+
+    def prefetch(self, cell):
+        BrowserCell(self.grid, self, **cell).contents()

@@ -95,7 +95,7 @@ class Application:
         self.ui.run()
 
     def idle_cb(self, deadline):
-        pass
+        self.browser.idle_cb(deadline)
 
     def timer(self, *args, **kwargs):
         return timer.Timer(self, *args, **kwargs)

@@ -1,3 +1,5 @@
+import time
+
 from .grid import Grid
 from .viewer import Viewer
 from .pathbar import Pathbar
@@ -44,20 +46,32 @@ class Browser:
             self.mode = mode
             self.ui.set_mode(mode)
 
+    def make_cell(self, node):
+        return {
+            'image_path': next(node.images()).abspath,
+            'label': node.name if node.children else None,
+            'count': len(node.children),
+        }
+
+    def prefetch_suggestions(self):
+        for child in self.node.children:
+            yield self.make_cell(child)
+            for node in child.children[:30]:
+                yield self.make_cell(node)
+
+    def idle_cb(self, deadline):
+        for cell in self.prefetch_suggestions():
+            self.ui.prefetch(cell)
+            if time.time() > deadline:
+                break
+
     def load_node(self, node, target=None, mode=None):
         self.node = node
         self.target = target or (node.children[0] if node.children else None)
         self.set_mode(mode)
         if self.mode == 'grid':
             self.pathbar.fade_target = True
-            cells = [
-                {
-                    'image_path': next(child.images()).abspath,
-                    'label': child.name if child.children else None,
-                    'count': len(child.children),
-                }
-                for child in self.node.children
-            ]
+            cells = [self.make_cell(child) for child in self.node.children]
             target_i = self.node.children.index(self.target) if self.target else None
             self.grid.load(cells, target_i=target_i)
         else:
