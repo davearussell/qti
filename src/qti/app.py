@@ -81,6 +81,9 @@ class Application:
         elif action == 'search':
             if self.browser.mode == 'grid':
                 SearchDialog(self).run()
+        else:
+            return False
+        return True
 
     @property
     def viewer(self):
