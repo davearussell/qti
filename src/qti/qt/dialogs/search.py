@@ -18,5 +18,11 @@ class SearchDialogWidget(DialogWidget):
     def get_value(self):
         return self.box.get_value()
 
-    def set_label(self, text):
+    def set_status(self, match_name, match_i, n_matches):
+        if match_name:
+            search_text = self.get_value()
+            underlined = match_name.replace(search_text, '<u>%s</u>' % (search_text,))
+            text = 'Match %d / %d: %s' % (match_i + 1, n_matches, underlined)
+        else:
+            text = 'No matches'
         self.label.setText(text)

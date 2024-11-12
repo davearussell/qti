@@ -19,12 +19,9 @@ class SearchDialog(Dialog):
         if self.matches:
             grid_i = self.matches[self.match_i]
             self.grid.set_target_index(grid_i)
-            search_text = self.ui.get_value()
-            match_text = self.cells[grid_i].replace(search_text, '<u>%s</u>' % search_text)
-            self.ui.set_label('Match %d / %d: %s' % (self.match_i + 1, len(self.matches),
-                                                     match_text))
+            self.ui.set_status(self.cells[grid_i], self.match_i, len(self.matches))
         else:
-            self.ui.set_label('No matches')
+            self.ui.set_status(None, 0, 0)
 
     def find_next(self):
         if self.matches:
