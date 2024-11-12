@@ -66,3 +66,31 @@ class DialogWidget(VBox):
         # This means that if we need to grow later, it won't affect our position.
         self.halign = 'fixed'
         self.valign = 'fixed'
+
+
+class DataDialogWidget(DialogWidget):
+    error_color = 'red'
+    dirty = False
+    valid = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.error_label = Label(margin=10, color=self.error_color)
+        self.children.append(self.error_label)
+
+    def set_error(self, error):
+        self.valid = not error
+        self.error_label.set_text(error or '')
+
+    def set_dirty(self, dirty):
+        self.dirty = dirty
+
+
+class FieldDialogWidget(DataDialogWidget):
+    def __init__(self, group, **kwargs):
+        self._group = group
+        super().__init__(**kwargs)
+        self.body.children = [group]
+
+    def focus(self):
+        self._group.focus()
