@@ -3,10 +3,10 @@ from PySide6.QtGui import QPainter, QFont, QColor
 from PySide6.QtCore import Qt
 
 from .keys import event_keystroke
-from .grid import QCell
+from .grid import Cell
 
 
-class BrowserCell(QCell):
+class BrowserCell(Cell):
     def __init__(self, settings, image_path, label, count):
         super().__init__(settings, image_path, settings.thumbnail_size)
         self.label = label
