@@ -68,6 +68,8 @@ class DataDialog(Dialog):
     }
 
     def accept(self):
+        if self.error():
+            return
         if self.dirty():
             self.commit()
         super().accept()
@@ -77,6 +79,8 @@ class DataDialog(Dialog):
         self.ui.set_dirty(self.dirty())
 
     def apply(self):
+        if self.error():
+            return
         self.commit()
         self.ui.set_dirty(False)
 
