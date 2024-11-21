@@ -54,9 +54,14 @@ class DialogWidget(QDialog):
             super().reject()
 
     def accept(self):
+        # NOTE: not clear if/when qt calls this. I haven't yet found a case
+        # where it does. If it ever does, this cb will do the right thing.
         self.action_cb('ok') # NOTE: will trigger a call to self.exit(True)
 
     def reject(self):
+        # NOTE: qt will call this if you hit <escape> or click the 'X' in the
+        # top right corner, but not if you click or hit the keybind for the
+        # "Cancel" button (the latter would trigger self._clicked instead).
         self.action_cb('cancel') # NOTE: will trigger a call to self.exit(False)
 
     def keyPressEvent(self, event):
@@ -90,9 +95,9 @@ class DataDialogWidget(DialogWidget):
         self.error_box.setText(error or '')
         self.refresh_buttons()
 
-    def accept(self, from_app=False):
+    def accept(self):
         if self.valid:
-            super().accept(from_app)
+            super().accept()
 
     def set_dirty(self, dirty):
         self.dirty = dirty
