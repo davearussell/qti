@@ -23,18 +23,18 @@ QMainWindow {
 }
 
 *[qtiFont="pathbar"] {
-  font-size: {{ pathbar_font_size }}pt;
+  font-size: {{ header_font_size }}pt;
   font-family: "{{ font }}";
 }
 
 *[qtiFont="keypicker"] {
-  font-size: {{ key_picker_font_size }}pt;
+  font-size: {{ header_font_size }}pt;
   font-family: "{{ font }}";
 }
 
 *[qtiFont="statusbar"] {
   color: {{ text_color }};
-  font-size: {{ statusbar_font_size }}pt;
+  font-size: {{ header_font_size }}pt;
   font-family: "{{ font }}";
 }
 

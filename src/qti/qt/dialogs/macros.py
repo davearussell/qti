@@ -16,7 +16,7 @@ class Highlighter(QSyntaxHighlighter):
         self.highlight_cb = highlight_cb
         self.fmt = QTextCharFormat()
         self.fmt.setFont(self.settings.font)
-        self.fmt.setFontPointSize(self.settings.macro_font_size)
+        self.fmt.setFontPointSize(self.settings.font_size)
         super().__init__(document)
 
     def highlightBlock(self, text):

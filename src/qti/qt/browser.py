@@ -19,7 +19,7 @@ class BrowserCell(QCell):
         p.setPen(str(self.settings.text_color))
 
         if self.label:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_name_font_size))
+            p.setFont(QFont(self.settings.font, self.settings.header_font_size))
             r = p.fontMetrics().tightBoundingRect(self.label)
             r.adjust(0, 0, 10, 10)
             r.moveTop(0)
@@ -28,7 +28,7 @@ class BrowserCell(QCell):
             p.drawText(r, Qt.AlignCenter, self.label)
 
         if self.count:
-            p.setFont(QFont(self.settings.font, self.settings.thumbnail_count_font_size))
+            p.setFont(QFont(self.settings.font, self.settings.header_font_size * 2))
             r = p.fontMetrics().tightBoundingRect(str(self.count))
             # If we render using the rect returned by tightBoundingRect, it cuts off the
             # top of the text and leaves empty space at the bottom. Account for this by
