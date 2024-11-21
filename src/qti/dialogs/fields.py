@@ -89,7 +89,7 @@ class Field:
         if self.commit_cb:
             self.commit_cb(self)
 
-    def handle_update(self):
+    def handle_update(self, value):
         if self.update_cb:
             self.update_cb(self)
 
@@ -128,16 +128,16 @@ class ValidatedTextField(Field):
     def __init__(self, key, value, validator, **kwargs):
         self.validator = validator
         super().__init__(key, value, **kwargs)
-        self.handle_update()
+        self.handle_update(None)
 
     def is_valid(self):
         return self.validator(self.ui.get_value())
 
-    def handle_update(self):
+    def handle_update(self, value):
         if self.valid != self.is_valid():
             self.valid = not self.valid
             self.ui.set_valid(self.valid)
-        super().handle_update()
+        super().handle_update(value)
 
 
 class TypedField(ValidatedTextField):
