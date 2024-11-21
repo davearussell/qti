@@ -43,4 +43,6 @@ def cls(name):
     except (ModuleNotFoundError, AttributeError):
         if DEBUG:
             print("WARNING: failed to import %s.%s" % (module_name, class_name))
-        return None
+        def _fail(*args, **kwargs):
+            raise Exception("Failed to import %s.%s" % (module_name, class_name))
+        return _fail
