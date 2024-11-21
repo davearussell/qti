@@ -6,14 +6,14 @@ class KeyChooser(Dialog):
     title = 'Select keybind'
     ui_cls = ui.cls('key_chooser')
 
-    def __init__(self, parent, keymap, action, idx, keybind, accept_cb):
+    def __init__(self, app, parent, keymap, action, idx, keybind, accept_cb):
         self.keymap = keymap
         self.action = action
         self.idx = idx
         self.keybind = keybind
         self.chosen_keybind = keybind
         self.accept_cb = accept_cb
-        super().__init__(parent)
+        super().__init__(app, parent)
 
     @property
     def ui_args(self):
@@ -64,7 +64,8 @@ class KeybindDialog(DataDialog):
         }
 
     def click_cb(self, action, idx):
-        KeyChooser(parent=self.ui,
+        KeyChooser(self.app,
+                   parent=self.ui,
                    keymap=self.keymap,
                    action=action,
                    idx=idx,
