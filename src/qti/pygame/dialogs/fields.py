@@ -1,6 +1,8 @@
 import pygame
 
-from xui.widgets import HBox, VBox, Label
+from xui.widgets import HBox, VBox, Label, LineEdit
+
+from ...color import Color
 
 
 class FieldGroupWidget(VBox):
@@ -68,3 +70,37 @@ class FieldWidget(HBox):
 
     def post_commit_cb(self):
         pass
+
+
+class TextFieldWidget(FieldWidget):
+    halign = 'fill'
+    color = 'white'
+    completions = None
+    read_only = False
+
+    def make_body(self):
+        return LineEdit(update_cb=self.update_cb, commit_cb=self.commit_cb,
+                        enabled=not self.read_only, completions=self.completions)
+
+
+class SetFieldWidget(TextFieldWidget):
+    def get_value(self):
+        return super().get_value().split()
+
+    def set_value(self, value):
+        super().set_value(' '.join(value))
+
+
+class ValidatedTextFieldWidget(TextFieldWidget):
+    error_color = 'red'
+    valid = True
+
+    def set_valid(self, valid):
+        if valid != self.valid:
+            self.valid = valid
+            self.body.color = self.color if self.valid else self.error_color
+            self.redraw()
+
+
+class ColorFieldWidget(ValidatedTextFieldWidget):
+    pass
