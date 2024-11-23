@@ -106,7 +106,7 @@ class ImporterDialog(DataDialog):
         default_values = {}
         seen_our_node = not self.node.parent
         for key in self.library.metadata.hierarchy():
-            default_values[key] = '' if seen_our_node else image.spec.get(key)
+            default_values[key] = '' if seen_our_node else image_spec.get(key)
             if key == self.node.type:
                 seen_our_node = True
         return default_values
