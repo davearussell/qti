@@ -26,7 +26,7 @@ class Image:
     def scale(self, size):
         raise NotImplementedError()
 
-    def crop_and_pan(self, size, x, y, background_color='black'):
+    def crop_and_pan(self, size, x, y, background_color=None):
         raise NotImplementedError()
 
     def center(self, size, **kwargs):

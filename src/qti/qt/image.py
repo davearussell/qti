@@ -14,9 +14,10 @@ class Image(image.Image):
         return type(self)(self.image.scaled(QSize(*size), aspectMode=Qt.KeepAspectRatio,
                                             mode=Qt.SmoothTransformation))
 
-    def crop_and_pan(self, size, x, y, background_color='black'):
+    def crop_and_pan(self, size, x, y, background_color=None):
         viewport = QPixmap(QSize(*size))
-        viewport.fill(str(background_color))
+        if background_color:
+            viewport.fill(str(background_color))
         p = QPainter(viewport)
         p.drawPixmap(x, y, self.image)
         p.end()
