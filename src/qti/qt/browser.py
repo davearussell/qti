@@ -8,7 +8,7 @@ from .grid import Cell
 
 class BrowserCell(Cell):
     def __init__(self, settings, image_path, label, count):
-        super().__init__(settings, image_path, settings.thumbnail_size)
+        super().__init__(settings, image_path)
         self.label = label
         self.count = count
 

@@ -90,8 +90,7 @@ class ImporterDialog(DataDialog):
 
     def setup_grid(self):
         grid = Grid(self.app, scroll_cb=self.grid_target_updated, no_selection=True)
-        cells = [{'image_path': image, 'size': self.app.settings.thumbnail_size}
-                 for image in self.images]
+        cells = [{'image_path': image} for image in self.images]
         grid.load(cells)
         return grid
 

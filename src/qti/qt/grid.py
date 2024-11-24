@@ -33,10 +33,10 @@ def layout_cells(cells, grid_width, cell_size, spacing, border_width):
 
 
 class Cell:
-    def __init__(self, settings, image_path, size):
+    def __init__(self, settings, image_path):
         self.settings = settings
         self.image_path = image_path
-        self.size = size
+        self.size = settings.thumbnail_size
         self._contents = None
         self.row = None
         self.col = None
