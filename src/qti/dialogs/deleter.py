@@ -40,6 +40,7 @@ def delete_nodes(app, nodes, delete_mode):
 
 
 class DeleterDialog(Dialog):
+    title = 'Delete'
     ui_cls = ui.cls('choice_dialog')
     actions = {
         'yes': 'y',
