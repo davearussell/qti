@@ -21,7 +21,6 @@ CLASSES = {
     'set_field': 'dialogs.fields.SetFieldWidget',
     'validated_text_field': 'dialogs.fields.ValidatedTextFieldWidget',
     'color_field': 'dialogs.fields.ColorFieldWidget',
-    'enum_field': 'dialogs.fields.EnumFieldWidget',
     'importer_dialog': 'dialogs.importer.ImporterDialogWidget',
     'key_config_dialog': 'dialogs.key_config.KeybindDialogWidget',
     'key_chooser': 'dialogs.key_config.KeyChooserWidget',

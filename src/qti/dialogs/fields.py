@@ -165,11 +165,3 @@ class TypedField(ValidatedTextField):
 
 class ColorField(TypedField):
     ui_cls = ui.cls('color_field')
-
-
-class EnumField(Field):
-    ui_cls = ui.cls('enum_field')
-
-    def __init__(self, key, value, values, **kwargs):
-        self.ui_args = {'values': values}
-        super().__init__(key, value, **kwargs)
