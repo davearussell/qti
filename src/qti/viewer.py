@@ -12,6 +12,7 @@ class Viewer:
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app
+        self.size = app.ui.size
         self.node = None
         self.target = None
         self.auto_scroll_enabled = False
@@ -31,7 +32,7 @@ class Viewer:
     def load(self, node, target):
         self.node = node
         self.target = target
-        self.init_image(self.target.abspath, self.ui.size)
+        self.init_image(self.target.abspath, self.size)
         self.scroll_cb(node.children.index(target))
 
     def init_image(self, image_path, window_size):
@@ -96,7 +97,7 @@ class Viewer:
     def redraw_image(self):
         viewport = self.raw_image.crop_and_pan((self.view_width, self.view_height), -self.xoff,
                                                -self.yoff, self.app.settings.background_color)
-        self.ui.load(viewport.scale(self.ui.size))
+        self.ui.load(viewport.scale(self.size))
 
     def zoom_factor(self):
         return self.base_zoom * (self.app.settings.zoom_rate ** self.zoom_level)
@@ -120,7 +121,7 @@ class Viewer:
             return
 
         sx, sy = pos
-        sw, sh = self.ui.size
+        sw, sh = self.size
 
         if self.raw_image is None:
             self.load_raw_image()
