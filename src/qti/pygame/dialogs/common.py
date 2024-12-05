@@ -1,6 +1,9 @@
+from functools import partial
 import pygame
 
-from xui.widgets import VBox, Label
+from xui.widgets import VBox, HBox, Label, PushButton
+
+BUTTON_ORDER = ['apply', 'cancel', 'ok', 'no', 'yes']
 
 
 class DialogWidget(VBox):
@@ -26,7 +29,12 @@ class DialogWidget(VBox):
         self.header = Label(self.title, margin=5, border_thickness=self.border_thickness,
                             font_size=self.header_font_size)
         self.body = VBox(margin=self.body_margin, spacing=self.body_spacing)
-        self.children = [self.header, self.body]
+        self.buttons = HBox(margin=10, spacing=10, halign='right')
+        for action in BUTTON_ORDER:
+            if action in self.actions:
+                button = PushButton(action.title(), click_cb=partial(action_cb, action))
+                self.buttons.children.append(button)
+        self.children = [self.header, self.body, self.buttons]
 
     def run(self, done_cb=None):
         self.done_cb = done_cb
@@ -76,14 +84,24 @@ class DataDialogWidget(DialogWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_label = Label(margin=10, color=self.error_color)
-        self.children.append(self.error_label)
+        self.children.insert(-1, self.error_label) # just above dialog buttons
+
+    def refresh_buttons(self):
+        for button in self.buttons.children:
+            action = button.label.text.lower()
+            if action == 'apply':
+                button.set_enabled(self.valid and self.dirty)
+            elif action == 'ok':
+                button.set_enabled(self.valid)
 
     def set_error(self, error):
         self.valid = not error
         self.error_label.set_text(error or '')
+        self.refresh_buttons()
 
     def set_dirty(self, dirty):
         self.dirty = dirty
+        self.refresh_buttons()
 
 
 class FieldDialogWidget(DataDialogWidget):
