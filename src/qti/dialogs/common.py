@@ -74,6 +74,10 @@ class DataDialog(Dialog):
             self.commit()
         super().accept()
 
+    def run(self):
+        self.data_updated()
+        super().run()
+
     def data_updated(self):
         self.ui.set_error(self.error())
         self.ui.set_dirty(self.dirty())
