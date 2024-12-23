@@ -75,7 +75,7 @@ class MetadataEditorDialog(DataDialog):
                     self.metadata.lut[new['name']].in_hierarchy = new['type'] == 'hierarchy'
                     if is_multi != (old['type'] == 'multi'):
                         self.metadata.lut[new['name']].multi = is_multi
-                        self.tree.set_key_multi(name, is_multi)
+                        self.tree.set_key_multi(new['name'], is_multi)
         self.metadata.keys = [self.metadata.lut[entry['name']] for entry in self.data]
 
         if self.metadata.hierarchy() != hierarchy:
