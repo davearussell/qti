@@ -46,8 +46,11 @@ class MetadataEditorDialog(DataDialog):
 
     def error(self):
         names = {entry['name'] for entry in self.data}
-        valid = len(names) == len(self.data)
-        return None if valid else 'Duplicate key names found'
+        if len(names) < len(self.data):
+            return 'Duplicate key names found'
+        if not all(names):
+            return 'Empty key names found'
+        return None
 
     def commit(self):
         hierarchy = self.metadata.hierarchy()
