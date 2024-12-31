@@ -16,17 +16,23 @@ def cache_path(image_path, size):
 
 def ensure_cached(image_path, size):
     scaled_path = cache_path(image_path, size)
-    if not os.path.exists(os.path.dirname(scaled_path)):
-        try:
-            os.makedirs(os.path.dirname(scaled_path))
-        except FileExistsError:
-            pass
-    if not os.path.isfile(scaled_path):
-        image = Image.open(image_path)
-        if image.mode == 'RGBA':
-            image = image.convert('RGB')
-        old_size = image.size
-        ratio = min(size[0] / old_size[0], size[1] / old_size[1])
-        new_size = (int(old_size[0] * ratio), int(old_size[1] * ratio))
-        image.resize(new_size).save(scaled_path)
+    try:
+        if not os.path.exists(os.path.dirname(scaled_path)):
+            try:
+                os.makedirs(os.path.dirname(scaled_path))
+            except FileExistsError:
+                pass
+        if not os.path.isfile(scaled_path):
+            image = Image.open(image_path)
+            if image.mode == 'RGBA':
+                image = image.convert('RGB')
+            old_size = image.size
+            ratio = min(size[0] / old_size[0], size[1] / old_size[1])
+            new_size = (int(old_size[0] * ratio), int(old_size[1] * ratio))
+            image.resize(new_size).save(scaled_path)
+    except Exception as e:
+        # If the image is corrupt, create an empty file so that we don't keep
+        # retrying it. We'll report the error when we try to display the image.
+        if not os.path.exists(scaled_path):
+            open(scaled_path, 'wb').close()
     return scaled_path

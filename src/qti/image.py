@@ -4,7 +4,13 @@ import PIL
 class Image:
     def __init__(self, path_or_image):
         if isinstance(path_or_image, str):
-            self.size = PIL.Image.open(path_or_image).size
+            try:
+                self.size = PIL.Image.open(path_or_image).size
+            except:
+                # Image header is corrupt; report a small arbitrary size.
+                # The rendering code will display a suitable error when we
+                # try to show the image.
+                self.size = (100, 100)
             self._path = path_or_image
             self._image = None
         else:
