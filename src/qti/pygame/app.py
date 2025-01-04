@@ -41,6 +41,10 @@ def make_gui_settings(settings):
             'sep_color': settings.pathbar_separator,
         },
 
+        'KeyChooserWidget': {
+            'bind_font_size': int(settings.font_size * FONT_RATIO * 1.5),
+        }
+
     }
 
 
