@@ -8,6 +8,10 @@ def f_title(text):
     return ' '.join(text.split('_')).title()
 
 
+def f_strip(text):
+    return text.strip()
+
+
 def f_lstrip(text):
     """Converts 'Prefix Interesting Title' -> 'Interesting Title'"""
     return ' '.join(text.split()[1:])
@@ -38,7 +42,10 @@ def f_strip_from(text, *strip_words):
 
 
 def f_strip_digits(text):
-    return text.rstrip('0123456789')
+    return text.rstrip('0123456789 ')
+
+def f_remove_digits(text):
+    return ''.join(char for char in text if char not in '0123456789')
 
 
 def f_dirat(path, i):
@@ -63,9 +70,11 @@ IMAGE_FILTERS = {
     'title': f_title,
     'lstrip': f_lstrip,
     'rstrip': f_rstrip,
+    'strip': f_strip,
     'strip_words': f_strip_words,
     'strip_from': f_strip_from,
     'strip_digits': f_strip_digits,
+    'remove_digits': f_remove_digits,
     'dirat': f_dirat,
     'default': f_default,
     'uncamel': uncamel,
