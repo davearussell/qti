@@ -1,8 +1,9 @@
 import pygame
 
-from xui.widgets import VBox, ScrollArea
+from xui.widgets import VBox, VSpacer, ScrollArea
 
 from .grid import Cell
+from ..color import Color
 
 
 class BrowserCell(Cell):
@@ -55,12 +56,29 @@ class BrowserWidget(VBox):
         self.viewer = viewer
         self.pathbar = ScrollArea(pathbar, horizontal=True, greedy_width=True)
         self.status_bar = status_bar
+        self.overlay = VBox([self.pathbar, VSpacer(), self.status_bar], bgcolor=(0, 0, 0, 0))
+        self.show_bars = True
         self.grid.set_renderer(BrowserCell, ctx=self)
 
     def set_mode(self, mode):
+        self.mode = mode
+        overlay_on = self.overlay in self.screen.children
+        want_overlay = mode == 'viewer' and self.show_bars
+        if overlay_on != want_overlay:
+            if want_overlay:
+                i = self.screen.children.index(self)
+                self.screen.children.insert(i + 1, self.overlay)
+            else:
+                self.screen.children.remove(self.overlay)
+
         if mode == 'grid':
-            self.children = [self.scroll]
+            self.pathbar.bgcolor = self.status_bar.bgcolor = Color(self.screen.bgcolor).fade()
+            if self.show_bars:
+                self.children = [self.pathbar, self.scroll, self.status_bar]
+            else:
+                self.children = [self.scroll]
         else:
+            self.pathbar.bgcolor = self.status_bar.bgcolor = (0, 0, 0, 128)
             self.children = [self.viewer]
         self.relayout()
         self.redraw()
@@ -70,9 +88,11 @@ class BrowserWidget(VBox):
         self.status_bar.apply_settings(settings)
         self.scroll.apply_settings(settings)
         self.viewer.apply_settings(settings)
+        self.set_mode(self.mode)
 
     def set_bar_visibility(self, hidden):
-        pass
+        self.show_bars = not hidden
+        self.set_mode(self.mode)
 
     def handle_keydown(self, keystroke):
         return self.keydown_cb(keystroke)
