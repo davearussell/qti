@@ -4,6 +4,7 @@ from xui.widgets import HBox, VBox, Label, LineEdit
 
 from ...color import Color
 from ..color_picker import ColorPicker
+from ..set_picker import SetPicker
 
 
 class FieldGroupWidget(VBox):
@@ -85,11 +86,9 @@ class TextFieldWidget(FieldWidget):
 
 
 class SetFieldWidget(TextFieldWidget):
-    def get_value(self):
-        return super().get_value().split()
-
-    def set_value(self, value):
-        super().set_value(' '.join(value))
+    def make_body(self):
+        return SetPicker(update_cb=self.update_cb, commit_cb=self.commit_cb,
+                         enabled=not self.read_only, completions=self.completions)
 
 
 class ValidatedTextFieldWidget(TextFieldWidget):
