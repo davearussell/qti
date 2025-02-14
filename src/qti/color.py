@@ -7,6 +7,8 @@ def to_rgb(name):
 # into most backend APIs without first translating into a backend-specific object
 class Color(str):
     def __init__(self, name):
+        if not name:
+            raise ValueError("empty color name")
         if len(name) == 4 and name.startswith('#'):
             # Not all APIs accept these (in particular pygame does not)
             raise ValueError("short-form hexcodes not accepted")
