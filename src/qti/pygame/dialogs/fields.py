@@ -3,6 +3,7 @@ import pygame
 from xui.widgets import HBox, VBox, Label, LineEdit
 
 from ...color import Color
+from ..color_picker import ColorPicker
 
 
 class FieldGroupWidget(VBox):
@@ -103,4 +104,5 @@ class ValidatedTextFieldWidget(TextFieldWidget):
 
 
 class ColorFieldWidget(ValidatedTextFieldWidget):
-    pass
+    def make_body(self):
+        return ColorPicker(update_cb=self.update_cb, commit_cb=self.commit_cb)
