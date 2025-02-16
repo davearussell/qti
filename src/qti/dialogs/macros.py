@@ -8,9 +8,9 @@ from ..macros import Command
 class NewDialog(LineEditDialog):
     title = 'New macro'
 
-    def __init__(self, parent, names):
+    def __init__(self, app, parent, names):
         self.names = names
-        super().__init__(parent)
+        super().__init__(app, parent)
 
     def error(self):
         name = self.ui.get_value()
@@ -58,7 +58,7 @@ class MacroDialog(DataDialog):
         self.data_updated()
 
     def new_macro(self):
-        name = NewDialog(self.ui, self.by_name).run()
+        name = NewDialog(self.app, self.ui, self.by_name).run()
         if name is None:
             return
         macro = {'name': name, 'text': ''}
