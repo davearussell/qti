@@ -76,7 +76,7 @@ class Command:
         return commands
 
     @classmethod
-    def syntax_highlight(cls, text):
+    def _syntax_highlight(cls, text):
         pos = 0
         comment = False
         done_command = False
@@ -93,6 +93,23 @@ class Command:
                 word_type = 'variable'
             yield pos, len(token), word_type
             pos += len(token)
+
+    @classmethod
+    def syntax_highlight(cls, text):
+        current_pos = 0
+        current_count = 0
+        current_word_type = None
+        for pos, count, word_type in cls._syntax_highlight(text):
+            if word_type == current_word_type:
+                current_count += count
+            else:
+                if current_count:
+                    yield current_pos, current_count,  current_word_type
+                current_pos = pos
+                current_count = count
+                current_word_type = word_type
+        if current_count:
+            yield current_pos, current_count,  current_word_type
 
 
 class Group(Command):
