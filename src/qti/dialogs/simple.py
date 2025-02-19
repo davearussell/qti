@@ -26,6 +26,5 @@ class LineEditDialog(Dialog):
     def error(self):
         return None
 
-    def run(self):
-        if super().run():
-            return self.ui.get_value()
+    def result(self):
+        return self.ui.get_value() if self.accepted else None

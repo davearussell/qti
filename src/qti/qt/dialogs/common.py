@@ -68,8 +68,10 @@ class DialogWidget(QDialog):
         if not self.keydown_cb(event_keystroke(event)):
             super().keyPressEvent(event)
 
-    def run(self):
+    def run(self, done_cb=None):
         self.exec()
+        if done_cb:
+            done_cb()
 
 
 class DataDialogWidget(DialogWidget):

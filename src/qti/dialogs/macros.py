@@ -58,7 +58,9 @@ class MacroDialog(DataDialog):
         self.data_updated()
 
     def new_macro(self):
-        name = NewDialog(self.app, self.ui, self.by_name).run()
+        NewDialog(self.app, self.ui, self.by_name).run(self.new_macro_done)
+
+    def new_macro_done(self, name):
         if name is None:
             return
         macro = {'name': name, 'text': ''}

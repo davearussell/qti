@@ -23,6 +23,7 @@ class Dialog:
         }
         assert all(k in self.action_cbs for k in self.actions), self.actions
         self.ui = self.make_ui()
+        self.result_cb = None
         self.accepted = False
 
     @property
@@ -45,9 +46,16 @@ class Dialog:
     def keydown_cb(self, keystroke):
         return False
 
-    def run(self):
-        self.ui.run()
+    def run(self, result_cb=None):
+        self.result_cb = result_cb
+        self.ui.run(self._done)
+
+    def result(self):
         return self.accepted
+
+    def _done(self):
+        if self.result_cb:
+            self.result_cb(self.result())
 
     def accept(self):
         self.accepted = True
@@ -74,9 +82,9 @@ class DataDialog(Dialog):
             self.commit()
         super().accept()
 
-    def run(self):
+    def run(self, result_cb=None):
         self.data_updated()
-        super().run()
+        super().run(result_cb)
 
     def data_updated(self):
         self.ui.set_error(self.error())
