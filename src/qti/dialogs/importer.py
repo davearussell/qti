@@ -12,13 +12,15 @@ from .fields import FieldGroup, TextField, ReadOnlyField
 
 from .. import ui
 
+SUPPORTED_EXTNS = ['.jpg', '.png', '.webp']
+
 
 def find_all_images(path):
     for dirpath, _, filenames in os.walk(path):
         if '.cache/' in dirpath:
             continue
         for filename in filenames:
-            if filename.lower()[-4:] in ['.jpg', '.png']:
+            if os.path.splitext(filename)[1].lower() in SUPPORTED_EXTNS:
                 yield os.path.join(dirpath, filename)
 
 
