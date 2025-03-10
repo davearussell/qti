@@ -32,6 +32,11 @@ def f_strip_words(text, *strip_words):
     return ' '.join(words)
 
 
+def f_remove_words(text, *remove_words):
+    words = [word for word in text.split() if word not in remove_words]
+    return ' '.join(words)
+
+
 def f_strip_from(text, *strip_words):
     pats = [word.lower() for word in strip_words]
     words = text.split()
@@ -55,6 +60,19 @@ def f_dirat(path, i):
 def f_default(text, default):
     return text or default
 
+def dedup(text):
+    words = text.split()
+    print("dedup %d words: %r" % (len(words), words))
+    for i in range(len(words) // 2, 1, -1):
+        prefix = words[:i]
+        print("  i=%d: prefix=%r" % (i, prefix))
+        for j in range(i, len(words) - i + 1):
+            print("    j=%d words=%r" % (j, words[j:j+i]))
+            if words[j:j+i] == prefix:
+                return ' '.join(words[:j] + words[j+i:])
+    print("  no matches")
+    return text
+
 
 def uncamel(word):
     """Converts 'WordInCamelCase' -> 'Word In Camel Case' """
@@ -72,12 +90,14 @@ IMAGE_FILTERS = {
     'rstrip': f_rstrip,
     'strip': f_strip,
     'strip_words': f_strip_words,
+    'remove_words': f_remove_words,
     'strip_from': f_strip_from,
     'strip_digits': f_strip_digits,
     'remove_digits': f_remove_digits,
     'dirat': f_dirat,
     'default': f_default,
     'uncamel': uncamel,
+    'dedup': dedup,
 }
 
 
