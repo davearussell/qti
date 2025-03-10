@@ -168,5 +168,6 @@ class EditorDialog(FieldDialog):
             if self.dirty():
                 self.commit()
             self.init_fields(self.choose_fields())
+            self.ui.focus()
             return True
         return False
