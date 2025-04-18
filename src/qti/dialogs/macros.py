@@ -2,7 +2,7 @@ import copy
 from .common import DataDialog
 from .simple import LineEditDialog
 from .. import ui
-from ..macros import Command
+from ..macros import syntax_highlight
 
 
 class NewDialog(LineEditDialog):
@@ -37,7 +37,7 @@ class MacroDialog(DataDialog):
         return {
             'names': [macro['name'] for macro in self.macros],
             'settings': self.app.settings,
-            'highlight_cb': Command.syntax_highlight,
+            'highlight_cb': syntax_highlight,
             'select_name_cb': self.select_name,
             'update_cb': self.handle_update,
             'new_cb': self.new_macro,

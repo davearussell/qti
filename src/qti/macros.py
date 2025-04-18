@@ -281,6 +281,10 @@ class Scroll(Command):
         self.app.browser.scroll(self.direction)
 
 
+def syntax_highlight(text):
+    return Command.syntax_highlight(text)
+
+
 def parse_macro(app, macro):
     command_map = Command.command_map()
     commands = []
