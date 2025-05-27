@@ -1,306 +1,93 @@
-from . import expr
-from .tree import SORT_TYPES
-from .keys import SCROLL_ACTIONS
-from .dialogs.deleter import delete_nodes
+import ast
+import io
+import keyword
+import tokenize
 
-class MacroError(Exception):
-    pass
+INTERESTING_TYPES = {'NAME', 'STRING', 'COMMENT', 'KEYWORD'}
 
+class Token:
+    def __init__(self, rawtoken):
+        self.type = tokenize.tok_name[rawtoken.type]
+        if self.type == 'NAME' and keyword.iskeyword(rawtoken.string):
+            self.type = 'KEYWORD'
+        if self.type not in INTERESTING_TYPES:
+            self.type = 'IGNORE'
+        self.start_line, self.start_pos = rawtoken.start
+        self.end_line, self.end_pos = rawtoken.end
+        self.start_line -= 1
+        self.end_line -= 1
 
-def resolve_ref(app, ref):
-    if '.' not in ref:
-        return ref
-    start, *args = ref.split('.')
-    if not args:
-        raise MacroError("Cannot resolve ref %r" % (ref,))
-
-    if start == 'target' and 1 <= len(args) <= 2:
-        value = app.browser.target.get_key(args.pop(0))
-        if args:
-            value = value[int(args.pop())]
-        return value
-
-    if start == 'browser':
-        if args == ['mode']:
-            return app.browser.mode
-        if args == ['target']:
-            return app.browser.target
-        if args == ['marked']:
-            return app.browser.marked_nodes()
-
-    raise MacroError("Cannot resolve ref %r" % (ref,))
+    def __repr__(self):
+        return "%s(%d/%d - %d/%d" % (self.type, self.start_line, self.start_pos, self.end_line, self.end_pos)
 
 
-def tokenize(line):
-    token_start = None
-    for i, char in enumerate(line):
-        is_sep = char.isspace() or char in '#:'
-        if is_sep:
-            if token_start is not None:
-                yield line[token_start:i]
-            yield line[i]
-            token_start = None
-        elif token_start is None:
-            token_start = i
-    if token_start is not None:
-        yield line[token_start:]
+class Filler(Token):
+    def __init__(self, start_line, start_pos, end_line, end_pos):
+        self.type = 'IGNORE'
+        self.start_line = start_line
+        self.start_pos = start_pos
+        self.end_line = end_line
+        self.end_pos = end_pos
 
 
-class Command:
-    command = None
-    min_args = None
-    max_args = None
-
-    def __init__(self, app, args):
-        self.app = app
-        self._args = args
-        if self.min_args is not None and len(args) < self.min_args:
-            self.bad_args("require >= %d args" % (self.min_args,))
-        if self.max_args is not None and len(args) > self.max_args:
-            self.bad_args("require <= %d args" % (self.max_args,))
-        self.process_args(args)
-
-    def process_args(self, args):
-        pass
-
-    def bad_args(self, msg):
-        raise MacroError("%s %s: %s" % (type(self).__name__.lower(), ' '.join(self._args), msg))
-
-    @classmethod
-    def command_map(cls):
-        commands = {}
-        for subcls in cls.__subclasses__():
-            if subcls.command:
-                commands[subcls.command] = subcls
-            commands |= subcls.command_map()
-        return commands
-
-    @classmethod
-    def _syntax_highlight(cls, text):
-        pos = 0
-        comment = False
-        done_command = False
-        for token in tokenize(text):
-            if token == '#':
-                comment = True
-            word_type = None
-            if comment:
-                word_type = 'comment'
-            elif not done_command and not token.isspace():
-                word_type = 'command' if token in cls.command_map() else 'error'
-                done_command = True
-            elif '.' in token:
-                word_type = 'variable'
-            yield pos, len(token), word_type
-            pos += len(token)
-
-    @classmethod
-    def syntax_highlight(cls, text):
-        current_pos = 0
-        current_count = 0
-        current_word_type = None
-        for pos, count, word_type in cls._syntax_highlight(text):
-            if word_type == current_word_type:
-                current_count += count
-            else:
-                if current_count:
-                    yield current_pos, current_count,  current_word_type
-                current_pos = pos
-                current_count = count
-                current_word_type = word_type
-        if current_count:
-            yield current_pos, current_count,  current_word_type
-
-
-class Group(Command):
-    command = 'group'
-
-    def process_args(self, args):
-        self.clauses = []
-        for arg in args:
-            if ':' in arg:
-                key, include = arg.split(':')
-            else:
-                key, include = arg, None
-
-            clause = resolve_ref(self.app, key)
-
-            if include:
-                include = resolve_ref(self.app, include)
-                if isinstance(include, list):
-                    include = ','.join(map(str, include))
-                clause += ':' + include
-            self.clauses.append(clause)
-
-    def run(self):
-        self.app.filter_config.group_by = self.clauses
-
-
-class Order(Command):
-    command = 'order'
-
-    def process_args(self, args):
-        self.clauses = [resolve_ref(self.app, arg) for arg in args]
-        for clause in self.clauses:
-            if clause not in SORT_TYPES:
-                self.bad_args("unknown sort type")
-
-    def run(self):
-        self.app.filter_config.order_by = self.clauses
-
-
-class Expr(Command):
-    command = 'expr'
-
-    @staticmethod
-    def _walk_tags(ex):
-        if isinstance(ex, expr.Tag):
-            yield ex
-        elif isinstance(ex, expr.Prefix):
-            yield from walk_expr(ex.value)
-        elif isinstance(ex, expr.Infix):
-            yield from walk_expr(ex.lhs)
-            yield from walk_expr(ex.rhs)
-        elif not isinstance(ex, expr.Empty):
-            assert 0, ex
-
-    def process_args(self, args):
-        try:
-            self.expr = expr.parse_expr(' '.join(args))
-        except expr.BadExpr:
-            self.bad_args("cannot parse expr")
-        for tag in self._walk_tags(self.expr):
-            tag.value = resolve_ref(app, tag.value)
-
-    def run(self):
-        self.app.filter_config.include_tags = []
-        self.app.filter_config.exclude_tags = []
-        self.app.filter_config.custom_expr = self.expr
-
-
-class Snapshot(Command):
-    command = 'snapshot'
-    max_args = 0
-
-    def run(self):
-        self.app.save_snapshot()
-
-class Reload(Command):
-    command = 'reload'
-    max_args = 0
-
-    def run(self):
-        self.app.reload_tree()
-
-
-class Load(Command):
-    command = 'load'
-    min_args = 1
-
-    def process_args(self, args):
-        args = [resolve_ref(self.app, arg) for arg in args]
-        self.mode, *self.path = args
-        if self.mode not in ['grid', 'viewer']:
-            self.bad_args('expected load <grid|viewer> ...')
-
-    def run(self):
-        node = self.app.library.make_tree(self.app.filter_config)
-        for name in self.path:
-            for child in node.children:
-                if child.name == name:
-                    node = child
-                    break
-            else:
-                raise MacroError("Cannot load path %r" % (self.path,))
-        if self.mode == 'viewer':
-            target = node
-            while target.children:
-                target = target.children[0]
-            node = target.parent
+def _merge_tokens(tokens):
+    merged_tokens = []
+    for token in tokens:
+        if merged_tokens and merged_tokens[-1].type == token.type:
+            merged_tokens[-1].end_line = token.end_line
+            merged_tokens[-1].end_pos = token.end_pos
         else:
-            target = None
-        self.app.browser.load_node(node, target, self.mode)
+            merged_tokens.append(token)
+    return merged_tokens
 
 
-class Edit(Command):
-    command = 'edit'
-    min_args = 2
+def lex(text):
+    lines = text.split('\n')
+    end_line = len(lines) - 1
+    end_pos = len(lines[end_line])
 
-    def process_args(self, args):
-        args = [resolve_ref(self.app, arg) for arg in args]
-        self.key, self.op, *self.value = args
-        if self.key not in self.app.metadata.editable_keys():
-            self.bad_args("is read-only")
-        self.is_multi = self.key in self.app.metadata.multi_value_keys()
-        if self.op == 'set':
-            if not self.is_multi:
-                if len(self.value) != 1:
-                    self.bad_args("one value required")
-                self.value = self.value[0]
-        elif self.op in ['add', 'remove', 'toggle']:
-            if not self.is_multi:
-                self.bad_args("op requres a multi-value key")
-        else:
-            self.bad_args("unknown op")
+    tokens = []
+    cur_line = cur_pos = 0
 
-    def run(self):
-        target = self.app.browser.target
-        if self.op == 'set':
-            target.update(self.key, self.value)
-        else:
-            target.update_set(self.key, **{self.op: set(self.value)})
+    try:
+        for rawtoken in tokenize.generate_tokens(io.StringIO(text).readline):
+            token = Token(rawtoken)
+            if (token.start_line, token.start_pos) != (cur_line, cur_pos):
+                tokens.append(Filler(cur_line, cur_pos, token.start_line, token.start_pos))
+            tokens.append(token)
+            cur_line = token.end_line
+            cur_pos = token.end_pos
+    except Exception as e:
+        print("Invalid macro:", e)
+
+    if (cur_line < end_line) or (cur_line == end_line and cur_pos < end_pos):
+        tokens.append(Filler(cur_line, cur_pos, end_line, end_pos))
+    return _merge_tokens(tokens)
 
 
-class Delete(Command):
-    command = 'delete'
-    min_args = 1
-    max_args = 2
+def _highlight_line(line_i, line, tokens):
+    words = []
+    for token in tokens:
+        if token.start_line > line_i:
+            break
+        if token.end_line < line_i:
+            continue
 
-    def process_args(self, args):
-        nodes = resolve_ref(self.app, args[0])
-        if not isinstance(nodes, list):
-            nodes = [nodes]
-        self.nodes = nodes
-        self.mode = args[1] if len(args) == 2 else 'library'
-
-    def run(self):
-        delete_nodes(self.app, self.nodes, self.mode)
-
-
-class Scroll(Command):
-    command = 'scroll'
-    min_args = 1
-    max_args = 1
-
-    def process_args(self, args):
-        self.direction = args[0]
-        if self.direction not in SCROLL_ACTIONS:
-            self.bad_args('invalid scroll direction')
-
-    def run(self):
-        self.app.browser.scroll(self.direction)
+        start_pos = 0 if token.start_line < line_i else token.start_pos
+        end_pos = len(line) if token.end_line > line_i else token.end_pos
+        word = line[start_pos:end_pos]
+        if word:
+            words.append((word, token.type))
+    return words
 
 
 def syntax_highlight(text):
-    return Command.syntax_highlight(text)
-
-
-def parse_macro(app, macro):
-    command_map = Command.command_map()
-    commands = []
-    for line in macro.strip().split('\n'):
-        line = line.split('#')[0].strip()
-        if not line:
-            continue
-        command, *args = line.split()
-        if '.' in command:
-            command = resolve_ref(app, command)
-        if command not in command_map:
-            raise MacroError("Unknown command %r" % (command,))
-        commands.append(command_map[command](app, args))
-    return commands
+    tokens = lex(text)
+    lines = text.split('\n')
+    return [_highlight_line(i, line, tokens) for i, line in enumerate(lines)]
 
 
 def run_macro(app, macro):
-    for command in parse_macro(app, macro):
-        command.run()
+    tree = ast.parse(macro)
+    code = compile(tree, '<macro>', 'exec')
+    exec(code, {'app': app})

@@ -5,10 +5,10 @@ from .common import DataDialogWidget
 
 class MacroDialogWidget(DataDialogWidget):
     color_map = {
-        'comment': (255, 128, 128),
-        'error': 'red',
-        'command': 'cyan',
-        'variable': 'lightgreen',
+        'STRING': (255, 220, 220),
+        'COMMENT': (255, 127, 127),
+        'NAME': 'lightgreen',
+        'KEYWORD': 'cyan',
     }
 
     def __init__(self, names, settings, highlight_cb, select_name_cb,
@@ -35,8 +35,13 @@ class MacroDialogWidget(DataDialogWidget):
             self.text_area.set_enabled(False)
 
     def highlight(self, text):
-        for i, n, label in self.highlight_cb(text):
-            yield text[i:i+n], self.color_map.get(label)
+        return [
+            [
+                (text, self.color_map.get(text_type))
+                for text, text_type in line
+            ]
+            for line in self.highlight_cb(text)
+        ]
 
     def name_update(self, _):
         self.select_name_cb(self.name_box.choice)
