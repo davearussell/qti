@@ -151,3 +151,12 @@ class Browser:
         else:
             return False
         return True
+
+    def delete_nodes(self, nodes, propagate=None):
+        old_parent = nodes[0].parent
+        root = old_parent.root
+        for node in nodes:
+            new_target = node.delete(propagate=propagate)
+        new_parent = root if new_target is None else new_target.parent
+        mode = 'grid' if new_parent != old_parent else self.mode
+        self.load_node(new_parent, target=new_target, mode=mode)

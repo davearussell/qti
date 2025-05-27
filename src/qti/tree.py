@@ -27,6 +27,10 @@ def maybe(seq):
         raise Exception("Expected 0-1 matches, found %d" % (len(l),))
     return l[0] if l else None
 
+def maybe_first(seq):
+    l = list(seq)
+    return l[0] if l else None
+
 
 class Node:
     type = None
@@ -91,12 +95,20 @@ class Node:
 
     def delete(self):
         if self.parent is None:
-            return
+            return None # tree is empty
 
-        self.parent.remove_child(self)
-        if not self.parent.children:
-            self.parent.delete()
+        parent = self.parent
         self.parent = None
+        i = parent.children.index(self)
+        parent.remove_child(self)
+
+        # We return the node's closest neighbour as a hint to what to focus on next
+        if not parent.children:
+            return parent.delete()
+        else:
+            if i == len(parent.children):
+                i -= 1
+            return parent.children[i]
 
 
 class Root(Node):
@@ -275,6 +287,16 @@ class FilteredContainer(Container):
                 value = image_value
             return value
 
+    def delete(self, propagate=None):
+        if propagate is None:
+            return super().delete()
+
+        set_node = maybe_first(self.ancestors(lambda n: isinstance(n, FilteredSet)))
+        for image in list(self.images()):
+            neighbour = image.delete(propagate=propagate, set_node=set_node)
+        # NOTE: deleting the final image will also have deleted this node
+        return neighbour
+
 
 class FilteredSet(FilteredContainer):
     def __init__(self, name, _type):
@@ -318,6 +340,24 @@ class FilteredImage(Image):
 
     def get_key(self, key):
         return self.spec[key]
+
+    def delete(self, propagate=None, set_node=None):
+        if propagate is not None:
+            assert propagate in ['disk', 'library', 'tree']
+            if propagate == 'tree':
+                if set_node is None:
+                    set_node = maybe_first(self.ancestors(lambda n: isinstance(n, FilteredSet)))
+                if set_node is not None:
+                    self.base_node.spec[set_node.type].remove(set_node.name)
+                else:
+                    self.base_node.delete()
+            else:
+                if propagate == 'disk':
+                    self.base_node.delete_file()
+                self.base_node.delete()
+                for node in self.aliases:
+                    node.delete()
+        return super().delete()
 
 
 class FilteredTree(Root):
