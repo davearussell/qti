@@ -33,6 +33,7 @@ def ensure_cached(image_path, size):
     except Exception as e:
         # If the image is corrupt, create an empty file so that we don't keep
         # retrying it. We'll report the error when we try to display the image.
+        print("WARNING: corrupt or missing image:", image_path)
         if not os.path.exists(scaled_path):
             open(scaled_path, 'wb').close()
     return scaled_path
