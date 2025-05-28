@@ -78,6 +78,15 @@ class Browser:
             self.pathbar.fade_target = False
             self.viewer.load(self.node, self.target)
 
+    def set_target(self, target):
+        if target.parent != self.node:
+            self.load_node(target.parent, target, self.mode)
+        else:
+            if self.mode == 'grid':
+                self.grid.set_target_index(self.node.children.index(target))
+            else:
+                self.viewer.load(self.node, target)
+
     def node_labels(self):
         return [child.name for child in self.node.children]
 
