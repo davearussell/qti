@@ -93,3 +93,4 @@ class MacroDialog(DataDialog):
             self.app.keybinds.delete_action('macro_' + name)
         for name in new_names - old_names:
             self.app.keybinds.add_action('macro_' + name)
+        self.orig_macros = copy.deepcopy(self.macros)
