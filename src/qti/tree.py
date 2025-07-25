@@ -144,10 +144,10 @@ class Image(Node):
             print("Deleting", self.abspath)
             os.unlink(self.abspath)
 
-    def update_set(self, key, add=None, remove=None, toggle=None):
+    def update_set(self, key, add=None, remove=None):
         keep = []
-        add = (add or set()) | (toggle or set())
-        remove = (remove or set()) | (toggle or set())
+        add = list(add) if add else set() # do not modify input list
+        remove = remove or set()
         for val in self.spec[key]:
             if val in add:
                 add.remove(val)
