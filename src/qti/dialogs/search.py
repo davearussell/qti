@@ -1,11 +1,11 @@
-from .. import ui
+from ..ui.dialogs.search import SearchDialogWidget
 from .common import Dialog
 
 
 class SearchDialog(Dialog):
     title = "Search"
     actions = {'ok': ''}
-    ui_cls = ui.cls('search_dialog')
+    ui_cls = SearchDialogWidget
 
     def __init__(self, app):
         self.ui_args  = {'update_cb': self.search_text_changed, 'commit_cb': self.find_next}

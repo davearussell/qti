@@ -1,5 +1,5 @@
 import time
-from . import ui
+from .ui.status_bar import StatusBarWidget
 
 
 class StatusBar:
@@ -9,7 +9,7 @@ class StatusBar:
         self.timer = app.timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
-        self.ui = ui.cls('status_bar')(app.ui)
+        self.ui = StatusBarWidget(app.ui)
 
     def set_text(self, msg, duration_s=None, priority=0):
         """

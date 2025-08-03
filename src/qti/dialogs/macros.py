@@ -1,7 +1,7 @@
 import copy
 from .common import DataDialog
 from .simple import LineEditDialog
-from .. import ui
+from ..ui.dialogs.macros import MacroDialogWidget
 from ..macros import syntax_highlight
 
 
@@ -22,7 +22,7 @@ class NewDialog(LineEditDialog):
 
 class MacroDialog(DataDialog):
     title = 'Macros'
-    ui_cls = ui.cls('macro_dialog')
+    ui_cls = MacroDialogWidget
 
     def __init__(self, app):
         self.app = app

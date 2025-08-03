@@ -8,7 +8,6 @@ dependencies = [
   "jinja2",
   "pillow",
   "pygame-ce",
-  "PySide6==6.6.0",
   "xui",
 ]
 

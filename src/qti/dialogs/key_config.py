@@ -1,10 +1,10 @@
 from .common import Dialog, DataDialog
-from ..import ui
+from ..ui.dialogs.key_config import KeybindDialogWidget, KeyChooserWidget
 
 
 class KeyChooser(Dialog):
     title = 'Select keybind'
-    ui_cls = ui.cls('key_chooser')
+    ui_cls = KeyChooserWidget
 
     def __init__(self, app, parent, keymap, action, idx, keybind, accept_cb):
         self.keymap = keymap
@@ -38,7 +38,7 @@ class KeyChooser(Dialog):
 
 class KeybindDialog(DataDialog):
     title = 'Key Bindings'
-    ui_cls = ui.cls('key_config_dialog')
+    ui_cls = KeybindDialogWidget
 
     def __init__(self, app):
         self.app = app

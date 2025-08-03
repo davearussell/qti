@@ -1,6 +1,8 @@
 import copy
 import traceback
 
+from .ui.app import App as UApp
+
 from . import library
 from . import browser
 from . import settings
@@ -8,7 +10,6 @@ from . import cache
 from . import keys
 from . import macros
 from . import timer
-from . import ui
 
 from .status_bar import StatusBar
 from .dialogs.editor import EditorDialog
@@ -30,7 +31,7 @@ class Application:
     def __init__(self, json_file):
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
-        self.ui = ui.cls('app')(self.settings, self.handle_keydown, self.exit_hook, self.idle_cb)
+        self.ui = UApp(self.settings, self.handle_keydown, self.exit_hook, self.idle_cb)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata

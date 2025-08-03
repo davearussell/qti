@@ -2,16 +2,13 @@ import pygame
 
 from xui import app as xapp
 
-# HACK: makes pygame render fonts at about the same size as qt
-FONT_RATIO = 1.35
-
 def make_gui_settings(settings):
     return {
 
         'font': settings.font,
         'color': settings.text_color,
         'border_color': settings.text_color,
-        'font_size': int(settings.font_size * FONT_RATIO),
+        'font_size': settings.font_size,
 
         'Screen': {
             'bgcolor': settings.background_color,
@@ -24,25 +21,25 @@ def make_gui_settings(settings):
         },
 
         'BrowserWidget': {
-            'name_size': int(settings.header_font_size * FONT_RATIO),
-            'count_size': int(2 * settings.header_font_size * FONT_RATIO),
+            'name_size': settings.header_font_size,
+            'count_size': 2 * settings.header_font_size,
         },
 
         'StatusBarWidget': {
-            'font_size': int(settings.header_font_size * FONT_RATIO),
+            'font_size': settings.header_font_size,
         },
 
         'DialogWidget': {
-            'header_font_size': int(settings.header_font_size * FONT_RATIO),
+            'header_font_size': settings.header_font_size,
         },
 
         'PathbarWidget': {
-            'font_size': int(settings.header_font_size * FONT_RATIO),
+            'font_size': settings.header_font_size,
             'sep_color': settings.pathbar_separator,
         },
 
         'KeyChooserWidget': {
-            'bind_font_size': int(settings.font_size * FONT_RATIO * 1.5),
+            'bind_font_size': int(settings.font_size * 1.5),
         }
 
     }

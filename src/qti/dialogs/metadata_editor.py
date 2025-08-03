@@ -1,7 +1,7 @@
 import copy
 
 from .common import DataDialog
-from .. import ui
+from ..ui.dialogs.metadata_editor import MetadataEditorDialogWidget
 
 
 def key_type(key):
@@ -13,7 +13,7 @@ def key_type(key):
 
 class MetadataEditorDialog(DataDialog):
     title = 'Metadata Editor'
-    ui_cls = ui.cls('metadata_editor_dialog')
+    ui_cls = MetadataEditorDialogWidget
 
     def __init__(self, app):
         self.app = app

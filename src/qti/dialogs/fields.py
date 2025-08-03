@@ -1,4 +1,4 @@
-from ..import ui
+from ..ui.dialogs import fields as ufields
 
 
 def assign_keybind(keys, word):
@@ -16,7 +16,7 @@ class FieldGroup:
         self.auto_keybinds = auto_keybinds
         self.fields = []
         self.keybinds = {}
-        self.ui = ui.cls('field_group')(keystroke_cb=self.handle_keystroke)
+        self.ui = ufields.FieldGroupWidget(keystroke_cb=self.handle_keystroke)
         self.init_fields(fields)
 
     def init_fields(self, fields):
@@ -50,7 +50,7 @@ class FieldGroup:
 
 
 class Field:
-    ui_cls = ui.cls('field')
+    ui_cls = ufields.FieldWidget
     ui_args = {}
     read_only = False
 
@@ -107,7 +107,7 @@ class Field:
 
 
 class TextField(Field):
-    ui_cls = ui.cls('text_field')
+    ui_cls = ufields.TextFieldWidget
 
     def __init__(self, key, value, completions=None, **kwargs):
         self.ui_args = {'completions': completions, 'read_only': self.read_only}
@@ -119,11 +119,11 @@ class ReadOnlyField(TextField):
 
 
 class SetField(TextField):
-    ui_cls = ui.cls('set_field')
+    ui_cls = ufields.SetFieldWidget
 
 
 class ValidatedTextField(Field):
-    ui_cls = ui.cls('validated_text_field')
+    ui_cls = ufields.ValidatedTextFieldWidget
 
     def __init__(self, key, value, validator, **kwargs):
         self.validator = validator
@@ -164,4 +164,4 @@ class TypedField(ValidatedTextField):
 
 
 class ColorField(TypedField):
-    ui_cls = ui.cls('color_field')
+    ui_cls = ufields.ColorFieldWidget

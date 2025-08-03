@@ -1,12 +1,12 @@
 import os
 
 from .common import Dialog
-from .. import ui
+from ..ui.dialogs.choice import ChoiceDialogWidget
 
 
 class DeleterDialog(Dialog):
     title = 'Delete'
-    ui_cls = ui.cls('choice_dialog')
+    ui_cls = ChoiceDialogWidget
     actions = {
         'yes': 'y',
         'no': 'n',

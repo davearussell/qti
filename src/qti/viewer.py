@@ -1,14 +1,13 @@
 import time
 
 from .cache import ensure_cached
-from . import ui
-
-Image = ui.cls('image')
+from .ui.viewer import ViewerWidget
+from .ui.image import Image
 
 
 class Viewer:
     def __init__(self, app, scroll_cb, close_cb):
-        self.ui = ui.cls('viewer')(app.ui, mouse_cb=self.handle_mouse)
+        self.ui = ViewerWidget(app.ui, mouse_cb=self.handle_mouse)
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app

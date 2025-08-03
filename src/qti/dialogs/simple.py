@@ -1,10 +1,10 @@
 from .common import Dialog
-from .. import ui
+from ..ui.dialogs.simple import LabelDialogWidget, LineEditDialogWidget
 
 
 class InfoDialog(Dialog):
     actions = {'ok': None}
-    ui_cls = ui.cls('label_dialog')
+    ui_cls = LabelDialogWidget
 
     def __init__(self, app, parent, text, **kwargs):
         self.ui_args = {'text': text} | kwargs
@@ -13,7 +13,7 @@ class InfoDialog(Dialog):
 
 class LineEditDialog(Dialog):
     actions = {'ok': None, 'cancel': None}
-    ui_cls = ui.cls('line_edit_dialog')
+    ui_cls = LineEditDialogWidget
 
     def __init__(self, app, parent, **kwargs):
         self.ui_args = {'update_cb': self.handle_update}

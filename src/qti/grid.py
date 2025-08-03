@@ -1,4 +1,4 @@
-from . import ui
+from .ui.grid import GridWidget
 
 
 class Grid:
@@ -6,7 +6,7 @@ class Grid:
         self.scroll_cb = scroll_cb or (lambda x: None)
         self.select_cb = select_cb or (lambda x: None)
         self.unselect_cb = unselect_cb or (lambda: None)
-        self.ui = ui.cls('grid')(app.ui, click_cb=self.handle_click)
+        self.ui = GridWidget(app.ui, click_cb=self.handle_click)
         self.target_i = None
         self.mark_i = None
         self.no_selection = no_selection

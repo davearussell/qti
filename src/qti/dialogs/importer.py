@@ -10,7 +10,7 @@ from .simple import InfoDialog
 from .common import DataDialog
 from .fields import FieldGroup, TextField, ReadOnlyField
 
-from .. import ui
+from ..ui.dialogs.importer import ImporterDialogWidget
 
 SUPPORTED_EXTNS = ['.jpg', '.png', '.webp']
 
@@ -46,7 +46,7 @@ def make_spec(image_path, root_dir, defaults):
 
 class ImporterDialog(DataDialog):
     title = 'Import images'
-    ui_cls = ui.cls('importer_dialog')
+    ui_cls = ImporterDialogWidget
     actions = {
         'ok': None,
         'cancel': None,
