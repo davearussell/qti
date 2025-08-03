@@ -1,7 +1,7 @@
 import copy
 import traceback
 
-from .ui.app import App as UApp
+from xui.app import App
 
 from . import library
 from . import browser
@@ -27,11 +27,56 @@ from .dialogs.search import SearchDialog
 from .datastore import Datastore
 
 
-class Application:
+def make_xui_config(settings):
+    return {
+
+        'font': settings.font,
+        'color': settings.text_color,
+        'border_color': settings.text_color,
+        'font_size': settings.font_size,
+
+        'Screen': {
+            'bgcolor': settings.background_color,
+        },
+
+        'GridWidget': {
+            'cell_size': settings.thumbnail_size,
+            'select_color': settings.selection_color,
+            'mark_color': settings.mark_color,
+        },
+
+        'BrowserWidget': {
+            'name_size': settings.header_font_size,
+            'count_size': 2 * settings.header_font_size,
+        },
+
+        'StatusBarWidget': {
+            'font_size': settings.header_font_size,
+        },
+
+        'DialogWidget': {
+            'header_font_size': settings.header_font_size,
+        },
+
+        'PathbarWidget': {
+            'font_size': settings.header_font_size,
+            'sep_color': settings.pathbar_separator,
+        },
+
+        'KeyChooserWidget': {
+            'bind_font_size': int(settings.font_size * 1.5),
+        }
+
+    }
+
+
+class Application(App):
+    framerate = 30
+
     def __init__(self, json_file):
+        super().__init__()
         self.store = Datastore()
         self.settings = settings.Settings(self.store)
-        self.ui = UApp(self.settings, self.handle_keydown, self.exit_hook, self.idle_cb)
         self.keybinds = keys.Keybinds(self.store)
         self.library = library.Library(json_file)
         self.metadata = self.library.metadata
@@ -41,9 +86,8 @@ class Application:
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar(self)
         self.browser = browser.Browser(self)
-        self.ui.set_main_widget(self.browser.ui)
-        self.size = self.ui.size
-        self.window = self.ui.window
+        self.add_window(self.browser.ui)
+        self.browser.ui.focus()
         self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
@@ -52,7 +96,7 @@ class Application:
     def handle_keydown(self, keystroke):
         action = self.keybinds.get_action(keystroke)
         if action == 'quit':
-            self.ui.quit()
+            self.quit()
         elif action == 'edit':
             if self.browser.target:
                 EditorDialog(self).run()
@@ -92,21 +136,18 @@ class Application:
             return None
         return self.browser.viewer
 
-    def run(self):
-        self.ui.run()
-
-    def idle_cb(self, deadline):
+    def idle_hook(self, deadline):
         self.browser.idle_cb(deadline)
 
     def timer(self, *args, **kwargs):
         return timer.Timer(self, *args, **kwargs)
 
-    def exit_hook(self):
+    def pre_exit_hook(self):
         self.library.save()
         self.cacher.stop()
 
     def apply_settings(self):
-        self.ui.apply_settings(self.settings.to_dict())
+        self.set_config(make_xui_config(self.settings))
         self.browser.reload_node()
         self.cacher.cache_all_images()
 

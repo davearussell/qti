@@ -28,7 +28,7 @@ class Browser:
                              scroll_cb=self._target_updated,
                              close_cb=self.unselect)
         self.pathbar = Pathbar(self.app, click_cb=self.unselect)
-        self.ui = BrowserWidget(self.app.ui,
+        self.ui = BrowserWidget(self.app,
                                 grid=self.grid.ui,
                                 viewer=self.viewer.ui,
                                 status_bar=self.app.status_bar.ui,

@@ -29,7 +29,7 @@ class Dialog:
     @property
     def common_ui_args(self):
         return {
-            'app': self.app.ui,
+            'app': self.app,
             'parent': self.parent,
             'title': self.title,
             'actions': self.actions,

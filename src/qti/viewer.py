@@ -7,11 +7,11 @@ from .ui.image import Image
 
 class Viewer:
     def __init__(self, app, scroll_cb, close_cb):
-        self.ui = ViewerWidget(app.ui, mouse_cb=self.handle_mouse)
+        self.ui = ViewerWidget(app, mouse_cb=self.handle_mouse)
         self.scroll_cb = scroll_cb
         self.close_cb = close_cb
         self.app = app
-        self.size = app.ui.size
+        self.size = app.size
         self.node = None
         self.target = None
         self.auto_scroll_enabled = False

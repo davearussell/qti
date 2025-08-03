@@ -13,7 +13,7 @@ class PathbarEntry:
 class Pathbar:
     def __init__(self, app, click_cb):
         self.click_cb = click_cb
-        self.ui = PathbarWidget(app.ui, self.entry_clicked)
+        self.ui = PathbarWidget(app, self.entry_clicked)
         self.fade_target = False
 
     def entry_clicked(self, entry):

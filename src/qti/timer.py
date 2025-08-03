@@ -8,7 +8,7 @@ class Timer:
         self._timer = None
 
     def _start(self):
-        self._timer = self.app.ui.call_later(self.duration_s, self.timeout, self.token)
+        self._timer = self.app.call_later(self.duration_s, self.timeout, self.token)
 
     def start(self, duration_s):
         self.token += 1

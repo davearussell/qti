@@ -9,7 +9,7 @@ class StatusBar:
         self.timer = app.timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
-        self.ui = StatusBarWidget(app.ui)
+        self.ui = StatusBarWidget(app)
 
     def set_text(self, msg, duration_s=None, priority=0):
         """
