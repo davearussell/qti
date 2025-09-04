@@ -6,10 +6,12 @@ from .viewer import Viewer
 # TODO:
 #  * Marking
 #  * Pathbar and StatusBar
-#  * Label and count
 
 
 class Browser(VBox):
+    name_size = 14
+    count_size = 30
+
     def __init__(self):
         super().__init__()
         self.library = self.app.library
