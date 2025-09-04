@@ -1,10 +1,7 @@
 import os
 from functools import partial
 
-from ..image import Image
-
 from .. import template
-from ..grid import Grid
 
 from .simple import InfoDialog
 from .common import DataDialog
@@ -35,7 +32,7 @@ def make_spec(image_path, root_dir, defaults):
         'path': relpath,
         'name': template.f_title(os.path.splitext(os.path.basename(image_path))[0]),
         'filename': os.path.basename(relpath),
-        'resolution': list(Image(image_path).size),
+        'resolution': list(Image(image_path).size), # XXX use xui.Image or CachedImage here
 
         # These are not saved in the database but may be helpful for templating
         'directory': os.path.dirname(relpath),
@@ -91,6 +88,7 @@ class ImporterDialog(DataDialog):
         return field_group
 
     def setup_grid(self):
+        # XXX use xui.Grid here (action handling needs work)
         grid = Grid(self.app, scroll_cb=self.grid_target_updated, no_selection=True)
         cells = [{'image_path': image} for image in self.images]
         grid.load(cells)

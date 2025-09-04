@@ -17,7 +17,6 @@ from .dialogs.bulk_edit import BulkEditDialog
 from .filtering import default_filter_config
 from .dialogs.deleter import DeleterDialog
 from .dialogs.filter_config import FilterConfigDialog
-from .dialogs.importer import make_importer
 from .dialogs.metadata_editor import MetadataEditorDialog
 from .dialogs.macros import MacroDialog
 from .dialogs.app_settings import AppSettingsDialog
@@ -39,13 +38,12 @@ def make_xui_config(settings):
             'bgcolor': settings.background_color,
         },
 
-        'GridWidget': {
-            'cell_size': settings.thumbnail_size,
-            'select_color': settings.selection_color,
+        'Grid': {
+            'highlight_color': settings.selection_color,
             'mark_color': settings.mark_color,
         },
 
-        'BrowserWidget': {
+        'Browser': {
             'name_size': settings.header_font_size,
             'count_size': 2 * settings.header_font_size,
         },
@@ -85,9 +83,9 @@ class Application(App):
             self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
         self.status_bar = StatusBar(self)
-        self.browser = browser.Browser(self)
-        self.add_window(self.browser.ui)
-        self.browser.ui.focus()
+        self.browser = browser.Browser()
+        self.add_window(self.browser)
+        self.browser.focus()
         self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')
         self.cacher = BackgroundCacher(self)
         self.apply_settings()
@@ -98,10 +96,10 @@ class Application(App):
         if action == 'quit':
             self.quit()
         elif action == 'edit':
-            if self.browser.target:
+            if self.browser.node.children:
                 EditorDialog(self).run()
         elif action == 'bulk_edit':
-            if self.browser.target:
+            if self.browser.node.children:
                 BulkEditDialog(self, self.browser.node).run()
         elif action == 'filter_config':
             FilterConfigDialog(self).run()
@@ -120,6 +118,7 @@ class Application(App):
         elif action and action.startswith('macro_'):
             self.run_macro(action[len('macro_'):])
         elif action == 'add_new_images':
+            assert 0, "XXX fixme!"
             make_importer(self, self.browser.node).run()
         elif action == 'app_settings':
             AppSettingsDialog(self).run()
@@ -129,15 +128,6 @@ class Application(App):
         else:
             return False
         return True
-
-    @property
-    def viewer(self):
-        if self.browser.mode != 'viewer':
-            return None
-        return self.browser.viewer
-
-    def idle_hook(self, deadline):
-        self.browser.idle_cb(deadline)
 
     def timer(self, *args, **kwargs):
         return timer.Timer(self, *args, **kwargs)
@@ -152,7 +142,7 @@ class Application(App):
         self.cacher.cache_all_images()
 
     def save_snapshot(self):
-        snapshot = (self.browser.node, self.browser.target, self.browser.mode,
+        snapshot = (self.browser.node, self.browser.get_target(), self.browser.mode,
                     copy.deepcopy(self.filter_config))
         self.snapshots.append(snapshot)
 
@@ -237,7 +227,7 @@ class Application(App):
         return target.parent, target, None
 
     def reload_tree(self, target_path=None):
-        old_target = self.browser.target
+        old_target = self.browser.get_target()
         tree = self.library.make_tree(self.filter_config)
         if target_path:
             node, target, mode = self.select_target_by_path(tree, target_path)

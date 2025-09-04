@@ -1,165 +1,80 @@
-import time
+from xui.widgets import VBox, ScrollArea
 
-from .grid import Grid
+from .grid import Grid, Thumbnail
 from .viewer import Viewer
-from .pathbar import Pathbar
-from .tree import TreeError
 
-from .ui.browser import BrowserWidget
+# TODO:
+#  * Marking
+#  * Pathbar and StatusBar
+#  * Label and count
 
 
-class Browser:
-    def __init__(self, app):
-        self.app = app
+class Browser(VBox):
+    def __init__(self):
+        super().__init__()
         self.library = self.app.library
-        self.keybinds = app.keybinds
+        self.keybinds = self.app.keybinds
         self.mode = None
         self.node = None
-        self.target = None
-        self.hide_bars = False
+        self.grid = Grid(click_cb=self._grid_click)
+        self.grid_scroller = ScrollArea(self.grid, greedy_height=True, right_bar=True)
+        self.viewer = Viewer()
+
+    def settings_updated(self):
         self.setup_widgets()
 
-    def setup_widgets(self):
-        self.grid = Grid(self.app,
-                         scroll_cb=self._target_updated,
-                         select_cb=self._select,
-                         unselect_cb=self.unselect)
-        self.viewer = Viewer(self.app,
-                             scroll_cb=self._target_updated,
-                             close_cb=self.unselect)
-        self.pathbar = Pathbar(self.app, click_cb=self.unselect)
-        self.ui = BrowserWidget(self.app,
-                                grid=self.grid.ui,
-                                viewer=self.viewer.ui,
-                                status_bar=self.app.status_bar.ui,
-                                pathbar=self.pathbar.ui,
-                                keydown_cb=self.handle_keydown)
+    def _grid_click(self, cell_i, is_double):
+        self._set_target_i(cell_i)
+        if is_double:
+            self.select()
 
-    def _target_updated(self, target_i):
-        self.target = None if target_i is None else self.node.children[target_i]
-        self.pathbar.set_target(self.target)
+    def setup_grid(self):
+        self.children = [self.grid_scroller]
+
+    def setup_viewer(self):
+        self.children = [self.viewer]
+
+    def setup_widgets(self):
+        if self.mode == 'grid':
+            self.setup_grid()
+        else:
+            self.setup_viewer()
+        self.relayout()
+        self.redraw()
 
     def set_mode(self, mode):
         if mode is None:
             mode = self.mode or 'grid'
         if mode != self.mode:
             self.mode = mode
-            self.ui.set_mode(mode)
+            self.setup_widgets()
 
-    def make_cell(self, node):
-        return {
-            'image_path': next(node.images()).abspath,
-            'label': node.name if node.children else None,
-            'count': len(node.children),
-        }
-
-    def prefetch_suggestions(self):
-        for child in self.node.children:
-            yield self.make_cell(child)
-            for node in child.children[:30]:
-                yield self.make_cell(node)
-
-    def idle_cb(self, deadline):
-        for cell in self.prefetch_suggestions():
-            self.ui.prefetch(cell)
-            if time.time() > deadline:
-                break
-
-    def load_node(self, node, target=None, mode=None):
-        self.node = node
-        self.target = target or (node.children[0] if node.children else None)
-        self.set_mode(mode)
-        if self.mode == 'grid':
-            self.pathbar.fade_target = True
-            cells = [self.make_cell(child) for child in self.node.children]
-            target_i = self.node.children.index(self.target) if self.target else None
-            self.grid.load(cells, target_i=target_i)
-        else:
-            self.pathbar.fade_target = False
-            self.viewer.load(self.node, self.target)
+    def get_target(self):
+        if not self.node.children:
+            return None
+        return self.node.children[self.grid.get_target_i()]
 
     def set_target(self, target):
-        if target.parent != self.node:
-            self.load_node(target.parent, target, self.mode)
+        if target.parent == self.node:
+            self._set_target_i(self.node.children.index(target))
         else:
-            if self.mode == 'grid':
-                self.grid.set_target_index(self.node.children.index(target))
-            else:
-                self.viewer.load(self.node, target)
+            self.load_node(target.parent, target, self.mode)
 
-    def node_labels(self):
-        return [child.name for child in self.node.children]
+    def load_node(self, node, target=None, mode=None):
+        if node.children and not target:
+            target = node.children[0]
+        self.node = node
+        self.grid.load_cells([Thumbnail(self, child) for child in node.children])
+        target_i = node.children.index(target) if node.children else None
+        self._set_target_i(target_i)
+        self.set_mode(mode)
 
     def reload_node(self):
         if self.node:
-            self.load_node(self.node, self.target, self.mode)
-
-    def _select(self, target_i):
-        target = self.node.children[target_i]
-        if target.children:
-            self.load_node(target, mode='grid')
-        else:
-            self.load_node(target.parent, target=target, mode='viewer')
-
-    def unselect(self, node=None):
-        if node is None:
-            node = self.node
-        if node.parent:
-            self.load_node(node.parent, target=node, mode='grid')
-
-    def scroll_node(self, action):
-        if not self.node.parent:
-            return
-        siblings = self.node.parent.children
-        offset = {'up': -1, 'prev': -1, 'down': 1, 'next': 1}[action]
-        new_node = siblings[(siblings.index(self.node) + offset) % len(siblings)]
-        self.load_node(new_node)
-
-    def scroll(self, action):
-        widget = self.grid if self.mode == 'grid' else self.viewer
-        if action in widget.action_map:
-            widget.action_map[action](action)
-        else:
-            self.scroll_node(action)
-
-    def swap_cells(self, direction):
-        cells = self.node.children
-        if direction in ['left', 'right']:
-            i = (self.target.index + (1 if direction == 'right' else -1)) % len(cells)
-            other = cells[i]
-        elif self.mode == 'grid':
-            other = cells[self.grid.neighbour(direction)]
-        else:
-            return # Cannot swap verticaly when in viewer mode
-
-        try:
-            self.target.swap_with(other)
-            self.load_node(self.node, self.target)
-        except TreeError as e:
-            self.app.status_bar.set_text("Cannot swap (%s)" % e, duration_s=5)
+            self.load_node(self.node, self.get_target(), self.mode)
 
     def marked_nodes(self):
-        if self.mode == 'grid':
-            return [self.node.children[i] for i in self.grid.marked_range()]
-        return [self.target]
-
-    def handle_keydown(self, keystroke):
-        action = self.keybinds.get_action(keystroke)
-        widget = self.viewer if self.mode == 'viewer' else self.grid
-        if widget.handle_action(action):
-            pass
-        elif action in ['prev', 'next', 'up', 'down']:
-            # NOTE: up/down here is only reachable in viewer mode; in grid
-            # mode the grid class consumes them to scroll with in the grid
-            self.scroll_node(action)
-        elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
-            self.swap_cells(action[len('swap_'):])
-        elif action == 'toggle_hide':
-            self.hide_bars = not self.hide_bars
-            self.ui.set_bar_visibility(self.hide_bars)
-        else:
-            return False
-        return True
+        pass # XXX  "Write me!"
 
     def delete_nodes(self, nodes, propagate=None):
         old_parent = nodes[0].parent
@@ -169,3 +84,92 @@ class Browser:
         new_parent = root if new_target is None else new_target.parent
         mode = 'grid' if new_parent != old_parent else self.mode
         self.load_node(new_parent, target=new_target, mode=mode)
+
+    def scroll_node(self, forwards):
+        if not self.node.parent:
+            return
+        siblings = self.node.parent.children
+        i = (siblings.index(self.node) + (1 if forwards else -1)) % len(siblings)
+        self.load_node(siblings[i])
+
+    def _set_target_i(self, target_i):
+        target = None if target_i is None else self.node.children[target_i]
+        self.grid.set_target_i(target_i)
+        if target and self.mode == 'viewer':
+            self.viewer.load(target.abspath)
+
+    def scroll(self, direction):
+        if not self.node.children:
+            return
+
+        if self.mode == 'viewer' and direction in ['up', 'down']:
+            # up/down have no meaning in viewer mode so alias them to prev/next for convenience
+            direction = 'prev' if direction == 'up' else 'next'
+
+        if direction in ['prev', 'next']:
+            self.scroll_node(direction == 'next')
+        else:
+            target_i = self.grid.get_target_i()
+            n = len(self.node.children)
+            if direction == 'top':
+                target_i = 0
+            elif direction == 'bottom':
+                target_i = n - 1
+            else:
+                if self.mode == 'viewer':
+                    assert direction in ['left', 'right']
+                    target_i = (target_i + (1 if direction == 'right' else -1)) % n
+                    self.viewer.load(self.node.children[target_i].abspath)
+                else:
+                    target_i = self.grid.neighbour(target_i, direction)
+            self._set_target_i(target_i)
+
+    def swap_cells(self, direction):
+        cells = self.node.children
+        target = self.get_target()
+        if not target:
+            return
+        if direction in ['left', 'right']:
+            i = (cells.index(target) + (1 if direction == 'right' else -1)) % len(cells)
+            other = cells[i]
+        elif self.mode == 'grid':
+            other = cells[self.grid.neighbour(direction)]
+        else:
+            return # Cannot swap verticaly when in viewer mode
+        try:
+            target.swap_with(other)
+            self.load_node(self.node, target)
+        except TreeError as e:
+            self.app.status_bar.set_text("Cannot swap (%s)" % e, duration_s=5)
+
+    def select(self):
+        if self.mode == 'viewer':
+            self.set_mode('grid')
+        else:
+            node = self.get_target()
+            if node:
+                if node.children:
+                    self.load_node(node, mode='grid')
+                else:
+                    self.viewer.load(node.abspath)
+                    self.set_mode('viewer')
+
+    def unselect(self):
+        if self.mode == 'viewer':
+            self.set_mode('grid')
+        elif self.node.parent:
+            self.load_node(self.node.parent, target=self.node, mode='grid')
+
+    def handle_keydown(self, keystroke):
+        action = self.keybinds.get_action(keystroke)
+        if action in ['up', 'down', 'left', 'right', 'top', 'bottom', 'prev', 'next']:
+            self.scroll(action)
+        elif action in ['swap_up', 'swap_down', 'swap_left', 'swap_right']:
+            self.swap_cells(action[len('swap_'):])
+        elif action == 'select':
+            self.select()
+        elif action == 'unselect':
+            self.unselect()
+        else:
+            return False
+        return True
