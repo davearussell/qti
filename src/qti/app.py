@@ -56,7 +56,7 @@ def make_xui_config(settings):
             'header_font_size': settings.header_font_size,
         },
 
-        'PathbarWidget': {
+        'PathbarBody': {
             'font_size': settings.header_font_size,
             'sep_color': settings.pathbar_separator,
         },

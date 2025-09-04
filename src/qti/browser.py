@@ -1,11 +1,14 @@
-from xui.widgets import VBox, ScrollArea
+import pygame
+
+from xui.widgets import VBox, VSpacer, ScrollArea
 
 from .grid import Grid, Thumbnail
 from .viewer import Viewer
+from .pathbar import Pathbar
 
 # TODO:
 #  * Marking
-#  * Pathbar and StatusBar
+#  * StatusBar
 
 
 class Browser(VBox):
@@ -18,9 +21,12 @@ class Browser(VBox):
         self.keybinds = self.app.keybinds
         self.mode = None
         self.node = None
+        self.hide_bars = False
         self.grid = Grid(click_cb=self._grid_click)
         self.grid_scroller = ScrollArea(self.grid, greedy_height=True, right_bar=True)
         self.viewer = Viewer()
+        self.pathbar = Pathbar(click_cb=self._pathbar_click)
+        self.overlay = VBox([self.pathbar, VSpacer()], bgcolor=(0, 0, 0, 0))
 
     def settings_updated(self):
         self.setup_widgets()
@@ -30,17 +36,30 @@ class Browser(VBox):
         if is_double:
             self.select()
 
+    def _pathbar_click(self, node):
+        self.load_node(node.parent, target=node, mode='grid')
+
     def setup_grid(self):
-        self.children = [self.grid_scroller]
+        if self.hide_bars:
+            self.children = [self.grid_scroller]
+        else:
+            self.children = [self.pathbar, self.grid_scroller]
+        self.pathbar.bgcolor = pygame.Color(self.screen.bgcolor).lerp('black', 0.5)
 
     def setup_viewer(self):
         self.children = [self.viewer]
+        if not self.hide_bars:
+            self.pathbar.bgcolor = (0, 0, 0, 128)
+            self.screen.children.insert(1, self.overlay)
 
     def setup_widgets(self):
+        if self.overlay in self.screen.children:
+            self.screen.children.remove(self.overlay)
         if self.mode == 'grid':
             self.setup_grid()
         else:
             self.setup_viewer()
+        self.pathbar.set_target(self.get_target(), fade=self.mode == 'grid')
         self.relayout()
         self.redraw()
 
@@ -50,6 +69,10 @@ class Browser(VBox):
         if mode != self.mode:
             self.mode = mode
             self.setup_widgets()
+
+    def toggle_hide(self):
+        self.hide_bars = not self.hide_bars
+        self.setup_widgets()
 
     def get_target(self):
         if not self.node.children:
@@ -96,6 +119,7 @@ class Browser(VBox):
 
     def _set_target_i(self, target_i):
         target = None if target_i is None else self.node.children[target_i]
+        self.pathbar.set_target(target, fade=self.mode == 'grid')
         self.grid.set_target_i(target_i)
         if target and self.mode == 'viewer':
             self.viewer.load(target.abspath)
@@ -172,6 +196,8 @@ class Browser(VBox):
             self.select()
         elif action == 'unselect':
             self.unselect()
+        elif action == 'toggle_hide':
+            self.toggle_hide()
         else:
             return False
         return True
