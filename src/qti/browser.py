@@ -5,10 +5,10 @@ from xui.widgets import VBox, VSpacer, ScrollArea
 from .grid import Grid, Thumbnail
 from .viewer import Viewer
 from .pathbar import Pathbar
+from .status_bar import StatusBar
 
 # TODO:
 #  * Marking
-#  * StatusBar
 
 
 class Browser(VBox):
@@ -26,7 +26,8 @@ class Browser(VBox):
         self.grid_scroller = ScrollArea(self.grid, greedy_height=True, right_bar=True)
         self.viewer = Viewer()
         self.pathbar = Pathbar(click_cb=self._pathbar_click)
-        self.overlay = VBox([self.pathbar, VSpacer()], bgcolor=(0, 0, 0, 0))
+        self.status_bar = StatusBar()
+        self.overlay = VBox([self.pathbar, VSpacer(), self.status_bar], bgcolor=(0, 0, 0, 0))
 
     def settings_updated(self):
         self.setup_widgets()
@@ -43,13 +44,15 @@ class Browser(VBox):
         if self.hide_bars:
             self.children = [self.grid_scroller]
         else:
-            self.children = [self.pathbar, self.grid_scroller]
+            self.children = [self.pathbar, self.grid_scroller, self.status_bar]
         self.pathbar.bgcolor = pygame.Color(self.screen.bgcolor).lerp('black', 0.5)
+        self.status_bar.bgcolor = pygame.Color(self.screen.bgcolor).lerp('black', 0.5)
 
     def setup_viewer(self):
         self.children = [self.viewer]
         if not self.hide_bars:
             self.pathbar.bgcolor = (0, 0, 0, 128)
+            self.status_bar.bgcolor = (0, 0, 0, 128)
             self.screen.children.insert(1, self.overlay)
 
     def setup_widgets(self):

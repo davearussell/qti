@@ -11,7 +11,6 @@ from . import keys
 from . import macros
 from . import timer
 
-from .status_bar import StatusBar
 from .dialogs.editor import EditorDialog
 from .dialogs.bulk_edit import BulkEditDialog
 from .filtering import default_filter_config
@@ -48,7 +47,7 @@ def make_xui_config(settings):
             'count_size': 2 * settings.header_font_size,
         },
 
-        'StatusBarWidget': {
+        'StatusBar': {
             'font_size': settings.header_font_size,
         },
 
@@ -82,8 +81,8 @@ class Application(App):
         for macro in self.library.macros:
             self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
-        self.status_bar = StatusBar(self)
         self.browser = browser.Browser()
+        self.status_bar = self.browser.status_bar
         self.add_window(self.browser)
         self.browser.focus()
         self.browser.load_node(self.library.make_tree(self.filter_config), mode='grid')

@@ -1,15 +1,21 @@
 import time
-from .ui.status_bar import StatusBarWidget
+
+from xui.widgets import HBox, HSpacer, Label
+from xui.settings import ChildSettings
 
 
-class StatusBar:
-    def __init__(self, app):
+class StatusBar(HBox):
+    margin = 10
+
+    def __init__(self):
         super().__init__()
+        label_settings = ChildSettings(self, inherit=['font_size'])
+        self.label = Label('', settings=label_settings)
+        self.children = [self.label, HSpacer()]
         self.msg = ''
-        self.timer = app.timer(self.refresh_msg)
+        self.timer = self.app.timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
-        self.ui = StatusBarWidget(app)
 
     def set_text(self, msg, duration_s=None, priority=0):
         """
@@ -57,6 +63,6 @@ class StatusBar:
                 prio = _prio
         if msg != self.msg:
             self.msg = msg
-            self.ui.set_text(msg)
+            self.label.set_text(msg)
         if first_expiry is not None:
             self.timer.start(first_expiry - now)
