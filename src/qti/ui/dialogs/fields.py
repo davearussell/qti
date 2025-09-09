@@ -2,7 +2,6 @@ import pygame
 
 from xui.widgets import HBox, VBox, Label, LineEdit
 
-from ...color import Color
 from ..color_picker import ColorPicker
 from ..set_picker import SetPicker
 

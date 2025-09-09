@@ -1,5 +1,3 @@
-from .color import Color
-
 class Size(list):
     def __init__(self, text):
         values = text.split()
@@ -10,6 +8,9 @@ class Size(list):
 
     def __str__(self):
         return "%d x %d" % (self.w, self.h)
+
+class Color(str):
+    pass
 
 
 DEFAULT_APP_SETTINGS = {

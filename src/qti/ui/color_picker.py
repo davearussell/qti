@@ -1,6 +1,6 @@
-from xui.widgets import Widget, HBox, LineEdit
+import pygame
 
-from ..color import Color
+from xui.widgets import Widget, HBox, LineEdit
 
 
 class Sample(Widget):
@@ -18,7 +18,7 @@ class Sample(Widget):
 
     def set_value(self, value):
         try:
-            self.color = Color(value)
+            self.color = pygame.Color(value)
         except (AttributeError, ValueError):
             self.color = 'black'
 
