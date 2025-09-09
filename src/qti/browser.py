@@ -7,9 +7,6 @@ from .viewer import Viewer
 from .pathbar import Pathbar
 from .status_bar import StatusBar
 
-# TODO:
-#  * Marking
-
 
 class Browser(VBox):
     name_size = 14
@@ -102,7 +99,9 @@ class Browser(VBox):
             self.load_node(self.node, self.get_target(), self.mode)
 
     def marked_nodes(self):
-        pass # XXX  "Write me!"
+        if self.mode == 'grid':
+            return [self.node.children[i] for i in self.grid.marked_range()]
+        return [self.get_target()]
 
     def delete_nodes(self, nodes, propagate=None):
         old_parent = nodes[0].parent
@@ -199,6 +198,10 @@ class Browser(VBox):
             self.select()
         elif action == 'unselect':
             self.unselect()
+        elif action == 'mark':
+            self.grid.set_mark()
+        elif action == 'cancel':
+            self.grid.clear_mark()
         elif action == 'toggle_hide':
             self.toggle_hide()
         else:
