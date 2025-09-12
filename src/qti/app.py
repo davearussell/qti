@@ -54,6 +54,10 @@ def make_xui_config(settings):
             'header_font_size': settings.header_font_size,
         },
 
+        'Dialog': {
+            'title_font_size': settings.header_font_size,
+        },
+
         'PathbarBody': {
             'font_size': settings.header_font_size,
             'sep_color': settings.pathbar_separator,
@@ -122,7 +126,7 @@ class Application(App):
             AppSettingsDialog(self).run()
         elif action == 'search':
             if self.browser.mode == 'grid':
-                SearchDialog(self).run()
+                SearchDialog().run()
         else:
             return False
         return True
