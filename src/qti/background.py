@@ -1,25 +1,29 @@
 import select
 import subprocess
 
+from xui.timer import Timer
+
 
 class BackgroundCacher:
     poll_interval_s = 1.0
 
     def __init__(self, app):
         self.app = app
-        self.timer = app.timer(self.poll, repeat=True)
+        self.timer = Timer(self.poll)
         self.done = None
         self.total = None
         self.proc = None
 
     def cache_all_images(self):
+        if self.proc:
+            self.stop()
         sizes = [self.app.size,
                  self.app.settings.thumbnail_size]
         cmd = ['qti-image-cacher', self.app.library.root_dir]
         for size in sizes:
             cmd += ['-s', '%dx%d' % tuple(size)]
         self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        self.timer.start(self.poll_interval_s)
+        self.timer.start(self.poll_interval_s, repeat=True)
 
     def poll(self):
         if not select.select([self.proc.stdout], [], [], 0)[0]:

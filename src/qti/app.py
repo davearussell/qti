@@ -9,7 +9,6 @@ from . import settings
 from . import cache
 from . import keys
 from . import macros
-from . import timer
 
 from .dialogs.editor import EditorDialog
 from .dialogs.bulk_edit import BulkEditDialog
@@ -127,9 +126,6 @@ class Application(App):
         else:
             return False
         return True
-
-    def timer(self, *args, **kwargs):
-        return timer.Timer(self, *args, **kwargs)
 
     def pre_exit_hook(self):
         self.library.save()

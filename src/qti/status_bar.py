@@ -1,5 +1,6 @@
 import time
 
+from xui.timer import Timer
 from xui.widgets import HBox, HSpacer, Label
 from xui.settings import ChildSettings
 
@@ -13,7 +14,7 @@ class StatusBar(HBox):
         self.label = Label('', settings=label_settings)
         self.children = [self.label, HSpacer()]
         self.msg = ''
-        self.timer = self.app.timer(self.refresh_msg)
+        self.timer = Timer(self.refresh_msg)
         self.timed_msgs = [] # [ (msg, priority, expiry_time), ... ]
         self.perm_msg = None # (msg, priority)
 
@@ -65,4 +66,6 @@ class StatusBar(HBox):
             self.msg = msg
             self.label.set_text(msg)
         if first_expiry is not None:
+            if self.timer.is_running():
+                self.timer.stop()
             self.timer.start(first_expiry - now)
