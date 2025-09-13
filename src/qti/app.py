@@ -106,7 +106,7 @@ class Application(App):
         elif action == 'filter_config':
             FilterConfigDialog(self).run()
         elif action == 'delete':
-            DeleterDialog(self, self.browser.marked_nodes()).run()
+            DeleterDialog().run()
         elif action == 'edit_metadata':
             MetadataEditorDialog(self).run()
         elif action == 'edit_macros':
