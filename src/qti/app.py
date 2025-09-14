@@ -108,7 +108,7 @@ class Application(App):
         elif action == 'delete':
             DeleterDialog().run()
         elif action == 'edit_metadata':
-            MetadataEditorDialog(self).run()
+            MetadataEditorDialog().run()
         elif action == 'edit_macros':
             MacroDialog(self).run()
         elif action == 'edit_keybinds':
