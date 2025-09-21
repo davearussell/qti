@@ -1,5 +1,5 @@
-from .common import FieldDialog
-from .fields import TypedField, ColorField
+from xui.widgets import FieldDialog, TypedField, ColorField
+
 from ..settings import Color, Size
 
 FIELD_TYPES = {
@@ -14,15 +14,20 @@ FIELD_TYPES = {
 class AppSettingsDialog(FieldDialog):
     title = 'App settings'
 
-    def __init__(self, app):
-        self.app = app
-        fields = [FIELD_TYPES[type(value)](key, value)
-                  for key, value in self.app.settings.to_dict().items()]
-        super().__init__(app, app.screen, fields)
+    def __init__(self):
+        super().__init__()
+        self.init_fields(self.choose_fields())
+
+    def choose_fields(self):
+        return [
+            FIELD_TYPES[type(value)](key, value)
+            for key, value in self.app.settings.to_dict().items()
+        ]
 
     def apply_field_update(self, field, value):
         self.app.settings.set(field.key, str(value))
 
     def post_commit_cb(self):
+        super().post_commit_cb()
         self.app.apply_settings()
         super().post_commit_cb()

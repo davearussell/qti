@@ -123,7 +123,7 @@ class Application(App):
             assert 0, "XXX fixme!"
             make_importer(self, self.browser.node).run()
         elif action == 'app_settings':
-            AppSettingsDialog(self).run()
+            AppSettingsDialog().run()
         elif action == 'search':
             if self.browser.mode == 'grid':
                 SearchDialog().run()
