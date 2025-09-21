@@ -104,7 +104,7 @@ class Application(App):
             if self.browser.node.children:
                 BulkEditDialog(self, self.browser.node).run()
         elif action == 'filter_config':
-            FilterConfigDialog(self).run()
+            FilterConfigDialog().run()
         elif action == 'delete':
             DeleterDialog().run()
         elif action == 'edit_metadata':
