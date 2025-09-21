@@ -1,7 +1,8 @@
 import copy
 import os
-from .fields import TextField, ReadOnlyField, SetField
-from .common import FieldDialog
+
+from xui.widgets import FieldDialog, TextField, ReadOnlyField, SetField
+
 from ..tree import FilteredContainer
 
 
@@ -103,18 +104,15 @@ def choose_fields(library, nodes):
 class EditorDialog(FieldDialog):
     title = "Editor"
 
-    def __init__(self, app):
-        self.app = app
-        self.library = app.library
-        self.browser = app.browser
-        self.keybinds = self.app.keybinds
-        super().__init__(app, app.screen, self.choose_fields())
+    def __init__(self):
+        super().__init__()
+        self.init_fields(self.choose_fields())
 
     def choose_fields(self):
-        return choose_fields(self.library, self.browser.marked_nodes())
+        return choose_fields(self.app.library, self.app.browser.marked_nodes())
 
     def new_target_path(self):
-        target = self.browser.target
+        target = self.app.browser.get_target()
         expr = target.root.filter_config.filter
         old_path = {node.type: node.key for node in target.ancestors()}
 
@@ -161,13 +159,14 @@ class EditorDialog(FieldDialog):
     def apply_field_update(self, field, value):
         field.update_nodes(value)
 
-    def keydown_cb(self, keystroke):
-        action = self.keybinds.get_action(keystroke)
-        if self.keybinds.is_scroll(action):
-            self.browser.scroll(action)
-            if self.dirty():
+    def handle_keydown(self, keystroke):
+        if keystroke in self.action_keybinds:
+            return super().handle_keydown(keystroke)
+        action = self.app.keybinds.get_action(keystroke)
+        if self.app.keybinds.is_scroll(action):
+            self.app.browser.scroll(action)
+            if self.is_dirty():
                 self.commit()
             self.init_fields(self.choose_fields())
-            self.ui.focus()
-            return True
-        return False
+            self.focus()
+        return True

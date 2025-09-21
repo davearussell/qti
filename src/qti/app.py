@@ -99,7 +99,7 @@ class Application(App):
             self.quit()
         elif action == 'edit':
             if self.browser.node.children:
-                EditorDialog(self).run()
+                EditorDialog().run()
         elif action == 'bulk_edit':
             if self.browser.node.children:
                 BulkEditDialog(self, self.browser.node).run()
