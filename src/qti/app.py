@@ -19,6 +19,7 @@ from .dialogs.metadata_editor import MetadataEditorDialog
 from .dialogs.macros import MacroDialog
 from .dialogs.app_settings import AppSettingsDialog
 from .dialogs.key_config import KeybindDialog
+from .dialogs.importer import ImporterDialog
 from .background import BackgroundCacher
 from .dialogs.search import SearchDialog
 from .datastore import Datastore
@@ -120,8 +121,7 @@ class Application(App):
         elif action and action.startswith('macro_'):
             self.run_macro(action[len('macro_'):])
         elif action == 'add_new_images':
-            assert 0, "XXX fixme!"
-            make_importer(self, self.browser.node).run()
+            ImporterDialog().run()
         elif action == 'app_settings':
             AppSettingsDialog().run()
         elif action == 'search':
