@@ -112,7 +112,7 @@ class Application(App):
         elif action == 'edit_macros':
             MacroDialog(self).run()
         elif action == 'edit_keybinds':
-            KeybindDialog(self).run()
+            KeybindDialog().run()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':
