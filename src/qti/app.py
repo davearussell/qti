@@ -110,7 +110,7 @@ class Application(App):
         elif action == 'edit_metadata':
             MetadataEditorDialog().run()
         elif action == 'edit_macros':
-            MacroDialog(self).run()
+            MacroDialog().run()
         elif action == 'edit_keybinds':
             KeybindDialog().run()
         elif action == 'save_snapshot':
