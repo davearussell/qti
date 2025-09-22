@@ -1,37 +1,33 @@
 import copy
 
+import pygame
+
+from xui.widgets import DataDialog, HBox, ComboBox, LineEdit, DataTable
+
 from .. import template
-from ..ui.dialogs.bulk_edit import BulkEditDialogWidget
-from .common import DataDialog
 
 
 class BulkEditDialog(DataDialog):
-    ui_cls = BulkEditDialogWidget
-
-    def __init__(self, app, node):
-        self.app = app
-        self.node = node
-        self.library = self.app.library
+    def __init__(self):
+        super().__init__()
+        self.node = self.app.browser.node
         self.edit_type = self.node.children[0].type
-        self.title = "Bulk %s edit" % (self.edit_type,)
+        self.set_title("Bulk %s edit" % (self.edit_type,))
         self.keys = self.choose_keys()
-        self.table = self.make_table(self.keys)
-        self.orig_table = copy.deepcopy(self.table)
-        super().__init__(app, app.screen)
-
-    @property
-    def ui_args(self):
-        return {
-            'keys': self.keys,
-            'table': self.table,
-            'update_cb': self.update_key,
-        }
-
-    def make_table(self, keys):
-        return [{key: child.get_key(key) for key in keys} for child in self.node.children]
+        self.data = [{key: child.get_key(key) for key in self.keys} for child in self.node.children]
+        self.orig_data = copy.deepcopy(self.data)
+        self.key_box = ComboBox(self.keys)
+        self.line_edit = LineEdit(num_chars=20, commit_cb=self.do_update)
+        self.editor = HBox([self.key_box, self.line_edit],
+                           child_valign='center', spacing=10)
+        self.table = DataTable(self.data, self.keys)
+        self.body.children = [
+            self.editor,
+            self.table,
+        ]
 
     def choose_keys(self):
-        hierarchy = self.library.metadata.hierarchy()
+        hierarchy = self.app.library.metadata.hierarchy()
         if self.edit_type == 'image':
             parents = hierarchy
         elif self.edit_type in hierarchy:
@@ -40,7 +36,7 @@ class BulkEditDialog(DataDialog):
         else:
             parents = []
         keys = ['name']
-        for key in self.library.metadata.keys:
+        for key in self.app.library.metadata.keys:
             if key.builtin or key.multi:
                 continue
             if key.in_hierarchy and key.name not in parents:
@@ -56,21 +52,37 @@ class BulkEditDialog(DataDialog):
         if node.type == 'image':
             spec['dir'] = os.path.basename(os.path.dirname(node.abspath))
             spec['file'] = os.path.splitext(os.path.basename(node.abspath))[0]
-        for key in self.library.metadata.keys:
+        for key in self.app.library.metadata.keys:
             spec[key.name] = node.get_key(key.name)
         return spec
 
-    def update_key(self, key, value):
+    def do_update(self):
+        key = self.key_box.choice
+        value = self.line_edit.get_value()
         for i, node in enumerate(self.node.children):
-            self.table[i][key] = template.apply(self.template_spec(node), value)
-        self.ui.refresh()
+            self.data[i][key] = template.apply(self.template_spec(node), value)
+        self.table.refresh()
+        self.focus()
         self.data_updated()
 
-    def dirty(self):
-        return self.table != self.orig_table
+    def is_dirty(self):
+        return self.data != self.orig_data
 
     def commit(self):
-        for node, row in zip(self.node.children, self.table):
+        for node, row in zip(self.node.children, self.data):
             for key in self.keys:
                 node.update(key, row[key])
         self.app.reload_tree()
+
+    def handle_keydown(self, keystroke):
+        if keystroke == 'up':
+            if self.key_box.choice_i > 0:
+                self.key_box.set_choice_i(self.key_box.choice_i - 1)
+        elif keystroke == 'down':
+            if self.key_box.choice_i < len(self.key_box.choices) - 1:
+                self.key_box.set_choice_i(self.key_box.choice_i + 1)
+        elif keystroke == 'e':
+            self.line_edit.focus()
+        else:
+            return super().handle_keydown(keystroke)
+        return True

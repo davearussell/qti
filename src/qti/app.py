@@ -102,7 +102,7 @@ class Application(App):
                 EditorDialog().run()
         elif action == 'bulk_edit':
             if self.browser.node.children:
-                BulkEditDialog(self, self.browser.node).run()
+                BulkEditDialog().run()
         elif action == 'filter_config':
             FilterConfigDialog().run()
         elif action == 'delete':
