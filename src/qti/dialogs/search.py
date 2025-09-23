@@ -18,6 +18,10 @@ class SearchDialog(Dialog):
         self.edit = LineEdit(update_cb=self.search_text_changed, commit_cb=self.find_next)
         self.body.children = [self.label, self.edit]
 
+    def run(self, exit_cb=None):
+        if self.app.browser.mode == 'grid':
+            super().run(exit_cb)
+
     def do_action(self, action):
         self.exit()
 

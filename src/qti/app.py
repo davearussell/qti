@@ -67,6 +67,20 @@ def make_xui_config(settings):
     }
 
 
+DIALOGS = {
+    'edit': EditorDialog,
+    'bulk_edit': BulkEditDialog,
+    'filter_config': FilterConfigDialog,
+    'delete': DeleterDialog,
+    'edit_metadata': MetadataEditorDialog,
+    'edit_macros': MacroDialog,
+    'edit_keybinds': KeybindDialog,
+    'add_new_images': ImporterDialog,
+    'app_settings': AppSettingsDialog,
+    'search': SearchDialog,
+}
+
+
 class Application(App):
     framerate = 30
 
@@ -94,35 +108,14 @@ class Application(App):
         action = self.keybinds.get_action(keystroke)
         if action == 'quit':
             self.quit()
-        elif action == 'edit':
-            if self.browser.node.children:
-                EditorDialog().run()
-        elif action == 'bulk_edit':
-            if self.browser.node.children:
-                BulkEditDialog().run()
-        elif action == 'filter_config':
-            FilterConfigDialog().run()
-        elif action == 'delete':
-            DeleterDialog().run()
-        elif action == 'edit_metadata':
-            MetadataEditorDialog().run()
-        elif action == 'edit_macros':
-            MacroDialog().run()
-        elif action == 'edit_keybinds':
-            KeybindDialog().run()
         elif action == 'save_snapshot':
             self.save_snapshot()
         elif action == 'restore_snapshot':
             self.restore_snapshot()
         elif action and action.startswith('macro_'):
             self.run_macro(action[len('macro_'):])
-        elif action == 'add_new_images':
-            ImporterDialog().run()
-        elif action == 'app_settings':
-            AppSettingsDialog().run()
-        elif action == 'search':
-            if self.browser.mode == 'grid':
-                SearchDialog().run()
+        elif action in DIALOGS:
+            DIALOGS[action]().run()
         else:
             return False
         return True

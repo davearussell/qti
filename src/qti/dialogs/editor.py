@@ -51,6 +51,9 @@ class EditorSetField(EditorTextField, SetField):
 
 
 def choose_fields(library, nodes):
+    if not nodes:
+        return []
+
     hierarchy = library.metadata.hierarchy()
 
     first_node = nodes[0]
@@ -107,6 +110,10 @@ class EditorDialog(FieldDialog):
     def __init__(self):
         super().__init__()
         self.init_fields(self.choose_fields())
+
+    def run(self, exit_cb=None):
+        if self.app.browser.node.children:
+            super().run(exit_cb)
 
     def choose_fields(self):
         return choose_fields(self.app.library, self.app.browser.marked_nodes())

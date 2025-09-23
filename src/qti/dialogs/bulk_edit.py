@@ -26,6 +26,10 @@ class BulkEditDialog(DataDialog):
             self.table,
         ]
 
+    def run(self, exit_cb=None):
+        if self.app.browser.node.children:
+            super().run(exit_cb)
+
     def choose_keys(self):
         hierarchy = self.app.library.metadata.hierarchy()
         if self.edit_type == 'image':
