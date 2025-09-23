@@ -2,7 +2,7 @@ import pygame
 
 from xui.widgets import Widget
 
-from .cache import ensure_cached
+from ..cache import ensure_cached
 
 class Viewer(Widget):
     greedy_width = True

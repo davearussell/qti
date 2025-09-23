@@ -3,16 +3,18 @@ import traceback
 
 from xui.app import App
 
-from . import library
-from . import browser
-from . import settings
-from . import cache
-from . import keys
-from . import macros
+from .library import Library
+from .settings import Settings
+from .cache import set_root_dir, BackgroundCacher
+from .keys import Keybinds
+from .macros import run_macro
+from .datastore import Datastore
+from .filtering import default_filter_config
+
+from .widgets import browser
 
 from .dialogs.editor import EditorDialog
 from .dialogs.bulk_edit import BulkEditDialog
-from .filtering import default_filter_config
 from .dialogs.deleter import DeleterDialog
 from .dialogs.filter_config import FilterConfigDialog
 from .dialogs.metadata_editor import MetadataEditorDialog
@@ -20,9 +22,7 @@ from .dialogs.macros import MacroDialog
 from .dialogs.app_settings import AppSettingsDialog
 from .dialogs.key_config import KeybindDialog
 from .dialogs.importer import ImporterDialog
-from .background import BackgroundCacher
 from .dialogs.search import SearchDialog
-from .datastore import Datastore
 
 
 def make_xui_config(settings):
@@ -87,11 +87,11 @@ class Application(App):
     def __init__(self, json_file):
         super().__init__()
         self.store = Datastore()
-        self.settings = settings.Settings(self.store)
-        self.keybinds = keys.Keybinds(self.store)
-        self.library = library.Library(json_file)
+        self.settings = Settings(self.store)
+        self.keybinds = Keybinds(self.store)
+        self.library = Library(json_file)
         self.metadata = self.library.metadata
-        cache.set_root_dir(self.library.root_dir)
+        set_root_dir(self.library.root_dir)
         for macro in self.library.macros:
             self.keybinds.add_action('macro_' + macro['name'])
         self.filter_config = default_filter_config(self.library)
@@ -143,7 +143,7 @@ class Application(App):
         for macro in self.library.macros:
             if macro['name'] == name:
                 try:
-                    macros.run_macro(self, macro['text'])
+                    run_macro(self, macro['text'])
                 except Exception as e:
                     traceback.print_exc()
                     self.status_bar.set_text('Macro error: %s' % (e,), duration_s=10)

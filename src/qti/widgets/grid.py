@@ -2,7 +2,7 @@ import pygame
 
 from xui.widgets import Image, grid
 
-from .cache import ensure_cached
+from ..cache import ensure_cached
 
 
 class Thumbnail(Image):

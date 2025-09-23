@@ -1,3 +1,5 @@
+# NOTE: this script runs as a subprocess of qti, managed by cache.BackgroundCacher
+
 import argparse
 import os
 import multiprocessing
