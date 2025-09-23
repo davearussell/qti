@@ -51,10 +51,6 @@ def make_xui_config(settings):
             'font_size': settings.header_font_size,
         },
 
-        'DialogWidget': {
-            'header_font_size': settings.header_font_size,
-        },
-
         'Dialog': {
             'title_font_size': settings.header_font_size,
         },
